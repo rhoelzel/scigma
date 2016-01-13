@@ -1,0 +1,11 @@
+Cmake_minimum_required(VERSION 3.0)
+project(scigma)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(CMAKE_MACOSX_RPATH OFF)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Weverything -Wno-c++98-compat-pedantic -Wno-documentation -Wno-unknown-pragmas")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wpedantic -Wextra -Werror -Wno-unknown-pragmas")	
+endif()
+
+add_subdirectory(num)

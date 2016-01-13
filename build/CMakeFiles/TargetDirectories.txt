@@ -1,0 +1,2 @@
+/Users/rhoelzel/scigma/build/num/test/CMakeFiles/utest.dir
+/Users/rhoelzel/scigma/build/num/CMakeFiles/num.dir
