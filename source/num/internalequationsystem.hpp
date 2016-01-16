@@ -91,7 +91,7 @@ namespace scigma
       bool structure_changed(const FunctionSet& varSet, const FunctionSet& parSet, 
 			     const FunctionSet& funcSet, const FunctionSet& constSet) const;
 
-      void detach(Function& t, VecF& x, VecF& rhs, VecF& func) const;
+      void detach(Function& t, VecF& x, VecF& p, VecF& rhs, VecF& func) const;
       
       size_t stalled_;
       unsigned long long timeStamp_;

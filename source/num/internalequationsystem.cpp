@@ -368,7 +368,7 @@ namespace scigma
       
     }
     
-    void InternalEquationSystem::detach(Function& t, VecF& x, VecF& rhs, VecF& func) const
+    void InternalEquationSystem::detach(Function& t, VecF& x, VecF& p, VecF& rhs, VecF& func) const
     {
       FunctionSet fSetClone;
       //clone_sorted_function_set(fSet_,fSetClone);
@@ -380,8 +380,11 @@ namespace scigma
       else
 	t=0;
       size_t nVar(n_variables());
+      size_t nPar(n_parameters());
       for(size_t i(0);i<nVar;++i)
 	x.push_back(get_function_from_set(varNames_[i],fSetClone)->f);
+      for(size_t i(0);i<nPar;++i)
+	p.push_back(get_function_from_set(parNames_[i],fSetClone)->f);
       for(size_t i(0);i<nVar;++i)
 	rhs.push_back(get_function_from_set(varNames_[i]+"'",fSetClone)->f);
       for(size_t i(0),nFunc(n_functions());i<nFunc;++i)
@@ -400,8 +403,8 @@ namespace scigma
       if(!nVar)
 	return NULL;
 
-      Function T; VecF X,RHS,FUNC;
-      detach(T,X,RHS,FUNC);
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
 
       return
 	[nVar,X,RHS](const double* x, double* rhs) mutable
@@ -409,65 +412,247 @@ namespace scigma
 	  for(size_t i(0);i<nVar;++i)
 	    X[i].set_value(x[i]);
 	  for(size_t i(0);i<nVar;++i)
-	    {
-	      rhs[i]=RHS[i].evaluate();
-	    }
+	    rhs[i]=RHS[i].evaluate();
 	};
     }
     
     F InternalEquationSystem::dfdx() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      VecF DFDX;
+      for(size_t i(0);i<nVar;++i)
+	for(size_t j(0);j<nVar;++j)
+	  DFDX.push_back(RHS[j].get_partial_derivative(X[i]));
+
+      return
+	[nVar,X,DFDX](const double* x, double* jac) mutable
+	{
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nVar*nVar;++i)
+	      jac[i]=DFDX[i].evaluate();
+	};
     }
     
     F InternalEquationSystem::func() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      size_t nFunc(n_functions());
+      if(!nFunc)
+	return NULL;
+
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      return
+	[nVar,nFunc,X,FUNC](const double* x, double* fval) mutable
+	{
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nFunc;++i)
+	    fval[i]=FUNC[i].evaluate();
+	};
     }
     
     F_p InternalEquationSystem::f_p() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+      size_t nPar(n_parameters());
+      
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      return
+	[nVar,nPar,X,P,RHS](const double* x, const double* p, double* rhs) mutable
+	{
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nVar;++i)
+	    rhs[i]=RHS[i].evaluate();
+	};
     }
     
     F_p InternalEquationSystem::dfdx_p() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      VecF DFDX;
+      for(size_t i(0);i<nVar;++i)
+	for(size_t j(0);j<nVar;++j)
+	  DFDX.push_back(RHS[j].get_partial_derivative(X[i]));
+
+      return
+	[nVar,nPar,X,P,DFDX](const double* x, const double* p, double* jac) mutable
+	{
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nVar*nVar;++i)
+	      jac[i]=DFDX[i].evaluate();
+	};
     }
     
     F_p InternalEquationSystem::dfdp_p() const
     {
-            return NULL;
+      return NULL;
     }
     
     F_p InternalEquationSystem::func_p() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      size_t nFunc(n_functions());
+      if(!nFunc)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      return
+	[nVar,nPar,nFunc,X,P,FUNC](const double* x, const double* p, double* fval) mutable
+	{
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nFunc;++i)
+	    fval[i]=FUNC[i].evaluate();
+	};
     }
     
     F_t InternalEquationSystem::f_t() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+      
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+      
+      return
+	[nVar,T,X,RHS](double t, const double* x, double* rhs) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nVar;++i)
+	    rhs[i]=RHS[i].evaluate();
+	};
     }
     
     F_t InternalEquationSystem::dfdx_t() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      VecF DFDX;
+      for(size_t i(0);i<nVar;++i)
+	for(size_t j(0);j<nVar;++j)
+	  DFDX.push_back(RHS[j].get_partial_derivative(X[i]));
+
+      return
+	[nVar,T,X,DFDX](double t, const double* x, double* jac) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nVar*nVar;++i)
+	      jac[i]=DFDX[i].evaluate();
+	};
     }
 
     F_t InternalEquationSystem::func_t() const
     {
-            return NULL;
+            size_t nVar(n_variables());
+      size_t nFunc(n_functions());
+      if(!nFunc)
+	return NULL;
+
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      return
+	[nVar,nFunc,T,X,FUNC](double t,const double* x, double* fval) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nFunc;++i)
+	    fval[i]=FUNC[i].evaluate();
+	};
     }
 
     F_pt InternalEquationSystem::f_pt() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+      
+      return
+	[nVar,nPar,T,X,P,RHS](double t, const double* x, const double* p, double* rhs) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nVar;++i)
+	    rhs[i]=RHS[i].evaluate();
+	};
     }
 
     F_pt InternalEquationSystem::dfdx_pt() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      VecF DFDX;
+      for(size_t i(0);i<nVar;++i)
+	for(size_t j(0);j<nVar;++j)
+	  DFDX.push_back(RHS[j].get_partial_derivative(X[i]));
+
+      return
+	[nVar,nPar,T,X,P,DFDX](double t, const double* x, const double* p, double* jac) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nVar*nVar;++i)
+	      jac[i]=DFDX[i].evaluate();
+	};
     }
 
     F_pt InternalEquationSystem::dfdp_pt() const
@@ -477,7 +662,27 @@ namespace scigma
 
     F_pt InternalEquationSystem::func_pt() const
     {
-            return NULL;
+      size_t nVar(n_variables());
+      size_t nFunc(n_functions());
+      if(!nFunc)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      return
+	[nVar,nPar,nFunc,T,X,P,FUNC](double t, const double* x, const double* p, double* fval) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nFunc;++i)
+	    fval[i]=FUNC[i].evaluate();
+	};
     }
 
 #pragma GCC diagnostic pop

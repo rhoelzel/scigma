@@ -125,7 +125,7 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
 	  REQUIRE(eqsys.time()==-2);
 	}
     }
-  GIVEN("An InternalEquationSystem initialized with the script:\n"
+  GIVEN("An autonomous InternalEquationSystem initialized with the script:\n"
 	"x'=s*(y-x)\n"
 	"y'=x*(r-z)-y\n"
 	"z'=x*y-b*z\n"
@@ -146,7 +146,7 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
       double x[]={3,4,5};
       double p[]={6,7,8};
       double rhs[3];
-      double dfdx[9];
+      double jac[9];
       double func[2];
       
       THEN("is_autonomous() returns true")
@@ -179,60 +179,211 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
 	  REQUIRE(eqsys.parameter_values()[0]==2.66666667);
 	  REQUIRE(eqsys.parameter_values()[1]==28);
 	  REQUIRE(eqsys.parameter_values()[2]==10);
-	  REQUIRE(eqsys.function_values()[0]==std::pow(-1.24,2)-std::pow((28+10*std::sin(2.66666667))*12,2));
-	  REQUIRE(eqsys.function_values()[1]==std::sqrt(std::abs(std::pow(-1.24,2)-std::pow((28+10*std::sin(2.66666667))*12,2)-std::tan(23))));
+	  REQUIRE(eqsys.function_values()[0]==std::pow(-1.24,2)-std::pow((28+10*std::sin(2.66666667))*12,2)+10);
+	  REQUIRE(eqsys.function_values()[1]==std::sqrt(std::abs(std::pow(-1.24,2)-std::pow((28+10*std::sin(2.66666667))*12,2)+10-std::tan(23))));
 	  REQUIRE(eqsys.constant_values()[0]==28+10*std::sin(2.66666667));
 	}
       WHEN("we try to delete a function (f_1) that another function (f_2) depends on")
 	THEN("exception \"f_2 depends on f_1 - delete f_2 first\" is thrown")
 	REQUIRE_EXCEPTION(eqsys.parse("!f_1"),"f_2 depends on f_1 - delete f_2 first");
       
-      
-      THEN("f() returns a wrapper of the original right hand side function f_pt for current parameters and time")
+      THEN("f() returns a wrapper of the original right hand side function f_p for current parameters")
 	{
 	  eqsys.f()(x,rhs);
 	  REQUIRE(rhs[0]==10*(4-3));
 	  REQUIRE(rhs[1]==3*(28-5)-4);
 	  REQUIRE(rhs[2]==3*4-2.66666667*5);
 	}
+      THEN("f_p() returns the original right hand side function f_p")
+	{
+	  eqsys.f_p()(x,p,rhs);
+	  REQUIRE(rhs[0]==8*(4-3));
+	  REQUIRE(rhs[1]==3*(7-5)-4);
+	  REQUIRE(rhs[2]==3*4-6*5);
+	}
+      THEN("dfdx() returns a wrapper of the original Jacobian dfdx_pt for current parameters")
+	{
+	  eqsys.dfdx()(x,jac);
+	  REQUIRE(jac[0]==-10);
+	  REQUIRE(jac[1]==28-5);
+	  REQUIRE(jac[2]==4);
+	  REQUIRE(jac[3]==10);
+	  REQUIRE(jac[4]==-1);
+	  REQUIRE(jac[5]==3);
+	  REQUIRE(jac[6]==0);
+	  REQUIRE(jac[7]==-3);
+	  REQUIRE(jac[8]==-2.66666667);
+	}
+      THEN("dfdx_p() returns the original Jacobian dfdx_p")
+	{
+	  eqsys.dfdx_p()(x,p,jac);
+	  REQUIRE(jac[0]==-8);
+	  REQUIRE(jac[1]==7-5);
+	  REQUIRE(jac[2]==4);
+	  REQUIRE(jac[3]==8);
+	  REQUIRE(jac[4]==-1);
+	  REQUIRE(jac[5]==3);
+	  REQUIRE(jac[6]==0);
+	  REQUIRE(jac[7]==-3);
+	  REQUIRE(jac[8]==-6);
+	}
+      THEN("func() returns a wrapper of the original function func_p for the current parameters")
+	{
+	  eqsys.func()(x,func);
+	  REQUIRE(func[0]==std::pow(3,2)-std::pow(4,2)+10);
+	  REQUIRE(func[1]==std::sqrt(std::abs((std::pow(3,2)-std::pow(4,2)+10+5))));	  
+	}
+      THEN("func_p() returns the original function func_p")
+	{
+	  eqsys.func_p()(x,p,func);
+	  REQUIRE(func[0]==std::pow(3,2)-std::pow(4,2)+8);
+	  REQUIRE(func[1]==std::sqrt(std::abs((std::pow(3,2)-std::pow(4,2)+8+5))));
+	}
+    }
+  GIVEN("A non-autonomous InternalEquationSystem initialized with the script:\n"
+	"x'=-y+a*f1+b*(1-x)\n"
+	"y'=x+a*f2+b*(1-y)\n"
+	"f1=sin(omega*t)\n"
+	"f2=cos(omega*t)\n"
+	"t=-2\n"
+	"x=0.5\n"
+	"y=0.6\n"
+	"a=0.001\n"
+	"b=0.1\n"
+	"omega=5")
+    {
+      InternalEquationSystem eqsys;
+      for(size_t i(0);i<forcedLines;++i)
+	eqsys.parse(forced[i]);
+
+      double t(3);
+      double x[]={1.1,1.2};
+      double p[]={0.002,0.3,10};
+      double rhs[2];
+      double jac[4];
+      double func[2];
+      
+      THEN("is_autonomous() returns false")
+	REQUIRE(!eqsys.is_autonomous());
+           
+      THEN("n_variables(), n_parameters(), n_functions() and n_constants() return the correct values")
+	{
+	  REQUIRE(eqsys.n_variables()==2);
+	  REQUIRE(eqsys.n_parameters()==3);
+	  REQUIRE(eqsys.n_functions()==2);
+	  REQUIRE(eqsys.n_constants()==0);
+	}
+      THEN("variable_names(), parameter_names(), function_names() and constant_names() return the correct values in alphabetical order")
+	{
+	  REQUIRE(eqsys.variable_names()[0]=="x");
+	  REQUIRE(eqsys.variable_names()[1]=="y");
+	  REQUIRE(eqsys.parameter_names()[0]=="a");
+	  REQUIRE(eqsys.parameter_names()[1]=="b");
+	  REQUIRE(eqsys.parameter_names()[2]=="omega");
+	  REQUIRE(eqsys.function_names()[0]=="f1");
+	  REQUIRE(eqsys.function_names()[1]=="f2");
+	}
+      THEN("setting and retrieving t by name works")
+	{
+	  REQUIRE(eqsys.get("t")==-2);
+	  eqsys.set("t",5);
+	  REQUIRE(eqsys.get("t")==5);
+	}
+      THEN("time() returns the correct value")
+	{
+	  REQUIRE(eqsys.time()==-2);
+	}
+      THEN("variable_values(), parameter_values(), function_values() and constant_values() return the correct values")
+	{
+	  REQUIRE(eqsys.variable_values()[0]==0.5);
+	  REQUIRE(eqsys.variable_values()[1]==0.6);
+	  REQUIRE(eqsys.parameter_values()[0]==0.001);
+	  REQUIRE(eqsys.parameter_values()[1]==0.1);
+	  REQUIRE(eqsys.parameter_values()[2]==5);
+	  REQUIRE(eqsys.function_values()[0]==std::cos(5*-2));
+	  REQUIRE(eqsys.function_values()[1]==std::sin(5*-2));
+	}
+
+      THEN("f() returns a wrapper of the original right hand side function f_pt for current parameters and time")
+	{
+	  eqsys.f()(x,rhs);
+	  REQUIRE(rhs[0]==-1.2+0.001*std::cos(5*-2)+0.1*(1-1.1));
+	  REQUIRE(rhs[1]==1.1+0.001*std::sin(5*-2)+0.1*(1-1.2));
+	}
       THEN("f_p() returns a wrapper of the original right hand side function f_pt for the current time")
 	{
-	  eqsys.f()(x,p,rhs);
-	  REQUIRE(rhs[0]==10*(4-3));
-	  REQUIRE(rhs[1]==3*(28-5)-4);
-	  REQUIRE(rhs[2]==3*4-2.66666667*5);
+	  eqsys.f_p()(x,p,rhs);
+	  REQUIRE(rhs[0]==-1.2+0.002*std::cos(10*-2)+0.3*(1-1.1));
+	  REQUIRE(rhs[1]==1.1+0.002*std::sin(10*-2)+0.3*(1-1.2));
 	}
       THEN("f_t() returns a wrapper of the original right hand side function f_pt for the current parameters")
 	{
+	  eqsys.f_t()(t,x,rhs);
+	  REQUIRE(rhs[0]==-1.2+0.001*std::cos(5*t)+0.1*(1-1.1));
+	  REQUIRE(rhs[1]==1.1+0.001*std::sin(5*t)+0.1*(1-1.2));
 	}
       THEN("f_pt() returns the original right hand side function f_pt")
 	{
+	  eqsys.f_pt()(t,x,p,rhs);
+	  REQUIRE(rhs[0]==-1.2+0.002*std::cos(10*t)+0.3*(1-1.1));
+	  REQUIRE(rhs[1]==1.1+0.002*std::sin(10*t)+0.3*(1-1.2));
 	}
-  
       THEN("dfdx() returns a wrapper of the original Jacobian dfdx_pt for current parameters and time")
 	{
+	  eqsys.dfdx()(x,jac);
+	  REQUIRE(jac[0]==-0.1);
+	  REQUIRE(jac[1]==1);
+	  REQUIRE(jac[2]==-1);
+	  REQUIRE(jac[3]==-0.1);
 	}
       THEN("dfdx_p() returns a wrapper of the original Jacobian dfdx_pt for the current time")
 	{
+	  eqsys.dfdx_p()(x,p,jac);
+	  REQUIRE(jac[0]==-0.3);
+	  REQUIRE(jac[1]==1);
+	  REQUIRE(jac[2]==-1);
+	  REQUIRE(jac[3]==-0.3);
 	}
       THEN("dfdx_t() returns a wrapper of the original Jacobian dfdx_pt for the current parameters")
 	{
+	  eqsys.dfdx_t()(t,x,jac);
+	  REQUIRE(jac[0]==-0.1);
+	  REQUIRE(jac[1]==1);
+	  REQUIRE(jac[2]==-1);
+	  REQUIRE(jac[3]==-0.1);
 	}
       THEN("dfdx_pt() returns the original Jacobian dfdx_pt")
 	{
+	  eqsys.dfdx_pt()(t,x,p,jac);
+	  REQUIRE(jac[0]==-0.3);
+	  REQUIRE(jac[1]==1);
+	  REQUIRE(jac[2]==-1);
+	  REQUIRE(jac[3]==-0.3);
 	}
-  
       THEN("func() returns a wrapper of the original function func_pt for the current parameters")
 	{
+	  eqsys.func()(x,func);
+	  REQUIRE(func[0]==std::cos(5*-2));
+	  REQUIRE(func[1]==std::sin(5*-2));
 	}
       THEN("func_p() returns a wrapper of the original function func_pt for the current time")
 	{
+	  eqsys.func_p()(x,p,func);
+	  REQUIRE(func[0]==std::cos(10*-2));
+	  REQUIRE(func[1]==std::sin(10*-2));
 	}
       THEN("func_t() returns a wrapper of the original function func_pt for the current parameters")
 	{
+	  eqsys.func_t()(t,x,func);
+	  REQUIRE(func[0]==std::cos(5*t));
+	  REQUIRE(func[1]==std::sin(5*t));
 	}
       THEN("func_pt() returns the original function func_pt")
 	{
+	  eqsys.func_pt()(t,x,p,func);
+	  REQUIRE(func[0]==std::cos(10*t));
+	  REQUIRE(func[1]==std::sin(10*t));
 	}
+
     }
 }

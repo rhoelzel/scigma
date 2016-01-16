@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "-std=c++11 -Wall ")	
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")	
 
 include_directories(../../external/catch)
 add_executable(utest utest.cpp
