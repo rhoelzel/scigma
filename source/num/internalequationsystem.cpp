@@ -442,10 +442,11 @@ namespace scigma
     
     F InternalEquationSystem::func() const
     {
-      size_t nVar(n_variables());
       size_t nFunc(n_functions());
       if(!nFunc)
 	return NULL;
+
+      size_t nVar(n_variables());
 
       Function T; VecF X,P,RHS,FUNC;
       detach(T,X,P,RHS,FUNC);
@@ -511,16 +512,41 @@ namespace scigma
     
     F_p InternalEquationSystem::dfdp_p() const
     {
-      return NULL;
+      size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      if(!nPar)
+	return NULL;
+
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      VecF DFDP;
+      for(size_t i(0);i<nPar;++i)
+	for(size_t j(0);j<nVar;++j)
+	  DFDP.push_back(RHS[j].get_partial_derivative(P[i]));
+
+      return
+	[nVar,nPar,X,P,DFDP](const double* x, const double* p, double* dfdp) mutable
+	{
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nVar*nPar;++i)
+	      dfdp[i]=DFDP[i].evaluate();
+	};
     }
     
     F_p InternalEquationSystem::func_p() const
     {
-      size_t nVar(n_variables());
       size_t nFunc(n_functions());
       if(!nFunc)
 	return NULL;
 
+      size_t nVar(n_variables());
       size_t nPar(n_parameters());
       
       Function T; VecF X,P,RHS,FUNC;
@@ -585,11 +611,12 @@ namespace scigma
 
     F_t InternalEquationSystem::func_t() const
     {
-            size_t nVar(n_variables());
       size_t nFunc(n_functions());
       if(!nFunc)
 	return NULL;
 
+      size_t nVar(n_variables());
+      
       Function T; VecF X,P,RHS,FUNC;
       detach(T,X,P,RHS,FUNC);
 
@@ -657,16 +684,43 @@ namespace scigma
 
     F_pt InternalEquationSystem::dfdp_pt() const
     {
-            return NULL;
+       size_t nVar(n_variables());
+      if(!nVar)
+	return NULL;
+
+      size_t nPar(n_parameters());
+      if(!nPar)
+	return NULL;
+
+      Function T; VecF X,P,RHS,FUNC;
+      detach(T,X,P,RHS,FUNC);
+
+      VecF DFDP;
+      for(size_t i(0);i<nPar;++i)
+	for(size_t j(0);j<nVar;++j)
+	  DFDP.push_back(RHS[j].get_partial_derivative(P[i]));
+
+      return
+	[nVar,nPar,T,X,P,DFDP](double t, const double* x, const double* p, double* dfdp) mutable
+	{
+	  T.set_value(t);
+	  for(size_t i(0);i<nVar;++i)
+	    X[i].set_value(x[i]);
+	  for(size_t i(0);i<nPar;++i)
+	    P[i].set_value(p[i]);
+	  for(size_t i(0);i<nVar*nPar;++i)
+	      dfdp[i]=DFDP[i].evaluate();
+	};
     }
 
     F_pt InternalEquationSystem::func_pt() const
     {
-      size_t nVar(n_variables());
+
       size_t nFunc(n_functions());
       if(!nFunc)
 	return NULL;
 
+      size_t nVar(n_variables());
       size_t nPar(n_parameters());
       
       Function T; VecF X,P,RHS,FUNC;

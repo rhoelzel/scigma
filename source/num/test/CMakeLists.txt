@@ -7,5 +7,6 @@ add_executable(utest utest.cpp
 		     externalequationsystem_test_p.cpp
 		     externalequationsystem_test_t.cpp
 		     externalequationsystem_test_pt.cpp				
-		     externalequationsystem_shared.cpp) 
-target_link_libraries(utest num)
+		     externalequationsystem_shared.cpp
+		     odessa_test.cpp) 
+target_link_libraries(utest num tinythread)

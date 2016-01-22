@@ -25,9 +25,10 @@ void dfdx_p(const double* x, const double* p, double* dfdx)
   dfdx[1]=x[1]-p[0];dfdx[3]=x[0]-p[2];
 }
 
-void dfdp(const double* x, const double* p, double* dfdp)
+void dfdp_p(const double* x, const double* p, double* dfdp)
 {
-  
+  dfdp[0]=0;dfdp[2]=x[1];dfdp[4]=0;
+  dfdp[1]=-x[0];dfdp[3]=0;dfdp[5]=-x[1];
 }
 
 void func_p(const double* x, const double* p, double* funcval)
@@ -308,9 +309,37 @@ SCENARIO ("autonomous external ODEs with parameters","[equationsystem][external]
 	      REQUIRE(jac_1[3]==jac_2[3]);
 	    }
 	}
+      WHEN("the sensitivity function (dfdp_p) has been provided")
+	{
+	  ExternalEquationSystem eqsys(varNames,parNames,f_p,dfdx_p,dfdp_p);
+	  double x[]={5.4321,0.9876};
+	  double p[]={-10,-11,-12};
+	  eqsys.set("a",-10); eqsys.set("b",-11); eqsys.set("c",-12);
+	  double dfdp_1[6]; double dfdp_2[6];
+	  dfdp_p(x,p,dfdp_1);
+	  
+	  THEN("dfdp_p() returns the original sensitivity function dfdx_p")
+	    {
+	      eqsys.dfdp_p()(x,p,dfdp_2);
+	      REQUIRE(dfdp_1[0]==dfdp_2[0]);
+	      REQUIRE(dfdp_1[1]==dfdp_2[1]);
+	      REQUIRE(dfdp_1[2]==dfdp_2[2]);
+	      REQUIRE(dfdp_1[3]==dfdp_2[3]);
+	      REQUIRE(dfdp_1[4]==dfdp_2[4]);
+	    }
+	  THEN("dfdp_pt() returns a wrapper of the original sensitivity function dfdx_p with the additional parameter t")
+	    {
+	      eqsys.dfdp_pt()(0,x,p,dfdp_2);
+	      REQUIRE(dfdp_1[0]==dfdp_2[0]);
+	      REQUIRE(dfdp_1[1]==dfdp_2[1]);
+	      REQUIRE(dfdp_1[2]==dfdp_2[2]);
+	      REQUIRE(dfdp_1[3]==dfdp_2[3]);
+	      REQUIRE(dfdp_1[4]==dfdp_2[4]);
+	    }
+	}
       WHEN("additional functions (funcNames, func_p) have been provided")
 	{
-	  ExternalEquationSystem eqsys(varNames,parNames,f_p,dfdx_p,NULL,funcNames,func_p);
+	  ExternalEquationSystem eqsys(varNames,parNames,f_p,dfdx_p,dfdp_p,funcNames,func_p);
 	  double x[]={9.8765,4.3210};
 	  eqsys.set("x",9.8765); eqsys.set("y",4.3210);
 	  double p[]={-10,-11,-12};

@@ -147,6 +147,7 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
       double p[]={6,7,8};
       double rhs[3];
       double jac[9];
+      double dfdp[9];
       double func[2];
       
       THEN("is_autonomous() returns true")
@@ -227,6 +228,19 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
 	  REQUIRE(jac[7]==-3);
 	  REQUIRE(jac[8]==-6);
 	}
+      THEN("dfdx_p() returns the original sensitivity function dfdx_p")
+	{
+	  eqsys.dfdp_p()(x,p,dfdp);
+	  REQUIRE(dfdp[0]==0);
+	  REQUIRE(dfdp[1]==0);
+	  REQUIRE(dfdp[2]==-5);
+	  REQUIRE(dfdp[3]==0);
+	  REQUIRE(dfdp[4]==3);
+	  REQUIRE(dfdp[5]==0);
+	  REQUIRE(dfdp[6]==1);
+	  REQUIRE(dfdp[7]==0);
+	  REQUIRE(dfdp[8]==0);
+	}
       THEN("func() returns a wrapper of the original function func_p for the current parameters")
 	{
 	  eqsys.func()(x,func);
@@ -261,6 +275,7 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
       double p[]={0.002,0.3,10};
       double rhs[2];
       double jac[4];
+      double dfdp[6];
       double func[2];
       
       THEN("is_autonomous() returns false")
@@ -360,6 +375,27 @@ SCENARIO ("internal ODEs","[equationsystem][internal]")
 	  REQUIRE(jac[2]==-1);
 	  REQUIRE(jac[3]==-0.3);
 	}
+      THEN("dfdx_p() returns a wrapper of the original sensitivity function dfdx_pt for the current time")
+	{
+	  eqsys.dfdp_p()(x,p,dfdp);
+	  REQUIRE(dfdp[0]==std::cos(10*-2));
+	  REQUIRE(dfdp[1]==std::sin(10*-2));
+	  REQUIRE(dfdp[2]==1-1.1);
+	  REQUIRE(dfdp[3]==1-1.2);
+	  REQUIRE(dfdp[4]==-0.002*std::sin(10*-2)*-2);
+	  REQUIRE(dfdp[5]==0.002*std::cos(10*-2)*-2);
+	}
+      THEN("dfdx_pt() returns the original sensitivity function dfdx_pt")
+	{
+	  eqsys.dfdp_pt()(t,x,p,dfdp);
+	  REQUIRE(dfdp[0]==std::cos(10*t));
+	  REQUIRE(dfdp[1]==std::sin(10*t));
+	  REQUIRE(dfdp[2]==1-1.1);
+	  REQUIRE(dfdp[3]==1-1.2);
+	  REQUIRE(dfdp[4]==-0.002*std::sin(10*t)*t);
+	  REQUIRE(dfdp[5]==0.002*std::cos(10*t)*t);
+	}
+
       THEN("func() returns a wrapper of the original function func_pt for the current parameters")
 	{
 	  eqsys.func()(x,func);
