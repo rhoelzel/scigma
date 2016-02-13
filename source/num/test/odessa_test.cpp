@@ -191,7 +191,7 @@ SCENARIO ("Odessa: switching between integrations","[odessa]")
 {
     GIVEN("Four instances of Odessa with the same equations and initial conditions")
     {
-      int nVar(3),nPar(3);
+      size_t nVar(3),nPar(3);
       
       double x[]={1,2,3,1,0,0,0,1,0,0,0,1};
       double p[]={8./3.,28,10};
