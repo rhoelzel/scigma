@@ -3,6 +3,7 @@
 #include <cctype>
 #include <catch.hpp>
 #include "../externalequationsystem.hpp"
+#include "externalequationsystem_test_shared.hpp"
 
 #define REQUIRE_EXCEPTION(X,Y) {std::string error;try{X;}catch(std::string err){error=err;}REQUIRE(error==Y+error.substr(std::string(Y).size()));}
 
@@ -13,30 +14,6 @@ extern const std::string allowed;
 extern std::string well_formed_name(int maxLength);
 extern std::string ill_formed_name(int maxLength);
 
-void f_pt(double t, const double* x, const double* p,  double* rhs)
-{
-  rhs[0]=t*(x[0]+x[1]*(x[0]+p[1]));
-  rhs[1]=(x[0]*(x[1]-p[0])-x[1]*p[2])/t;
-}
-
-void dfdx_pt(double t, const double* x, const double* p, double* dfdx)
-{
-  dfdx[0]=t*(1+x[1]);dfdx[2]=t*(x[0]+p[1]);
-  dfdx[1]=(x[1]-p[0])/t;dfdx[3]=(x[0]-p[2])/t;
-}
-
-void dfdp_pt(double t, const double* x, const double* p, double* dfdp)
-{
-  dfdp[0]=0;dfdp[2]=t*x[1];dfdp[4]=0;
-  dfdp[1]=-x[0]/t;dfdp[3]=0;dfdp[5]=-x[1]/t;
-}
-
-void func_pt(double t, const double* x, const double* p, double* funcval)
-{
-  funcval[0]=std::sin(x[0]*t+x[1])*p[0];
-  funcval[1]=std::cos(x[0]+x[1])*(p[1]-t);
-  funcval[2]=std::tan(x[0]+x[1]*t)*p[2];
-}
 
 SCENARIO ("non-autonomous external ODEs with parameters","[equationsystem][external]")
 {

@@ -2,9 +2,9 @@
 #define SCIGMA_NUM_INTEGRATIONSTEPPER_HPP
 
 #include <vector>
-#include "definitions.h"
-#include "stepper.h"
-#include "odessa.h"
+#include "stepper.hpp"
+#include "odessa.hpp"
+#include "equationsystem.hpp"
 
 namespace scigma
 {
@@ -14,41 +14,41 @@ namespace scigma
     class IntegrationStepper:public Stepper
     {
     public:
-      IntegrationStepper(const EquationSystem& eqsys, bool computeJacobian, double dt, 
-			 bool stiff, double aTol, double rTol, size_t maxIter);
+      IntegrationStepper(const EquationSystem& eqsys, double dt,bool stiff=true, double aTol=1e-9, double rTol=1e-9, size_t maxIter=20000);
 
       virtual double t() const;
-      virtual double x(size_t index) const;
-      virtual double func(size_t index) const;
-      virtual double jac(size_t index) const;
+      virtual const double* x() const;
+      virtual const double* func() const;
+      virtual const double* jac() const;
 
-      virtual void reset(const double *x);
-
+      virtual void reset(double t,const double *x);
       virtual void advance(size_t n=1);
+
       virtual size_t n_variables() const;
       virtual size_t n_functions() const;
+
       
     private:
       IntegrationStepper();
       IntegrationStepper(const IntegrationStepper&);
       IntegrationStepper& operator=(const IntegrationStepper&);
 
+      size_t nVar_;
+      size_t nFunc_;
+      
       double t0_;
-      double dt_;
-
-      Function tFunc_;
-      std::vector<Function> xFuncs_;
-      std::vector<Function> rhsFuncs_;
-      std::vector<Function> funcFuncs_;
-
-      /*Odessa odessa_;*/
+      Odessa odessa_;
+      
       double* x_;
       double* jac_;
+      
+      F_t func_t_;
+      std::vector<double> funcVals_;
+
+      double dt_;
     };
-
-
 
   } /* end namespace num */
 } /* end namespace scigma */
 
-#endif /* __SCIGMA_NUM_INTEGRATIONSTEPPER_HPP */
+#endif /* SCIGMA_NUM_INTEGRATIONSTEPPER_HPP */

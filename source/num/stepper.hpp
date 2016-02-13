@@ -14,15 +14,15 @@ namespace scigma
       virtual ~Stepper();
 
       virtual double t() const =0;
-      virtual double x(size_t index) const =0;
-      virtual double func(size_t index) const = 0;
-      virtual double jac(size_t index) const = 0;
-      virtual void reset(const double* x)=0;
+      virtual const double* x() const =0;
+      virtual const double* func() const = 0;
+      virtual const double* jac() const = 0;
+      virtual void reset(double t, const double* x)=0;
 
       virtual void advance(size_t n=1)=0;
 
-      virtual size_t n_variables()=0;
-      virtual size_t n_functions()=0;
+      virtual size_t n_variables() const = 0;
+      virtual size_t n_functions() const = 0;
    
     private:
       Stepper(const Stepper&);
