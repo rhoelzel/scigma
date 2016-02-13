@@ -9,5 +9,9 @@ add_executable(utest utest.cpp
 		     externalequationsystem_test_shared.cpp
 		     odessa_test.cpp
 		     integrationstepper_test.cpp
-		     mapstepper_test.cpp) 
+		     mapstepper_test.cpp)
+
+add_executable(vtest vtest.cpp externalequationsystem_test_shared.cpp)
+		     
 target_link_libraries(utest num tinythread)
+target_link_libraries(vtest num tinythread)
