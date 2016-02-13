@@ -1,3 +1,4 @@
+set(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wno-documentation -Wno-unknown-pragmas")	
 include_directories(../../external/catch)
 add_executable(utest utest.cpp
 		     internalequationsystem_test.cpp
