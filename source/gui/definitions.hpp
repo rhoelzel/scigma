@@ -1,8 +1,6 @@
 #ifndef SCIGMA_GUI_DEFINITIONS_HPP
 #define SCIGMA_GUI_DEFINITIONS_HPP
 
-#define GLEW_STATIC
-
 #include <glew.h>
 #include <glfw3.h>
 
