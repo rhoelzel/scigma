@@ -14,3 +14,4 @@ endif()
 
 add_subdirectory(common)
 add_subdirectory(num)
+add_subdirectory(gui)
