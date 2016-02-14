@@ -244,6 +244,9 @@ namespace scigma
 
     void Application::loop(double seconds)
     {
+      bool noIdle(false);
+      if(!(seconds>0))
+	 noIdle=true;
       if(loopIsRunning_) //nested loop call
 	{
 	  double lt(glfwGetTime());
@@ -253,6 +256,9 @@ namespace scigma
 	      EventSource<LoopEvent>::Type::emit();
 	      loopMutex_.unlock();
 
+	      if(noIdle)
+		return;
+	      
 	      idleMutex_.lock();
 	      size_t nIdleSinks;
 	      while((nIdleSinks=EventSource<IdleEvent>::Type::sinks.size())!=0)
@@ -288,6 +294,13 @@ namespace scigma
 	  glfwPollEvents();
 	  if(!loopIsRunning_)
 	    return;
+
+	  if(noIdle)
+	    {
+	      loopIsRunning_=false;
+	      return;
+	    }  
+	  
 	  // as long as there is time, emit IdleEvents, if there are connected sinks
 	  double t(glfwGetTime());
 	  seconds-=(t-lt);
@@ -301,7 +314,7 @@ namespace scigma
 	      ++idleIndex_;
 	      glfwPollEvents();
 	      if(!loopIsRunning_)
-		  return;
+		return;
 	      lt=t;
 	      t=glfwGetTime();
 	      seconds-=(t-lt);
@@ -309,6 +322,7 @@ namespace scigma
 		break;
 	    }
 	  idleMutex_.unlock();
+	  
 	  /* if there is still more time, but no EventSinks for IdleEvent any more, insert a waiting period
 	     to avoid busy waits
 	  */
@@ -317,7 +331,7 @@ namespace scigma
 	      double d(seconds-remainingSecondsAtStart+REFRESH_INTERVAL);
 	      glfwWaitEventsWithTimeOut(d);
 	      if(!loopIsRunning_)
-		  return;
+		return;
 	      lt=t;
 	      t=glfwGetTime();
 	      seconds-=(t-lt);
