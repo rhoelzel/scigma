@@ -3,13 +3,13 @@
 #include <iostream>
 #include <sstream>
 #include <AntTweakBar.h>
-#include "../events.h"
-#include "application.h"
-#include "glwindow.h"
-#include "glutil.h"
-#include "drawable.h"
-#include "font.h"
-#include "marker.h"
+#include "events.hpp"
+#include "application.hpp"
+#include "glwindow.hpp"
+#include "glutil.hpp"
+#include "drawable.hpp"
+#include "font.hpp"
+#include "marker.hpp"
 
 extern "C"
 {
@@ -232,7 +232,7 @@ namespace scigma
       theInstance_->push_error(combine.str());
     }
     
-    const char* Application::pop_error()
+    std::string Application::pop_error()
     {
       return log_->pop();
     }
