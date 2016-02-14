@@ -29,17 +29,17 @@ SCENARIO("Log: writing messages with different flags","[Log][flags]")
       WHEN("The messages are passed with different flags push<Log::Type>(...)")
 	{
 	  log.push(message1);
-	  log.push<Log::ERROR>(error1);
-	  log.push<Log::WARNING>(warning1);
-	  log.push<Log::SUCCESS>(message1);
-	  log.push<Log::SUCCESS>(message2);
-	  log.push<Log::FAIL>(message1);
-	  log.push<Log::FAIL>(message2);
+	  log.push<Log::LOG_ERROR>(error1);
+	  log.push<Log::LOG_WARNING>(warning1);
+	  log.push<Log::LOG_SUCCESS>(message1);
+	  log.push<Log::LOG_SUCCESS>(message2);
+	  log.push<Log::LOG_FAIL>(message1);
+	  log.push<Log::LOG_FAIL>(message2);
 	  log.push(message2);
-	  log.push<Log::ERROR>(error2);
-	  log.push<Log::WARNING>(warning2);
-	  log.push<Log::DATA>(message1);
-	  log.push<Log::DATA>(message2);
+	  log.push<Log::LOG_ERROR>(error2);
+	  log.push<Log::LOG_WARNING>(warning2);
+	  log.push<Log::LOG_DATA>(message1);
+	  log.push<Log::LOG_DATA>(message2);
 	  
 	  THEN("The messages are retrieved correctly with pop<Log::Type>(), in the order"
 	       "they were submitted per Log::Type")
@@ -47,21 +47,21 @@ SCENARIO("Log: writing messages with different flags","[Log][flags]")
 	      REQUIRE(log.pop()==message1);
 	      REQUIRE(log.pop()==message2);
 	      REQUIRE(log.pop()=="");
-	      REQUIRE(log.pop<Log::SUCCESS>()==message1);
-	      REQUIRE(log.pop<Log::SUCCESS>()==message2);
-	      REQUIRE(log.pop<Log::SUCCESS>()=="");
-	      REQUIRE(log.pop<Log::FAIL>()==message1);
-	      REQUIRE(log.pop<Log::FAIL>()==message2);
-	      REQUIRE(log.pop<Log::FAIL>()=="");
-	      REQUIRE(log.pop<Log::ERROR>()==error1);
-	      REQUIRE(log.pop<Log::ERROR>()==error2);
-	      REQUIRE(log.pop<Log::ERROR>()=="");
-	      REQUIRE(log.pop<Log::WARNING>()==warning1);
-	      REQUIRE(log.pop<Log::WARNING>()==warning2);
-	      REQUIRE(log.pop<Log::WARNING>()=="");
-	      REQUIRE(log.pop<Log::DATA>()==message1);
-	      REQUIRE(log.pop<Log::DATA>()==message2);
-	      REQUIRE(log.pop<Log::DATA>()=="");
+	      REQUIRE(log.pop<Log::LOG_SUCCESS>()==message1);
+	      REQUIRE(log.pop<Log::LOG_SUCCESS>()==message2);
+	      REQUIRE(log.pop<Log::LOG_SUCCESS>()=="");
+	      REQUIRE(log.pop<Log::LOG_FAIL>()==message1);
+	      REQUIRE(log.pop<Log::LOG_FAIL>()==message2);
+	      REQUIRE(log.pop<Log::LOG_FAIL>()=="");
+	      REQUIRE(log.pop<Log::LOG_ERROR>()==error1);
+	      REQUIRE(log.pop<Log::LOG_ERROR>()==error2);
+	      REQUIRE(log.pop<Log::LOG_ERROR>()=="");
+	      REQUIRE(log.pop<Log::LOG_WARNING>()==warning1);
+	      REQUIRE(log.pop<Log::LOG_WARNING>()==warning2);
+	      REQUIRE(log.pop<Log::LOG_WARNING>()=="");
+	      REQUIRE(log.pop<Log::LOG_DATA>()==message1);
+	      REQUIRE(log.pop<Log::LOG_DATA>()==message2);
+	      REQUIRE(log.pop<Log::LOG_DATA>()=="");
 	    }
 	}
     }
@@ -86,11 +86,11 @@ void read(void* data)
 
   while(true)
     {
-      if(push_back(log->pop<Log::SUCCESS>()))return;
-      if(push_back(log->pop<Log::FAIL>()))return;
-      if(push_back(log->pop<Log::ERROR>()))return;
-      if(push_back(log->pop<Log::WARNING>()))return;
-      if(push_back(log->pop<Log::DATA>()))return;
+      if(push_back(log->pop<Log::LOG_SUCCESS>()))return;
+      if(push_back(log->pop<Log::LOG_FAIL>()))return;
+      if(push_back(log->pop<Log::LOG_ERROR>()))return;
+      if(push_back(log->pop<Log::LOG_WARNING>()))return;
+      if(push_back(log->pop<Log::LOG_DATA>()))return;
       if(push_back(log->pop()))return;
     }
 }
@@ -100,11 +100,11 @@ void write1(void* data)
   Log* log = static_cast<Log*>(data);
   for(char j(32);j<127;++j)
     {
-      log->push<Log::SUCCESS>(std::string("test")+j);
-      log->push<Log::FAIL>(std::string("test")+j);
-      log->push<Log::ERROR>(std::string("test")+j);
-      log->push<Log::WARNING>(std::string("test")+j);
-      log->push<Log::DATA>(std::string("test")+j);
+      log->push<Log::LOG_SUCCESS>(std::string("test")+j);
+      log->push<Log::LOG_FAIL>(std::string("test")+j);
+      log->push<Log::LOG_ERROR>(std::string("test")+j);
+      log->push<Log::LOG_WARNING>(std::string("test")+j);
+      log->push<Log::LOG_DATA>(std::string("test")+j);
       log->push(std::string("test")+j);
     }
 }
@@ -114,11 +114,11 @@ void write2(void* data)
   Log* log = static_cast<Log*>(data);
   for(char j(32);j<127;++j)
     {
-      log->push<Log::SUCCESS>(std::string("fest")+j);
-      log->push<Log::FAIL>(std::string("fest")+j);
-      log->push<Log::ERROR>(std::string("fest")+j);
-      log->push<Log::WARNING>(std::string("fest")+j);
-      log->push<Log::DATA>(std::string("fest")+j);
+      log->push<Log::LOG_SUCCESS>(std::string("fest")+j);
+      log->push<Log::LOG_FAIL>(std::string("fest")+j);
+      log->push<Log::LOG_ERROR>(std::string("fest")+j);
+      log->push<Log::LOG_WARNING>(std::string("fest")+j);
+      log->push<Log::LOG_DATA>(std::string("fest")+j);
       log->push(std::string("fest")+j);
     }
 }

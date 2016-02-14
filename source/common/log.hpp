@@ -20,18 +20,18 @@ namespace scigma
       
       enum Type
 	{
-	  SUCCESS=0,
-	  FAIL=1,
-	  DATA=2,
-	  WARNING=3,
-	  ERROR=4,
-	  DEFAULT=5
+	  LOG_SUCCESS=0,
+	  LOG_FAIL=1,
+	  LOG_DATA=2,
+	  LOG_WARNING=3,
+	  LOG_ERROR=4,
+	  LOG_DEFAULT=5
 	};
 
       Log();
       Log(std::string fileName);
       
-      template <Type T=DEFAULT> void push(const std::string& text, const char* file=NULL, int line=0)
+      template <Type T=LOG_DEFAULT> void push(const std::string& text, const char* file=NULL, int line=0)
       {
 	if(text=="")
 	  return;
@@ -56,7 +56,7 @@ namespace scigma
 	  }
       }
       
-      template <Type T=DEFAULT> std::string pop()
+      template <Type T=LOG_DEFAULT> std::string pop()
       {
 	tthread::lock_guard<tthread::mutex> guard(mutex_);
 	if(!list_[T].empty())
@@ -74,7 +74,7 @@ namespace scigma
       Log& operator=(const Log&);
       const char* strip_path(const char* file);
       
-      std::deque<std::string> list_[DEFAULT+1];
+      std::deque<std::string> list_[LOG_DEFAULT+1];
       tthread::mutex mutex_;
       std::string file_;
     };
