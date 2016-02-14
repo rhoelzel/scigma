@@ -12,4 +12,5 @@ else()
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")	
 endif()
 
+add_subdirectory(common)
 add_subdirectory(num)
