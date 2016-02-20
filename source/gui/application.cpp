@@ -3,7 +3,6 @@
 #include <iostream>
 #include <sstream>
 #include <AntTweakBar.h>
-#include "events.hpp"
 #include "application.hpp"
 #include "glwindow.hpp"
 #include "glutil.hpp"

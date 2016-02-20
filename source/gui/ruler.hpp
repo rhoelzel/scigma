@@ -6,9 +6,13 @@
 #include "drawable.hpp"
 #include "spacetext.hpp"
 #include "font.hpp"
+#include "../common/events.hpp"
 #include "glwindowevents.hpp"
 #include "viewingareaevents.hpp"
 #include "viewingvolumeevents.hpp"
+
+using scigma::common::EventSource;
+using scigma::common::EventSink;
 
 namespace scigma
 {

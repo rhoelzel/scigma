@@ -6,11 +6,14 @@
 #include <algorithm>
 #include <cmath>
 #include "../common/pythonobject.hpp"
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "definitions.hpp"
 #include "drawable.hpp"
 #include "drawabletypes.hpp"
 #include "glutil.hpp"
+
+using scigma::common::PythonObject;
+using scigma::common::EventSink;
 
 namespace scigma
 {

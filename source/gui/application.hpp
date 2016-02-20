@@ -4,7 +4,7 @@
 #include <string>
 #include <Typelist.h>
 #include <tinythread.h>
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "../common/log.hpp"
 #include "definitions.hpp"
 #include "inputevent.hpp"
@@ -12,6 +12,8 @@
 struct GLFWwindow;
 
 using scigma::common::Log;
+using scigma::common::EventSource;
+using scigma::common::EventSink;
 
 //!Top level namespace for scigma.
 namespace scigma

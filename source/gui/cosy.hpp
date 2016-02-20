@@ -3,11 +3,14 @@
 
 #include <string>
 #include "../common/pythonobject.hpp"
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "definitions.hpp"
 #include "viewingvolumeevents.hpp"
 #include "font.hpp"
 #include "ruler.hpp"
+
+using scigma::common::PythonObject;
+using scigma::common::EventSource;
 
 namespace scigma
 {

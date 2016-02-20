@@ -2,12 +2,13 @@
 #define SCIGMA_GUI_VIEWINGAREA_HPP
 
 #include <Typelist.h>
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "../common/pythonobject.hpp"
 #include "definitions.hpp"
 #include "viewingareaevents.hpp"
 
 using scigma::common::PythonObject;
+using scigma::common::EventSource;
 
 namespace scigma
 {

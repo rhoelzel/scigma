@@ -7,7 +7,7 @@
 
 using scigma::common::Log;
 
-SCENARIO("Log: writing messages with different flags","[Log][flags]")
+SCENARIO("Log: writing messages with different flags in a single thread","[Log][single-thread]")
 {
   GIVEN("A Log object and a number of messages")
     {
@@ -123,7 +123,7 @@ void write2(void* data)
     }
 }
 
-SCENARIO("Log: writing messages in multiple threads","[Log][parallel]")
+SCENARIO("Log: writing messages in multiple threads","[Log][multi-thread]")
 {
   GIVEN("A Log that is written to by two threads and read from by two other threads")
     {

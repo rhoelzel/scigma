@@ -4,8 +4,8 @@
 using scigma::gui::Application;
 using scigma::gui::LoopEvent;
 using scigma::gui::IdleEvent;
-using scigma::gui::EventSource;
-using scigma::gui::EventSink;
+using scigma::common::EventSource;
+using scigma::common::EventSink;
 
 class TestEvents:
   public EventSink<LoopEvent>::Type,

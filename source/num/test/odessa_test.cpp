@@ -51,7 +51,7 @@ void dfdp(double t, const double* x, const double* p, double* dfdp, int jpar)
   DF(NULL,&T,const_cast<double *>(x),const_cast<double *>(p),dfdp,&JPAR);
 }
 
-SCENARIO ("integration with Odessa","[odessa]")
+SCENARIO ("integration with Odessa in a single thread","[odessa][single-thread]")
 {
   double aTol(1e-9),rTol(1e-9);
   int iTol(1),iTask(1),iState(1);
@@ -187,7 +187,7 @@ SCENARIO ("integration with Odessa","[odessa]")
     }
 }
 
-SCENARIO ("Odessa: switching between integrations","[odessa]")
+SCENARIO ("Odessa: switching between integrations in multiple threads","[odessa][multi-thread]")
 {
     GIVEN("Four instances of Odessa with the same equations and initial conditions")
     {

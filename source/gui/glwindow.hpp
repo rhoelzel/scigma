@@ -6,9 +6,12 @@
 #include "viewingarea.hpp"
 #include "viewingvolume.hpp"
 #include "glcontext.hpp"
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "../common/pythonobject.hpp"
 #include "glwindowevents.hpp"
+
+using scigma::common::PythonObject;
+using scigma::common::EventSource;
 
 namespace scigma
 {

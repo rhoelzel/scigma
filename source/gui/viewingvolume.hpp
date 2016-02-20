@@ -1,12 +1,13 @@
 #ifndef SCIGMA_GUI_VIEWINGVOLUME_HPP
 #define SCIGMA_GUI_VIEWINGVOLUME_HPP
 
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "../common/pythonobject.hpp"
 #include "definitions.hpp"
 #include "viewingvolumeevents.hpp"
 
 using scigma::common::PythonObject;
+using scigma::common::EventSource;
 
 namespace scigma
 {

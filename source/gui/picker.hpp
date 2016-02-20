@@ -2,12 +2,14 @@
 #define SCIGMA_GUI_PICKER_HPP
 
 #include <map>
-#include "events.hpp"
+#include "../common/events.hpp"
 #include "marker.hpp"
 #include "glwindowevents.hpp"
 #include "../common/pythonobject.hpp"
 
 using scigma::common::PythonObject;
+using scigma::common::EventSource;
+using scigma::common::EventSink;
 
 namespace scigma
 {

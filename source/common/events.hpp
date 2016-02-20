@@ -1,5 +1,5 @@
-#ifndef SCIGMA_GUI_EVENTS_HPP
-#define SCIGMA_GUI_EVENTS_HPP
+#ifndef SCIGMA_COMMON_EVENTS_HPP
+#define SCIGMA_COMMON_EVENTS_HPP
 
 #include <vector>
 #include <algorithm>
@@ -10,7 +10,7 @@
 
 namespace scigma
 {
-  namespace gui
+  namespace common
   {
   
     template <class T> struct Event
@@ -224,4 +224,4 @@ namespace scigma
 
 #pragma clang diagnostic pop
   
-#endif /* SCIGMA_GUI_EVENTS_HPP */
+#endif /* SCIGMA_COMMON_EVENTS_HPP */
