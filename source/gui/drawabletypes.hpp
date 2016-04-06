@@ -2,6 +2,7 @@
 #define SCIGMA_GUI_DRAWABLETYPES_HPP
 
 #include <Typelist.h>
+#include "bundle.hpp"
 #include "ruler.hpp"
 #include "picker.hpp"
 #include "spacetext.hpp"
@@ -20,7 +21,7 @@ namespace scigma
       when extending this. The order in which the classes appear here is the order in which
       they are drawn.
     */
-    typedef LOKI_TYPELIST_6(DrawableFirst,Ruler,Picker,SpaceText,ScreenText,DrawableLast) DrawableTypes;
+    typedef LOKI_TYPELIST_7(DrawableFirst,Bundle,Ruler,Picker,SpaceText,ScreenText,DrawableLast) DrawableTypes;
 
   } /* end namespace gui */
 } /* end namespace scigma */

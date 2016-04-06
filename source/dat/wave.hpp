@@ -12,33 +12,35 @@ namespace scigma
 {
   namespace dat
   {
-    struct WaveUpdateEvent
-    { //!Argument list for ScaleEvent 
-      typedef LOKI_TYPELIST_0 Arguments;
-    };
-    
+
+    struct WaveInvalidateEvent
+    { //!Argument list for MouseButtonEvent 
+      typedef LOKI_TYPELIST_1(size_t) Arguments;};
+
     template <class T> class AbstractWave:
       public PythonObject<AbstractWave<T>>,
-      public EventSource<WaveUpdateEvent>::Type
+      public EventSource<WaveInvalidateEvent>::Type
       {
     public:
     	AbstractWave(size_t capacity=0x1000);
 	~AbstractWave();
 	
-	void lock();
-	void unlock();
+	void lock() const;
+	void unlock() const;
 
-	// size() is not threadsafe -> use only between lock() and unlock() !!
 	size_t size() const;
-	// data() is not threadsafe -> use only between lock() and unlock() !!
+	
 	const T* data() const;
+	T* data();
 	
 	void push_back(T value);
 	void push_back(T* values, size_t nValues);
-      
+
 	void pop_back();
 	void pop_back(size_t nValues);
 
+	void invalidate_from_index(size_t index);
+      
     private:
       AbstractWave(const AbstractWave<T>&);
       AbstractWave& operator=(const AbstractWave<T>&);
@@ -62,10 +64,11 @@ namespace scigma
 
     template <class T> size_t AbstractWave<T>::size() const {return size_;}
 
-    template <class T> void AbstractWave<T>::lock(){mutex_.lock();}
-    template <class T> void AbstractWave<T>::unlock(){mutex_.unlock();}
+    template <class T> void AbstractWave<T>::lock() const {mutex_.lock();} 
+    template <class T> void AbstractWave<T>::unlock() const {mutex_.unlock();}
     
     template <class T> const T* AbstractWave<T>::data() const {return data_;}
+    template <class T> T* AbstractWave<T>::data() {return data_;}
 
     template <class T> void AbstractWave<T>::push_back(T value)
     {
@@ -74,8 +77,6 @@ namespace scigma
 
     template <class T> void AbstractWave<T>::push_back(T* values, size_t nValues)
     {
-      lock();
-
       if(capacity_<size_+nValues)
 	{
 	  while(capacity_<size_+nValues)
@@ -92,27 +93,25 @@ namespace scigma
       for(size_t i(0);i<nValues;++i)
 	data_[size_+i]=values[i]; 
       size_+=nValues;
-
-      unlock();
-      emit();
     }
-              
+
     template <class T> void AbstractWave<T>::pop_back()
     {
-      pop_back(1);
+      size_=size_>1?size_-1:0;
+      emit(size_);
     }
-    
+
     template <class T> void AbstractWave<T>::pop_back(size_t nValues)
     {
-      lock();
       size_=size_>nValues?size_-nValues:0;
-      unlock();
-      emit();
+      emit(size_);
     }
 
-
-    typedef AbstractWave<double> Wave;
-    typedef AbstractWave<uint32_t> Mesh;
+    template <class T> void AbstractWave<T>::invalidate_from_index(size_t index)
+    {
+      emit(index);
+    }
+    
     
   } /* end namespace dat */
 } /* end namespace scigma */

@@ -909,7 +909,7 @@ static GLboolean createWindow(_GLFWwindow* window,
 #if defined(_GLFW_USE_RETINA)
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
     if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6)
-        [window->ns.view setWantsBestResolutionOpenGLSurface:YES];
+      [window->ns.view setWantsBestResolutionOpenGLSurface:NO]; /// this NO is from SCIGMA (should be YES, if handled correctly :()
 #endif /*MAC_OS_X_VERSION_MAX_ALLOWED*/
 #endif /*_GLFW_USE_RETINA*/
 

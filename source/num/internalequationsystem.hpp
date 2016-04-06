@@ -11,15 +11,15 @@ namespace scigma
 {
   namespace num
   {
-    typedef std::vector<std::string> VecS;
-    typedef std::vector<double> VecD;
-    typedef std::vector<Function> VecF;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
     class InternalEquationSystem: public EquationSystem
 #pragma clang diagnostic pop;      
     {
+      typedef std::vector<std::string> VecS;
+      typedef std::vector<double> VecD;
+      typedef std::vector<Function> VecF;
       
     public:
       InternalEquationSystem();

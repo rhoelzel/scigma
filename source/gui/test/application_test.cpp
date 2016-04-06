@@ -6,6 +6,7 @@ using scigma::gui::LoopEvent;
 using scigma::gui::IdleEvent;
 using scigma::common::EventSource;
 using scigma::common::EventSink;
+using scigma::common::connect;
 
 class TestEvents:
   public EventSink<LoopEvent>::Type,
@@ -45,7 +46,7 @@ SCENARIO("Application: initialization and termination","[Application]")
       WHEN("An EventSink for LoopEvent is connected")
 	{
 	  TestEvents t;
-	  app->EventSource<LoopEvent>::Type::connect(&t);
+	  connect<LoopEvent>(app,&t);
 	  THEN("for each loop, the LoopEvent is emitted and processed correctly")
 	    {
 	      app->loop(0);
@@ -57,7 +58,7 @@ SCENARIO("Application: initialization and termination","[Application]")
       WHEN("An EventSink for IdleEvent is connected")
 	{
 	  TestEvents t;
-	  app->EventSource<IdleEvent>::Type::connect(&t);
+	  connect<IdleEvent>(app,&t);
 
 	  THEN("if the loop does not run idle, no IdleEvent is emitted")
 	    {

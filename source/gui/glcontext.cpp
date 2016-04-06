@@ -4,6 +4,8 @@
 #include "glcontext.hpp"
 #include "glutil.hpp"
 
+using scigma::common::connect;
+
 namespace scigma
 {
   namespace gui
@@ -127,22 +129,21 @@ namespace scigma
       glPointParameterf(GL_POINT_SIZE_MAX, sizes[1]);
 #endif
       creation_notify<DrawableTypes>();
-      Application::get_instance()->EventSource<LoopEvent>::Type::connect(this);
+      
+      connect<LoopEvent>(Application::get_instance(),this);
     }
 
     void GLContext::destroy()
     {
       destruction_notify<DrawableTypes>();
-      Application::get_instance()->EventSource<LoopEvent>::Type::disconnect(this);
-    }
-
-    GLContext::~GLContext()
-    {
 #ifdef SCIGMA_USE_OPENGL_3_2
       glfwMakeContextCurrent(glfwWindowPointer_);
       glDeleteBuffers(1,&globalUniformBuffer_);
 #endif
     }
+
+    GLContext::~GLContext()
+    {}
     
     void GLContext::continuous_refresh_needed()
     {
@@ -573,21 +574,6 @@ namespace scigma
 
     template<> void GLContext::end_hover<LOKI_TYPELIST_0>(size_t hoverIndexBase)
     {}
-
-    std::string GLContext::create_fragment_main(const std::string& body,
-						const std::string& colorExpression, 
-						const std::string& hoverExpression, 
-						const std::string& colorOutput)
-    {
-      std::string main("void main()\n{\n"+body+
-		       "\tif(0.5>uniqueID.z)\n\t{\n"+
-		       "\t\t"+colorOutput+"="+colorExpression+";\n\t}\n"+
-		       "\telse if(1.5>uniqueID.z)\n\t{\n"+
-		       "\t\t"+colorOutput+"=vec4(uniqueID.xy,gl_FragCoord.z,1);\n\t}\n"+
-		       "\telse\n\t{\n"+
-		       "\t\t"+colorOutput+"="+hoverExpression+";\n\t}\n}\n");
-      return main;
-    }
 
 #pragma GCC diagnostic pop
 

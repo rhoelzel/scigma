@@ -33,16 +33,24 @@ extern "C"
   }
   
   /*void window_position_callback(GLFWwindow* w, int x, int y)
-  {}
+    {}*/
   
-  void window_refresh_callback(GLFWwindow* w)
-  {}
-  
+  /*void window_refresh_callback(GLFWwindow* w)
+  {
+    scigma::gui::GLWindow* glWindow(static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w)));
+    glWindow->gl_context()->request_redraw();
+    }*/
+
+  /*
   void window_focus_callback(GLFWwindow* w, int focused)
-  {}
+  {}*/
   
-  void framebuffer_size_callback(GLFWwindow* w, int width, int height)
-  {}*/  
+  /*  void framebuffer_size_callback(GLFWwindow* w, int width, int height)
+  {
+    scigma::gui::GLWindow* glWindow(static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w))); 
+    glWindow->viewing_area()->set_size(width,height,false);
+    }*/
+  
   void mouse_button_callback(GLFWwindow* w, int button , int action, int mods)
   {
     scigma::gui::GLWindow* glWindow(static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w))); 
@@ -199,7 +207,7 @@ namespace scigma
       //Font::terminate();
       glfwDestroyWindow(theInstance_->masterWindow_);
       glfwTerminate();
-      
+
       delete theInstance_;
     }
     
@@ -208,10 +216,10 @@ namespace scigma
       glfwSetWindowCloseCallback(w, window_close_callback);  
       //glfwSetWindowIconifyCallback(w, window_iconify_callback);
       glfwSetWindowSizeCallback(w, window_size_callback);
-      /*glfwSetWindowPosCallback(w, window_position_callback);
-      glfwSetWindowRefreshCallback(w, window_refresh_callback);
-      glfwSetWindowFocusCallback(w, window_focus_callback);  
-      glfwSetFramebufferSizeCallback(w, framebuffer_size_callback);*/
+      //glfwSetWindowPosCallback(w, window_position_callback);
+      //      glfwSetWindowRefreshCallback(w, window_refresh_callback);
+      //glfwSetWindowFocusCallback(w, window_focus_callback);
+      // glfwSetFramebufferSizeCallback(w, framebuffer_size_callback);
       glfwSetMouseButtonCallback(w, mouse_button_callback);
       glfwSetCursorPosCallback(w, cursor_position_callback);
       glfwSetScrollCallback(w, scroll_callback);
@@ -260,11 +268,11 @@ namespace scigma
 	      
 	      idleMutex_.lock();
 	      size_t nIdleSinks;
-	      while((nIdleSinks=EventSource<IdleEvent>::Type::sinks.size())!=0)
+	      while((nIdleSinks=EventSource<IdleEvent>::Type::sinks_.size())!=0)
 		{
 		  IdleEvent e;
 		  idleIndex_=idleIndex_%nIdleSinks;
-		  EventSource<IdleEvent>::Type::sinks[idleIndex_]->process(e,glfwGetTime());
+		  EventSource<IdleEvent>::Type::sinks_[idleIndex_]->process(e,glfwGetTime());
 		  ++idleIndex_;
 		}
 	      idleMutex_.unlock();
@@ -305,11 +313,11 @@ namespace scigma
 	  seconds-=(t-lt);
 	  idleMutex_.lock();
 	  size_t nIdleSinks;
-	  while((nIdleSinks=EventSource<IdleEvent>::Type::sinks.size())!=0)
+	  while((nIdleSinks=EventSource<IdleEvent>::Type::sinks_.size())!=0)
 	    {
 	      IdleEvent e;
 	      idleIndex_=idleIndex_%nIdleSinks;
-	      EventSource<IdleEvent>::Type::sinks[idleIndex_]->process(e,glfwGetTime());
+	      EventSource<IdleEvent>::Type::sinks_[idleIndex_]->process(e,glfwGetTime());
 	      ++idleIndex_;
 	      glfwPollEvents();
 	      if(!loopIsRunning_)
@@ -341,27 +349,6 @@ namespace scigma
     void Application::break_loop()
     {
       loopIsRunning_=false;
-    }
-
-    void Application::connect_to_loop_threadsafe(EventSink<LoopEvent>::Type* sink)
-    {
-      tthread::lock_guard<tthread::mutex> guard(loopMutex_);
-      EventSource<LoopEvent>::Type::connect(sink);
-    }
-    void Application::connect_to_idle_threadsafe(EventSink<IdleEvent>::Type* sink)
-    {
-      tthread::lock_guard<tthread::mutex> guard(idleMutex_);
-      EventSource<IdleEvent>::Type::connect(sink);
-    }
-    void Application::disconnect_from_loop_threadsafe(EventSink<LoopEvent>::Type* sink)
-    {
-      tthread::lock_guard<tthread::mutex> guard(loopMutex_);
-      EventSource<LoopEvent>::Type::disconnect(sink);
-    }
-    void Application::disconnect_from_idle_threadsafe(EventSink<IdleEvent>::Type* sink)
-    {
-      tthread::lock_guard<tthread::mutex> guard(idleMutex_);
-      EventSource<IdleEvent>::Type::disconnect(sink);
     }
 
   } /* end namespace gui */

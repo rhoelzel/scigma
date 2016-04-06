@@ -75,11 +75,6 @@ namespace scigma
       */
       void break_loop();
 
-      void connect_to_loop_threadsafe(EventSink<LoopEvent>::Type* sink);
-      void connect_to_idle_threadsafe(EventSink<IdleEvent>::Type* sink);
-      void disconnect_from_loop_threadsafe(EventSink<LoopEvent>::Type* sink);
-      void disconnect_from_idle_threadsafe(EventSink<IdleEvent>::Type* sink);
-      
     private:
       Application();
       ~Application();

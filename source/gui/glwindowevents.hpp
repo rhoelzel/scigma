@@ -1,6 +1,7 @@
 #ifndef SCIGMA_GUI_GLWINDOWEVENTS_HPP
 #define SCIGMA_GUI_GLWINDOWEVENTS_HPP
 
+#include <Typelist.h>
 #include "definitions.hpp"
 
 namespace scigma

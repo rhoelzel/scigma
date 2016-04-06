@@ -226,9 +226,6 @@ namespace scigma
       void update_global_uniform_4x4(GlobalUniform uniform, const GLfloat* matrix);
       void set_viewport(GLint left, GLint bottom, GLint width, GLint height);
 
-      static std::string create_fragment_main(const std::string& body,const std::string& colorExpression, 
-					      const std::string& hoverExpression,const std::string& colorOutput);
-      
     private:
       GLContext(GLFWwindow* ptr);
       GLContext(const GLContext&);
