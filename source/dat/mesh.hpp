@@ -48,7 +48,7 @@ namespace scigma
 	void collect_neighbours_before(GLint beginIndex, GLint endIndex, std::map<GLint, std::vector<GLint> >& neighbours);
 	void collect_neighbours_after(GLint beginIndex, GLint endIndex, std::map<GLint, std::vector<GLint> >& neighbours);
 
-	void compute_triangle_for_normal(GLint index, std::vector<double>& neighbourIndices);
+	void compute_triangle_for_normal(GLint index, std::vector<GLint>& neighbourIndices);
 	
 	void compute_normal_information();
 	

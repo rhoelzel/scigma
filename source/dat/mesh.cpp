@@ -393,22 +393,33 @@ namespace scigma
 
       /* average a triangle from the neighbours of each index, which will be used
 	 by the shader to compute a normal */
-      
-      double* tData(triangleData_.data());
       for(It i(begin);i!=end;++i)
 	compute_triangle_for_normal(i->first,i->second);
     }
 
-    void Mesh::compute_triangle_for_normal(GLint index, std::vector<double>& neighbourIndices)
+    void Mesh::compute_triangle_for_normal(GLint index, std::vector<GLint>& neighbourIndices)
     {
-      double n((double(neighbourIndices.size())));
-      double nGroup(n/3.0);
+      size_t n(neighbourIndices.size());
+      size_t idx(size_t(index)*nDim_*NVALS_PER_DIM);
 
-      for(double i(1);i<n+1;++i)
+      double* tData(triangleData_.data());
+      
+      for(size_t j(0);j<nDim_;++j)
 	{
-	  double rest(fmod(i,nGroup));
-	  double weight(rest<1?1-rest:1);
+	  size_t offset(j*NVALS_PER_DIM);
+	  tData[idx+offset+1]=tData[idx+offset]*2*n;
+	  tData[idx+offset+2]=tData[idx+offset]*2*n;
+	  tData[idx+offset+3]=tData[idx+offset]*2*n;
+
+	  for(size_t i(0);i<n*3;++i)
+	    tData[idx+offset+i/n+1]+=tData[size_t(neighbourIndices[(i/3+6)%n])*nDim_*NVALS_PER_DIM+offset];
+
+	  
+	  tData[idx+offset+1]/=3*n;
+	  tData[idx+offset+2]/=3*n;
+	  tData[idx+offset+3]/=3*n;
 	}
+            
     }
     
   } /* end namespace dat */

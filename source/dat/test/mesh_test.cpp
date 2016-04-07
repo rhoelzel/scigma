@@ -69,5 +69,16 @@ SCENARIO("Mesh: testing Mesh functionality in a single thread","[Mesh][single-th
 	  REQUIRE(w.size()==1);
 	  REQUIRE(m.size()==1);
 	  }*/
+
+      const double* d(m.triangle_data().data());
+      for(size_t i(0);i<m.triangle_data().size();i+=8)
+	{
+	  std::cerr<<d[i]<<"\t"<<d[i+4]<<std::endl<<std::endl;
+	  std::cerr<<d[i+1]<<"\t"<<d[i+5]<<std::endl;
+	  std::cerr<<d[i+2]<<"\t"<<d[i+6]<<std::endl;
+	  std::cerr<<d[i+3]<<"\t"<<d[i+7]<<std::endl;
+	  std::cerr<<d[i+1]<<"\t"<<d[i+5]<<std::endl;
+	  std::cerr<<std::endl;
+	}
     }
 }
