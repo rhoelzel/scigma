@@ -68,7 +68,8 @@ int main()
   b.adjust_shaders_for_view(w.gl_context(),ind,exp,0);
 
   w.gl_context()->add_drawable(&b);
-  
+
+  b.set_style(Graph::POINTS);
   Application::get_instance()->loop(5);
   //  b.set_style(Graph::ISOLINES);
   b.set_style(Graph::POINTS);

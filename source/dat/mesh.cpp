@@ -296,6 +296,11 @@ namespace scigma
 		 preceding it on its own layer, and its first neighbour on the layer 
 		 below */
 	      neighbours[index[0]].push_back(prevIndex[0]);
+	      if(beginIndex==GLint(currentStripTriangleIndicesBegin_))
+		{
+		  /* weight double if we are on the current layer*/
+		  neighbours[index[0]].push_back(prevIndex[0]);
+		}
 	      neighbours[index[0]].push_back(prevIndex[1]);
 	    } 
 	  /* add next point in triangle strip to the list of neighbours, if it 
@@ -382,6 +387,12 @@ namespace scigma
 
       typedef std::map<GLint,std::vector<GLint> >::iterator It;
       It begin(neighbours.begin()), end(neighbours.end());
+
+      /* average a triangle from the neighbours of each index, which will be used
+	 by the shader to compute a normal */
+      for(It i(begin);i!=end;++i)
+	compute_triangle_for_normal(i->first,i->second);
+
       
       for(It i(begin);i!=end;++i)
 	{
@@ -391,10 +402,39 @@ namespace scigma
 	  std::cout<<std::endl;
 	}
 
+      /* set normal information for current layer (this will be updated, when
+	 another layer is added */
+      
+      neighbours.clear();
+      collect_neighbours_before(GLint(currentStripTriangleIndicesBegin_),GLint(triangleIndices_.size()),neighbours);
+
+      GLint nCurrent((GLint(triangleData_.size()-currentStripTriangleDataBegin_)/nDim_/NVALS_PER_DIM));
+      
+      begin=neighbours.begin();
+      end=neighbours.end();
+      
       /* average a triangle from the neighbours of each index, which will be used
 	 by the shader to compute a normal */
       for(It i(begin);i!=end;++i)
-	compute_triangle_for_normal(i->first,i->second);
+	{
+	  /* add point that immediately preceeds this point, which
+	     is still missing from the set of neighbours, weight double */
+	  i->second.push_back((i->first-GLint(currentStripTriangleDataBegin_/nDim_/NVALS_PER_DIM)
+			       +1)%nCurrent+currentStripTriangleDataBegin_/nDim_/NVALS_PER_DIM);
+	  i->second.push_back(i->second.back());
+	  
+	  compute_triangle_for_normal(i->first,i->second);
+	}
+
+      
+      for(It i(begin);i!=end;++i)
+	{
+	  std::cout<<"Neighbours 2 for "<<i->first<<":"<<std::endl;
+	  for(size_t j(0);j<i->second.size();++j)
+	    std::cout<<i->second[j]<<", ";
+	  std::cout<<std::endl;
+	}
+				
     }
 
     void Mesh::compute_triangle_for_normal(GLint index, std::vector<GLint>& neighbourIndices)
@@ -412,7 +452,7 @@ namespace scigma
 	  tData[idx+offset+3]=tData[idx+offset]*2*n;
 
 	  for(size_t i(0);i<n*3;++i)
-	    tData[idx+offset+i/n+1]+=tData[size_t(neighbourIndices[(i/3+6)%n])*nDim_*NVALS_PER_DIM+offset];
+	    tData[idx+offset+i/n+1]+=tData[size_t(neighbourIndices[i/3])*nDim_*NVALS_PER_DIM+offset];
 
 	  
 	  tData[idx+offset+1]/=3*n;

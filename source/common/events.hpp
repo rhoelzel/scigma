@@ -44,14 +44,14 @@ namespace scigma
     {
       source->sinks_.insert(source->sinks_.begin(),sink);
       sink->sources_.push_back(source);
-    };
+    }
 
     template <class Event> void connect(typename EventSource<Event>::Type* source,
 					typename EventSink<Event>::Type* sink)
     {
       source->sinks_.push_back(sink);
       sink->sources_.push_back(source);
-    };
+    }
 
     template <class Event> void disconnect(typename EventSource<Event>::Type* source,
 					   typename EventSink<Event>::Type* sink)
@@ -62,7 +62,7 @@ namespace scigma
       auto iSource=std::find(sink->sources_.begin(),sink->sources_.end(),source); 
       if(iSource!=sink->sources_.end())
 	sink->sources_.erase(iSource);
-    };
+    }
 
     
     template <class Event> class EventSinkWithNArguments<Event,0>
