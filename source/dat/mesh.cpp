@@ -68,12 +68,8 @@ namespace scigma
       triangleData_.lock();
       std::vector<GLint> neighbours;
       for(GLint i(GLint(initial.size()/nDim_)-1);i>0;--i)
-	{
-	  for(size_t j(0);j<nDim_;++j)
-	    std::cout<<"initialRing: "<<triangleData_.data()[size_t(i)*nDim_*NVALS_PER_DIM+j*NVALS_PER_DIM]<<", ";
-	  std::cout<<std::endl;
 	  neighbours.push_back(i);
-	}
+
       compute_triangle_for_normal(0,neighbours);
       triangleData_.invalidate_from_index(0);
       triangleData_.unlock();
@@ -165,14 +161,6 @@ namespace scigma
       isoIndices_.unlock();isoEndPoints_.unlock();
       mutex_.unlock();
       
-      std::cout<<"available Iso: ";
-      for(size_t i(0);i<availableIsoLayer_.size();++i)
-	std::cout<<availableIsoLayer_[i]<<", ";
-      std::cout<<std::endl;
-      std::cout<<"available Triangle: ";
-      for(size_t i(0);i<availableTriangleLayer_.size();++i)
-	std::cout<<availableTriangleLayer_[i]<<", ";
-      std::cout<<std::endl;
     }
     
     const Mesh::IWave& Mesh::triangle_indices() const {return triangleIndices_;}
@@ -277,9 +265,6 @@ namespace scigma
 	    {
 	      diag1=distance_squared(currentIndex,DEC_LAST(lastIndex),tData);
 	      diag2=distance_squared(DEC_CURR(currentIndex),lastIndex,tData);
-	      std::cout<<"current1="<<currentIndex<<", last1="<<DEC_LAST(lastIndex)<<std::endl;
-	      std::cout<<"current2="<<DEC_CURR(currentIndex)<<", last2="<<lastIndex<<std::endl;
-	      std::cout<<"diag1="<<diag1<<", diag2="<<diag2<<std::endl;
 	    }
 	  addWithoutCheck=false;
 	  
@@ -477,13 +462,6 @@ namespace scigma
 	compute_triangle_for_normal(i->first,i->second);
 
       
-      for(It i(begin);i!=end;++i)
-	{
-	  std::cout<<"Neighbours for "<<i->first<<":"<<std::endl;
-	  for(size_t j(0);j<i->second.size();++j)
-	    std::cout<<i->second[j]<<", ";
-	  std::cout<<std::endl;
-	}
 
       /* set normal information for current layer (this will be updated, when
 	 another layer is added */
@@ -507,16 +485,6 @@ namespace scigma
 	  
 	  compute_triangle_for_normal(i->first,i->second);
 	}
-
-      
-      for(It i(begin);i!=end;++i)
-	{
-	  std::cout<<"Neighbours 2 for "<<i->first<<":"<<std::endl;
-	  for(size_t j(0);j<i->second.size();++j)
-	    std::cout<<i->second[j]<<", ";
-	  std::cout<<std::endl;
-	}
-				
     }
 
     void Mesh::compute_triangle_for_normal(GLint index, std::vector<GLint>& neighbourIndices)

@@ -232,10 +232,10 @@ namespace scigma
 	  substring(fShader,"__REPLACE_COLOR_IN_END__","");
 	}
 
-      std::cout<<"------------------------------------------------------------------"<<std::endl;
+      /*      std::cout<<"------------------------------------------------------------------"<<std::endl;
       std::cout<<vShader;
       std::cout<<"------------------------------------------------------------------"<<std::endl;
-      std::cout<<fShader;
+      std::cout<<fShader;*/
 
       
       glContext->delete_programs<Sheet>();
@@ -308,14 +308,14 @@ namespace scigma
       /* set the color, if we do not use a color map */
       if(-1!=colorLocation_)
 	glUniform4fv(colorLocation_,1,color_);
-      std::cout<<"colorLocation:"<<colorLocation_<<", ";
+      //      std::cout<<"colorLocation:"<<colorLocation_<<", ";
       GLERR;
       /* display the bundle in a lighter color, if hovering */
       if(hovering_&&!picking_)
 	glUniform1i(lighterLocation_,1);
       else
 	glUniform1i(lighterLocation_,0);
-      std::cout<<"lighterLocation:"<<lighterLocation_<<", ";
+      //std::cout<<"lighterLocation:"<<lighterLocation_<<", ";
       GLERR;
 
       switch(style_)
@@ -374,7 +374,7 @@ namespace scigma
 				nVars_*GLsizei(Mesh::NVALS_PER_DIM*sizeof(GLfloat)), 
 				reinterpret_cast<const GLvoid*>(sizeof(GLfloat)*varyingBaseIndex_[i]*Mesh::NVALS_PER_DIM));
       GLERR;
-      std::cout<<attLoc<<std::endl;
+      //      std::cout<<attLoc<<std::endl;
 	}
       varyingAttributesInvalid_=false;
     }
@@ -390,7 +390,7 @@ namespace scigma
 	  glDisableVertexAttribArray(attLoc);
 	  glVertexAttrib4fv(attLoc,&constants_[i*Mesh::NVALS_PER_DIM]);
       GLERR;
-            std::cout<<attLoc<<std::endl;
+      //  std::cout<<attLoc<<std::endl;
 	}
     }
 
@@ -402,7 +402,7 @@ namespace scigma
 
       glDisableVertexAttribArray(1);
       glVertexAttrib1f(1,0.f);
-      std::cout<<"availableLayers: "<<availableLayer<<"; maxIndex: "<<maxIndex<<std::endl;
+      //std::cout<<"availableLayers: "<<availableLayer<<"; maxIndex: "<<maxIndex<<std::endl;
       GLERR;
       /* draw line strip */
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,triangleIndexBuffer_.buffer_ID());
