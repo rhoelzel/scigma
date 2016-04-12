@@ -12,8 +12,8 @@ add_library(gui SHARED application.cpp glutil.cpp glcontext.cpp
 		viewingarea.cpp viewingvolume.cpp glwindow.cpp
 		font.cpp marker.cpp screentext.cpp spacetext.cpp
 		ruler.cpp picker.cpp drawable.cpp navigator.cpp
-		cosy.cpp graph.cpp bundle.cpp)
+		cosy.cpp graph.cpp bundle.cpp sheet.cpp)
 set_target_properties(gui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(gui common tinythread libpng zlib glew glfw anttweakbar ${GLFW_LIBRARIES})
+target_link_libraries(gui common dat tinythread libpng zlib glew glfw anttweakbar ${GLFW_LIBRARIES})
 
 add_subdirectory(test)

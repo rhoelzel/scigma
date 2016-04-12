@@ -39,21 +39,21 @@ namespace scigma
 
 
     // free connect and disconnect functions
-    template <class Event> void connect_before(typename EventSource<Event>::Type* source,
+    template <class Event> void connect_before(const typename EventSource<Event>::Type* source,
 					       typename EventSink<Event>::Type* sink)
     {
       source->sinks_.insert(source->sinks_.begin(),sink);
       sink->sources_.push_back(source);
     }
 
-    template <class Event> void connect(typename EventSource<Event>::Type* source,
+    template <class Event> void connect(const typename EventSource<Event>::Type* source,
 					typename EventSink<Event>::Type* sink)
     {
       source->sinks_.push_back(sink);
       sink->sources_.push_back(source);
     }
 
-    template <class Event> void disconnect(typename EventSource<Event>::Type* source,
+    template <class Event> void disconnect(const typename EventSource<Event>::Type* source,
 					   typename EventSink<Event>::Type* sink)
     {
       auto iSink=std::find(source->sinks_.begin(),source->sinks_.end(),sink); 
@@ -67,18 +67,18 @@ namespace scigma
     
     template <class Event> class EventSinkWithNArguments<Event,0>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
       
     private:
-      std::vector<typename EventSource<Event>::Type*> sources_;
+      mutable std::vector<const typename EventSource<Event>::Type*> sources_;
     public:
       virtual bool process(Event event)=0;
       ~EventSinkWithNArguments<Event,0>()
       {
-	std::vector<typename EventSource<Event>::Type*> sources(sources_);
-	typename std::vector<typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
+	std::vector<const typename EventSource<Event>::Type*> sources(sources_);
+	typename std::vector<const typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
 	while(iSource!=sources.end())
 	  {
 	    disconnect<Event>(*iSource,this);
@@ -89,19 +89,19 @@ namespace scigma
   
     template <class Event> class EventSinkWithNArguments<Event,1>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
     
     private:
-      std::vector<typename EventSource<Event>::Type*> sources_;
+      mutable std::vector<const typename EventSource<Event>::Type*> sources_;
     public:
       virtual bool process(Event event,
 			   typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1)=0;
       ~EventSinkWithNArguments<Event,1>()
       {
-	std::vector<typename EventSource<Event>::Type*> sources(sources_);
-	typename std::vector<typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
+	std::vector<const typename EventSource<Event>::Type*> sources(sources_);
+	typename std::vector<const typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
 	while(iSource!=sources.end())
 	  {
 	    disconnect<Event>(*iSource,this);
@@ -112,20 +112,20 @@ namespace scigma
     
     template <class Event> class EventSinkWithNArguments<Event,2>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     private:
-      std::vector<typename EventSource<Event>::Type*> sources_;
+      mutable std::vector<const typename EventSource<Event>::Type*> sources_;
     public:
       virtual bool process(Event event,
 			   typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 			   typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2)=0;
       ~EventSinkWithNArguments<Event,2>()
       {
-	std::vector<typename EventSource<Event>::Type*> sources(sources_);
-	typename std::vector<typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
+	std::vector<const typename EventSource<Event>::Type*> sources(sources_);
+	typename std::vector<const typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
 	while(iSource!=sources.end())
 	  {
 	    disconnect<Event>(*iSource,this);
@@ -136,12 +136,12 @@ namespace scigma
     
     template <class Event> class EventSinkWithNArguments<Event,3>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     private:
-      std::vector<typename EventSource<Event>::Type*> sources_;
+      mutable std::vector<const typename EventSource<Event>::Type*> sources_;
     public:
       virtual bool process(Event event,
 			   typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
@@ -149,8 +149,8 @@ namespace scigma
 			   typename Loki::TL::TypeAt<typename Event::Arguments,2>::Result arg3)=0;
       ~EventSinkWithNArguments<Event,3>()
       {
-	std::vector<typename EventSource<Event>::Type*> sources(sources_);
-	typename std::vector<typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
+	std::vector<const typename EventSource<Event>::Type*> sources(sources_);
+	typename std::vector<const typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
 	while(iSource!=sources.end())
 	  {
 	    disconnect<Event>(*iSource,this);
@@ -161,12 +161,12 @@ namespace scigma
     
     template <class Event> class EventSinkWithNArguments<Event,4>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     private:
-      std::vector<typename EventSource<Event>::Type*> sources_;
+      mutable std::vector<const typename EventSource<Event>::Type*> sources_;
     public:
       virtual bool process(Event event,
 			   typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
@@ -175,8 +175,8 @@ namespace scigma
 			   typename Loki::TL::TypeAt<typename Event::Arguments,3>::Result arg4)=0;
       ~EventSinkWithNArguments<Event,4>()
       {
-	std::vector<typename EventSource<Event>::Type*> sources(sources_);
-	typename std::vector<typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
+	std::vector<const typename EventSource<Event>::Type*> sources(sources_);
+	typename std::vector<const typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
 	while(iSource!=sources.end())
 	  {
 	    disconnect<Event>(*iSource,this);
@@ -187,12 +187,12 @@ namespace scigma
     
     template <class Event> class EventSinkWithNArguments<Event,5>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     private:
-      std::vector<typename EventSource<Event>::Type*> sources_;
+      mutable std::vector<const typename EventSource<Event>::Type*> sources_;
     public:
       virtual bool process(Event event,
 			   typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
@@ -202,8 +202,8 @@ namespace scigma
 			   typename Loki::TL::TypeAt<typename Event::Arguments,4>::Result arg5)=0;
       ~EventSinkWithNArguments<Event,5>()
       {
-	std::vector<typename EventSource<Event>::Type*> sources(sources_);
-	typename std::vector<typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
+	std::vector<const typename EventSource<Event>::Type*> sources(sources_);
+	typename std::vector<const typename EventSource<Event>::Type*>::iterator iSource = sources.begin();
 	while(iSource!=sources.end())
 	  {
 	    disconnect<Event>(*iSource,this);
@@ -217,12 +217,12 @@ namespace scigma
     
     template <class Event> class EventSourceWithNArguments<Event,0>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
-      std::vector<typename EventSink<Event>::Type*> sinks_;
+      mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit()
       {
 	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
@@ -244,12 +244,12 @@ namespace scigma
   
     template <class Event> class EventSourceWithNArguments<Event,1>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
-      std::vector<typename EventSink<Event>::Type*> sinks_;
+      mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1)
       {
 	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
@@ -272,12 +272,12 @@ namespace scigma
     
     template <class Event> class EventSourceWithNArguments<Event,2>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
-      std::vector<typename EventSink<Event>::Type*> sinks_;
+      mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 		typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2)
       {
@@ -301,12 +301,12 @@ namespace scigma
     
     template <class Event> class EventSourceWithNArguments<Event,3>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
-      std::vector<typename EventSink<Event>::Type*> sinks_;
+      mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 		typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2,
 		typename Loki::TL::TypeAt<typename Event::Arguments,2>::Result arg3)
@@ -331,12 +331,12 @@ namespace scigma
     
   template <class Event> class EventSourceWithNArguments<Event,4>
   {
-    friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-    friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-    friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+    friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+    friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+    friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
     
   protected:
-    std::vector<typename EventSink<Event>::Type*> sinks_;
+    mutable std::vector<typename EventSink<Event>::Type*> sinks_;
     void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 	      typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2,
 	      typename Loki::TL::TypeAt<typename Event::Arguments,2>::Result arg3,
@@ -362,12 +362,12 @@ namespace scigma
     
     template <class Event> class EventSourceWithNArguments<Event,5>
     {
-      friend void connect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void connect_before<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
-      friend void disconnect<Event>(typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void connect_before<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
+      friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
-      std::vector<typename EventSink<Event>::Type*> sinks_;
+      mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 		typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2,
 		typename Loki::TL::TypeAt<typename Event::Arguments,2>::Result arg3,

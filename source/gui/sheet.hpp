@@ -1,9 +1,9 @@
-#ifndef SCIGMA_GUI_BUNDLE_HPP
-#define SCIGMA_GUI_BUNDLE_HPP
+#ifndef SCIGMA_GUI_SHEET_HPP
+#define SCIGMA_GUI_SHEET_HPP
 
 #include <string>
 #include "../common/pythonobject.hpp"
-#include "../dat/wave.hpp"
+#include "../dat/mesh.hpp"
 #include "glwindowevents.hpp"
 #include "graph.hpp"
 #include "drawable.hpp"
@@ -12,6 +12,7 @@
 using scigma::common::PythonObject;
 using scigma::common::EventSink;
 using scigma::common::EventSource;
+using scigma::dat::Mesh;
 
 namespace scigma
 {
@@ -20,20 +21,21 @@ namespace scigma
 
     class GLWindow;
 
-    class Bundle: public Graph,
-		  public Drawable,
-		  public PythonObject<Bundle>,
-		  public EventSink<MouseButtonEvent>::Type
+    class Sheet: public Graph,
+		 public Drawable,
+		 public PythonObject<Sheet>,
+		 public EventSink<MouseButtonEvent>::Type
     {
     private:
       typedef AbstractWave<double> Wave;
       typedef AbstractGLBuffer<GLfloat,double> GLfloatBuffer;
+      typedef AbstractGLBuffer<GLuint,GLint> GLuintBuffer;
+      typedef AbstractGLBuffer<GLbyte,GLbyte> GLbyteBuffer;
       
     public:
-      Bundle(GLWindow* glWindow, std::string identifier,
-	     GLsizei length, GLsizei nRays, GLsizei nVars,
-	     const Wave* varyings, const Wave* constants);
-      ~Bundle();
+      Sheet(GLWindow* glWindow, std::string identifier,
+	    const Mesh* mesh, GLsizei nVars, const Wave* constants);
+      ~Sheet();
 
       bool process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods);
       
@@ -60,60 +62,68 @@ namespace scigma
 					   const VecS& expressions,
 					   double timeStamp);
       virtual void set_style(Style style);
+      void set_light_direction(GLfloat* direction);
+      void set_light_parameters(GLfloat* parameter);
       
     private:
       void prepare_varying_attributes();
       void prepare_constant_attributes();
+
+      void draw_triangles();
+      void draw_isolines();
+      void draw_points();
       
       static const std::string vertexShaderGL2_;
       static const std::string vertexShaderGL3_;
       static const std::string fragmentShaderGL2_;
       static const std::string fragmentShaderGL3_;
 
-      static std::map<GLContext*,GLint> nDrawnLocationMap_;
-      static std::map<GLContext*,GLint> nTotalLocationMap_;
       static std::map<GLContext*,GLint> spriteLocationMap_;
       static std::map<GLContext*,GLint> sizeLocationMap_;
       static std::map<GLContext*,GLint> colorLocationMap_;
       static std::map<GLContext*,GLint> lighterLocationMap_;
-
-      static GLint nDrawnLocation_;
-      static GLint nTotalLocation_;
+      static std::map<GLContext*,GLint> lightDirLocationMap_;
+      static std::map<GLContext*,GLint> lightParamLocationMap_;
+      
       static GLint spriteLocation_;
       static GLint sizeLocation_;
       static GLint colorLocation_;
       static GLint lighterLocation_;
+      static GLint lightDirLocation_;
+      static GLint lightParamLocation_;
 
       static GLuint program_;
       static double shaderTimeStamp_;
       
-      GLsizei length_;
-      GLsizei nRays_;
       GLsizei nVars_;
       GLsizei nConsts_;
+
+      const Mesh* mesh_;
       
-      GLuint isoIndexBuffer_;
-      GLuint isoIndexAttributeBuffer_; 
-      GLuint rayIndexBuffer_;
-      GLuint rayIndexAttributeBuffer_;
+      GLuintBuffer isoIndexBuffer_;
+      GLbyteBuffer isoEndPointsBuffer_;
+      GLuintBuffer triangleIndexBuffer_;
       
       GLfloatBuffer varyingBuffer_;
-      std::vector<double> constants_;
+      std::vector<GLfloat> constants_;
 
       std::vector<size_t> varyingBaseIndex_;
       std::vector<size_t> constantIndex_;
 
-      GLsizei last_;
+      GLfloat lightDirection_[4];
+      GLfloat lightParameter_[4];
+      
+      //      GLsizei last_;
       GLsizei pickPoint_;
       
       bool varyingAttributesInvalid_;
       bool hovering_;
       bool picking_;
       
-      char padding_[5];
+      char padding_[1];
     };
     
   } /* end namespace gui */
 } /* end namespace scigma */
 
-#endif /* SCIGMA_GUI_BUNDLE_HPP */
+#endif /* SCIGMA_GUI_SHEET_HPP */

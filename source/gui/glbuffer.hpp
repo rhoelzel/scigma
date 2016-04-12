@@ -19,13 +19,14 @@ namespace scigma
 {
   namespace gui
   {
+    
     template <class T,class U> class AbstractGLBuffer:
       public PythonObject< AbstractGLBuffer<T,U> >,
       public EventSink<WaveInvalidateEvent>::Type,
       public EventSink<IdleEvent>::Type
       {
     public:
-    	AbstractGLBuffer(AbstractWave<U>* wave, GLsizei initialCapacity);
+    	AbstractGLBuffer(const AbstractWave<U>* wave, GLsizei initialCapacity=0x4000);
 	virtual ~AbstractGLBuffer();
 	
 	size_t size() const;
@@ -43,7 +44,7 @@ namespace scigma
 	AbstractGLBuffer(const AbstractGLBuffer<T,U>&);
 	AbstractGLBuffer& operator=(const AbstractGLBuffer<T,U>&);
 
-	AbstractWave<U>* wave_;
+	const AbstractWave<U>* wave_;
 	
 	GLsizei size_;
 	GLsizei chunkSize_;
@@ -60,7 +61,7 @@ namespace scigma
     };
 
 
-    template <class T, class U> AbstractGLBuffer<T,U>::AbstractGLBuffer(AbstractWave<U>* wave, GLsizei initialCapacity):
+    template <class T, class U> AbstractGLBuffer<T,U>::AbstractGLBuffer(const AbstractWave<U>* wave, GLsizei initialCapacity):
       PythonObject<AbstractGLBuffer<T,U>>(this),wave_(wave),size_(0),
       chunkSize_(0x4000),capacity_(initialCapacity>2?initialCapacity:2),
       timeOfLastTransfer_(-1),usedFullChunk_(false),

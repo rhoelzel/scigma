@@ -1,3 +1,4 @@
+#include "../common/util.hpp"
 #include "bundle.hpp"
 #include "bundleshaders.hpp"
 #include "glcontext.hpp"
@@ -36,7 +37,7 @@ namespace scigma
     
     Bundle::Bundle(GLWindow* glWindow, std::string identifier,
 		   GLsizei length, GLsizei nRays, GLsizei nVars,
-		   Wave* varyings, Wave* constants):
+		   const Wave* varyings, const Wave* constants):
       Graph(glWindow,identifier),
       PythonObject<Bundle>(this),
       length_(length), nRays_(nRays),
@@ -135,7 +136,6 @@ namespace scigma
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wmissing-prototypes"
 
     bool Bundle::process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods)
     {
@@ -146,20 +146,10 @@ namespace scigma
 	  lastClickTime_=time;
 	  if(dt>doubleClickTime_)
 	    return true;
-	  EventSource<CurveClickEvent>::Type::emit(identifier_.c_str(),long(pickPoint_));
+	  EventSource<PointClickEvent>::Type::emit(identifier_.c_str(),int(pickPoint_));
 	  return true;
 	}
       return false;
-    }
-
-
-    void substring(std::string& subject, const std::string& search,const std::string& replace)
-    {
-      size_t pos = 0;
-      while((pos = subject.find(search, pos)) != std::string::npos) {
-	subject.replace(pos, search.length(), replace);
-	pos += replace.length();
-      }
     }
 
     void Bundle::on_addition(GLContext* glContext)
@@ -200,6 +190,7 @@ namespace scigma
       varyingAttributesInvalid_=true;
     }
     
+    using scigma::common::substring;
     
     void Bundle::adjust_shaders_for_view(GLContext* glContext,
 					 const VecS& independentVariables,

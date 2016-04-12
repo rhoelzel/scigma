@@ -14,6 +14,13 @@ namespace scigma
       lastStripTriangleDataBegin_(0),currentStripTriangleDataBegin_(nDim*NVALS_PER_DIM),
       lastStripTriangleIndicesBegin_(0),currentStripTriangleIndicesBegin_(1)
     {
+      tthread::lock_guard<tthread::mutex> guard(mutex_);
+
+      isoLayerBegin_.push_back(0);
+      triangleLayerBegin_.push_back(0);
+      
+      /* origin */
+      
       triangleData_.lock();
       triangleIndices_.lock();
 
@@ -30,31 +37,73 @@ namespace scigma
       triangleIndices_.unlock();
       triangleData_.unlock();
 
+      availableIsoLayer_.push_back(0);
+      availableTriangleLayer_.push_back(0);
+
+      isoLayerBegin_.push_back(1);
+      triangleLayerBegin_.push_back(1);
+      
+      /* first layer */
       
       std::vector<double> initialRing;
       for(size_t i(nDim_);i<initial.size();++i)
 	initialRing.push_back(initial[i]);
 
       add_layer(initialRing);
+      
+      
+      triangleIndices_.lock();
+      while(availableTriangleLayer_.size()<triangleIndices_.size()-1)
+	availableTriangleLayer_.push_back(0);
+      availableTriangleLayer_.push_back(1);
+      triangleLayerBegin_.push_back(triangleIndices_.size());
+      
       lastStripTriangleDataBegin_=currentStripTriangleDataBegin_;
       lastStripTriangleIndicesBegin_=currentStripTriangleIndicesBegin_;
       currentStripTriangleDataBegin_=triangleData_.size();
       currentStripTriangleIndicesBegin_=triangleIndices_.size();
 
+      triangleIndices_.unlock();
 
-      isoIndices_.lock();
+      triangleData_.lock();
+      std::vector<GLint> neighbours;
+      for(GLint i(GLint(initial.size()/nDim_)-1);i>0;--i)
+	{
+	  for(size_t j(0);j<nDim_;++j)
+	    std::cout<<"initialRing: "<<triangleData_.data()[size_t(i)*nDim_*NVALS_PER_DIM+j*NVALS_PER_DIM]<<", ";
+	  std::cout<<std::endl;
+	  neighbours.push_back(i);
+	}
+      compute_triangle_for_normal(0,neighbours);
+      triangleData_.invalidate_from_index(0);
+      triangleData_.unlock();
+      
+      isoIndices_.lock();isoEndPoints_.lock();
       isoIndices_.push_back(0);
-      GLint start((GLint(isoIndices_.size())));
-      GLint end(start+(GLint(initial.size()/nDim_)));
-      isoIndices_.push_back(-start);
-      for(GLint i(start+1);i<end-1;++i)
-	isoIndices_.push_back(i);
-      isoIndices_.push_back(-(end-1));
-      isoIndices_.unlock();
+      isoEndPoints_.push_back(1);
+      GLint start(1);
+      GLint end(start+(GLint(initialRing.size()/nDim_)));
+      isoIndices_.push_back(start);
+      isoEndPoints_.push_back(1);
+      for(GLint i(start+1);i<end;++i)
+	{
+	  isoIndices_.push_back(i);
+	  isoEndPoints_.push_back(0);
+	}
+      isoIndices_.push_back(start);
+
+      while(availableIsoLayer_.size()<isoIndices_.size()-1)
+	availableIsoLayer_.push_back(0);
+      availableIsoLayer_.push_back(1);
+      isoLayerBegin_.push_back(isoIndices_.size());
+      isoIndices_.unlock();isoEndPoints_.unlock();
+
+      
     }
     
     void Mesh::add_strip(const std::vector<double>& positions)
     {
+
       triangleData_.lock();
       triangleIndices_.lock();
   
@@ -64,17 +113,29 @@ namespace scigma
       /* compute correct normal information, for the next to last layer of points, 
 	 replacing the old normal information of the boundary layer */
       compute_normal_information();
-
-      /* invalidate the last part of the triangleData_ Wave, so that the new
-	 normal information will be reflected in attached buffers */
-      triangleData_.invalidate_from_index(lastStripTriangleDataBegin_);
       
       /* update internal variables */
+
+      mutex_.lock();
+
+      size_t completeTriangleLayer(availableTriangleLayer_.back()+1);
+      while(availableTriangleLayer_.size()<triangleIndices_.size()-1)
+	availableTriangleLayer_.push_back(completeTriangleLayer-1);
+      availableTriangleLayer_.push_back(completeTriangleLayer);
+
+      triangleLayerBegin_.push_back(triangleIndices_.size());
+      
+      mutex_.unlock();
+      
       lastStripTriangleDataBegin_=currentStripTriangleDataBegin_;
       lastStripTriangleIndicesBegin_=currentStripTriangleIndicesBegin_;
       currentStripTriangleDataBegin_=triangleData_.size();
       currentStripTriangleIndicesBegin_=triangleIndices_.size();
 
+      /* invalidate the last part of the triangleData_ Wave, so that the new
+	 normal information will be reflected in attached buffers */
+      triangleData_.invalidate_from_index(lastStripTriangleDataBegin_);
+      
       triangleIndices_.unlock();
       triangleData_.unlock();      
 
@@ -82,21 +143,43 @@ namespace scigma
 	 make first and last index of layer negative,
 	 so that the shader knows where to skip fragments
       */
-      isoIndices_.lock();
-      GLint start((GLint(isoIndices_.size())));
+      isoIndices_.lock();isoEndPoints_.lock();
+      GLint start(isoIndices_.data()[isoIndices_.size()-2]+1);
       GLint end(start+(GLint(positions.size()/nDim_)));
-      isoIndices_.push_back(-start);
-      for(GLint i(start+1);i<end-1;++i)
-	isoIndices_.push_back(i);
-      isoIndices_.push_back(-(end-1));
-      isoIndices_.unlock();
-
+      isoIndices_.push_back(start);
+      isoEndPoints_.push_back(1);
+      for(GLint i(start+1);i<end;++i)
+	{
+	  isoIndices_.push_back(i);
+	  isoEndPoints_.push_back(0);
+	}
+      /* close the isoline */
+      isoIndices_.push_back(start);
+     
+      size_t completeIsoLayer(availableIsoLayer_.back()+1);
+      mutex_.lock();
+      while(availableIsoLayer_.size()<isoIndices_.size()-1)
+	availableIsoLayer_.push_back(completeIsoLayer-1);
+      availableIsoLayer_.push_back(completeIsoLayer);
+      isoLayerBegin_.push_back(isoIndices_.size());
+      isoIndices_.unlock();isoEndPoints_.unlock();
+      mutex_.unlock();
+      
+      std::cout<<"available Iso: ";
+      for(size_t i(0);i<availableIsoLayer_.size();++i)
+	std::cout<<availableIsoLayer_[i]<<", ";
+      std::cout<<std::endl;
+      std::cout<<"available Triangle: ";
+      for(size_t i(0);i<availableTriangleLayer_.size();++i)
+	std::cout<<availableTriangleLayer_[i]<<", ";
+      std::cout<<std::endl;
     }
     
-    const IWave& Mesh::triangle_indices() const {return triangleIndices_;}
-    const IWave& Mesh::iso_indices() const {return isoIndices_;}
+    const Mesh::IWave& Mesh::triangle_indices() const {return triangleIndices_;}
+    const Mesh::IWave& Mesh::iso_indices() const {return isoIndices_;}
+    const Mesh::BWave& Mesh::iso_end_points() const {return isoEndPoints_;}
 	
-    const Wave& Mesh::triangle_data() const {return triangleData_;}
+    const Mesh::Wave& Mesh::triangle_data() const {return triangleData_;}
 
     double Mesh::distance_squared(GLint index1, GLint index2, const double* tData) const
     {
@@ -407,8 +490,7 @@ namespace scigma
       
       neighbours.clear();
       collect_neighbours_before(GLint(currentStripTriangleIndicesBegin_),GLint(triangleIndices_.size()),neighbours);
-
-      GLint nCurrent((GLint(triangleData_.size()-currentStripTriangleDataBegin_)/nDim_/NVALS_PER_DIM));
+      GLint nCurrent((GLint((triangleData_.size()-currentStripTriangleDataBegin_)/nDim_/NVALS_PER_DIM)));
       
       begin=neighbours.begin();
       end=neighbours.end();
@@ -420,7 +502,7 @@ namespace scigma
 	  /* add point that immediately preceeds this point, which
 	     is still missing from the set of neighbours, weight double */
 	  i->second.push_back((i->first-GLint(currentStripTriangleDataBegin_/nDim_/NVALS_PER_DIM)
-			       +1)%nCurrent+currentStripTriangleDataBegin_/nDim_/NVALS_PER_DIM);
+			       +1)%nCurrent+GLint(currentStripTriangleDataBegin_/nDim_/NVALS_PER_DIM));
 	  i->second.push_back(i->second.back());
 	  
 	  compute_triangle_for_normal(i->first,i->second);
@@ -460,6 +542,37 @@ namespace scigma
 	  tData[idx+offset+3]/=3*n;
 	}
             
+    }
+
+    size_t Mesh::available_iso_layer(size_t indexSize, size_t endPointsSize, size_t dataSize) const
+    {
+      tthread::lock_guard<tthread::mutex> guard(mutex_);
+      dataSize=dataSize/nDim_/NVALS_PER_DIM<endPointsSize?dataSize/nDim_/NVALS_PER_DIM:endPointsSize;
+      size_t iso(indexSize>=availableIsoLayer_.size()?availableIsoLayer_.back():availableIsoLayer_[indexSize]);
+      size_t data(dataSize>=availableIsoLayer_.size()?availableIsoLayer_.back():
+		  availableIsoLayer_[dataSize]);
+      return iso<data?iso:data;
+    }
+
+    size_t Mesh::available_triangle_layer(size_t indexSize, size_t dataSize) const
+    {
+      tthread::lock_guard<tthread::mutex> guard(mutex_);
+      size_t iso(indexSize>=availableTriangleLayer_.size()?availableTriangleLayer_.back():availableTriangleLayer_[indexSize]);
+      size_t data(dataSize/nDim_/NVALS_PER_DIM>=availableIsoLayer_.size()?availableIsoLayer_.back():
+		  availableIsoLayer_[dataSize/nDim_/NVALS_PER_DIM]);
+      return iso<data?iso:data;
+    }
+
+    size_t Mesh::max_for_iso_layer(size_t layer) const
+    {
+      tthread::lock_guard<tthread::mutex> guard(mutex_);
+      return layer>isoLayerBegin_.size()-2?isoLayerBegin_.back():isoLayerBegin_[layer+1];			
+    }
+
+    size_t Mesh::max_for_triangle_layer(size_t layer) const
+    {
+      tthread::lock_guard<tthread::mutex> guard(mutex_);
+      return layer>triangleLayerBegin_.size()-2?triangleLayerBegin_.back():triangleLayerBegin_[layer+1];				
     }
     
   } /* end namespace dat */
