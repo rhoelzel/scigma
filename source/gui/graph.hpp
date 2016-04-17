@@ -5,17 +5,20 @@
 #include <vector>
 #include <map>
 #include "../common/events.hpp"
+#include "glwindowevents.hpp"
 #include "definitions.hpp"
 #include "marker.hpp"
+#include "application.hpp"
 
 using scigma::common::EventSource;
+using scigma::common::EventSink;
 
 namespace scigma
 {
   namespace gui
   {
     struct GraphClickEvent{  
-      typedef LOKI_TYPELIST_2(const char*,int) Arguments;};
+      typedef LOKI_TYPELIST_1(const char*) Arguments;};
     struct PointClickEvent{  
       typedef LOKI_TYPELIST_2(const char*,int) Arguments;};
 
@@ -24,7 +27,9 @@ namespace scigma
 
     class Graph:
       public EventSource<GraphClickEvent>::Type,
-      public EventSource<PointClickEvent>::Type
+      public EventSource<PointClickEvent>::Type,
+      public EventSink<LoopEvent>::Type,
+      public EventSink<MouseButtonEvent>::Type
     {
    
     public:
@@ -62,7 +67,8 @@ namespace scigma
       virtual void set_style(Style style);
       GLfloat style() const;
 
-      virtual void replay()=0;
+      void replay();
+
       virtual void finalize()=0;
 
       virtual void set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
@@ -75,18 +81,22 @@ namespace scigma
 
       static void set_light_direction(GLContext* glContext, const GLfloat* direction);
       static GLfloat* light_direction(GLContext* glContext);
-	
+
+      bool process(LoopEvent Event);
+      bool process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods);
+      
     protected:
       Graph(GLWindow* glWindow, std::string identifier); 
       virtual ~Graph();
-
-
+      
       GLWindow* glWindow_;
       std::string identifier_;
       
       double doubleClickTime_;
       double lastClickTime_;
 
+      double startTime_;
+      
       Marker::Type marker_;
       Marker::Type point_;
 
@@ -97,7 +107,14 @@ namespace scigma
 
       GLfloat delay_;
       Style style_;
- 
+
+      GLsizei lastDrawn_;
+      GLsizei lastTotal_;
+      
+      GLsizei pickPoint_;
+
+      bool hovering_;
+      
       /* for colors, an isoluminant color map that works both on white
 	 and black background is hardcoded here */
       static const char* colorMapFunction_;
@@ -109,10 +126,13 @@ namespace scigma
 	 implementations */
       static GLuint dummyBuffer_;
 
+      
     private:
       Graph(const Graph&);
       Graph& operator=(const Graph&);
 
+      char padding_[3];
+      
     };
 
   } /* end namespace gui */

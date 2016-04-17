@@ -4,14 +4,12 @@
 #include <string>
 #include "../common/pythonobject.hpp"
 #include "../dat/wave.hpp"
-#include "glwindowevents.hpp"
 #include "graph.hpp"
 #include "drawable.hpp"
 #include "glbuffer.hpp"
 
 using scigma::common::PythonObject;
 using scigma::common::EventSink;
-using scigma::common::EventSource;
 
 namespace scigma
 {
@@ -23,7 +21,7 @@ namespace scigma
     class Bundle: public Graph,
 		  public Drawable,
 		  public PythonObject<Bundle>,
-		  public EventSink<MouseButtonEvent>::Type
+		  public EventSink<GLBufferInvalidateEvent>::Type
     {
     private:
       typedef AbstractWave<double> Wave;
@@ -34,8 +32,6 @@ namespace scigma
 	     GLsizei length, GLsizei nRays, GLsizei nVars,
 	     const Wave* varyings, const Wave* constants);
       ~Bundle();
-
-      bool process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods);
       
       // methods from the Drawable interface 
       static void on_gl_context_creation(GLContext* glContext);
@@ -49,7 +45,6 @@ namespace scigma
       void on_hover_end(GLContext* glContext);
       
       // virtual methods inherited from Graph
-      virtual void replay();
       virtual void finalize();
 
       virtual void set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
@@ -60,10 +55,18 @@ namespace scigma
 					   const VecS& expressions,
 					   double timeStamp);
       virtual void set_style(Style style);
+
+      using Graph::process;
+      bool process(GLBufferInvalidateEvent e);
       
     private:
       void prepare_varying_attributes();
       void prepare_constant_attributes();
+
+      void draw_isolines(GLsizei availablePoints);
+      void draw_lines(GLsizei availablePoints);
+      void draw_points(GLsizei availablePoints);
+      void draw_markers(GLsizei availablePoints);
       
       static const std::string vertexShaderGL2_;
       static const std::string vertexShaderGL3_;
@@ -102,15 +105,10 @@ namespace scigma
 
       std::vector<size_t> varyingBaseIndex_;
       std::vector<size_t> constantIndex_;
-
-      GLsizei last_;
-      GLsizei pickPoint_;
       
       bool varyingAttributesInvalid_;
-      bool hovering_;
-      bool picking_;
       
-      char padding_[5];
+      char padding_[7];
     };
     
   } /* end namespace gui */

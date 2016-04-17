@@ -10,8 +10,6 @@
 #include "glbuffer.hpp"
 
 using scigma::common::PythonObject;
-using scigma::common::EventSink;
-using scigma::common::EventSource;
 using scigma::dat::Mesh;
 
 namespace scigma
@@ -23,8 +21,7 @@ namespace scigma
 
     class Sheet: public Graph,
 		 public Drawable,
-		 public PythonObject<Sheet>,
-		 public EventSink<MouseButtonEvent>::Type
+		 public PythonObject<Sheet>
     {
     private:
       typedef AbstractWave<double> Wave;
@@ -37,8 +34,6 @@ namespace scigma
 	    const Mesh* mesh, GLsizei nVars, const Wave* constants);
       ~Sheet();
 
-      bool process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods);
-      
       // methods from the Drawable interface 
       static void on_gl_context_creation(GLContext* glContext);
       static void on_gl_context_destruction(GLContext* glContext);
@@ -51,7 +46,6 @@ namespace scigma
       void on_hover_end(GLContext* glContext);
       
       // virtual methods inherited from Graph
-      virtual void replay();
       virtual void finalize();
 
       virtual void set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
@@ -113,14 +107,9 @@ namespace scigma
       GLfloat lightDirection_[4];
       GLfloat lightParameter_[4];
       
-      //      GLsizei last_;
-      GLsizei pickPoint_;
-      
       bool varyingAttributesInvalid_;
-      bool hovering_;
-      bool picking_;
       
-      char padding_[1];
+      char padding_[7];
     };
     
   } /* end namespace gui */

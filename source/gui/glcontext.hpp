@@ -313,6 +313,7 @@ namespace scigma
 		{
 		  if(color[i*3]!=0xFF||color[i*3+1]!=0xFF||color[i*3+2]!=0xFF)
 		    {
+		      std::cout<<int(color[i*3])<<", "<<int(color[i*3+1])<<", "<<int(color[i*3+2])<<std::endl;
 		      value=color[i*3]*0x10000+color[i*3+1]*0x100+color[i*3+2];
 		      break;
 		    }

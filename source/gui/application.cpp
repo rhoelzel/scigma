@@ -165,7 +165,7 @@ namespace scigma
       //glfwWindowHint(GLFW_DECORATED,GL_FALSE);
       theInstance_->masterWindow_=glfwCreateWindow(10,10, "", NULL,NULL);
       glfwWindowHint(GLFW_VISIBLE,GL_TRUE);
-      //glfwWindowHint(GLFW_SAMPLES, 4);
+      //glfwWindowHint(GLFW_SAMPLES, 16);
       glfwMakeContextCurrent(theInstance_->masterWindow_);
       GLERR;
 

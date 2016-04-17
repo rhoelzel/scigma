@@ -13,7 +13,10 @@
   Bundle b(&w,"bundle1",100,10,2,&varWave,&constWave);
 
   b.set_point_size(7);
-  
+
+GLfloat col[]={1,0,0,1}; 
+b.set_color(col);
+
   std::vector<std::size_t> vBaseIndex,cIndex;
   vBaseIndex.push_back(0);
   vBaseIndex.push_back(1);
@@ -42,16 +45,13 @@
   b.adjust_shaders_for_view(w.gl_context(),ind,exp,0);
 
   w.gl_context()->add_drawable(&b);
-
-  b.set_style(Graph::POINTS);
-  Application::get_instance()->loop(5);
-  //  b.set_style(Graph::ISOLINES);
-  b.set_style(Graph::POINTS);
-  w.gl_context()->request_redraw();
-  Application::get_instance()->loop(5);
-  b.set_style(Graph::ISOLINES);
-  w.gl_context()->request_redraw();
-  Application::get_instance()->loop(5);
-  b.set_style(Graph::LINES);
-  w.gl_context()->request_redraw();
-  Application::get_instance()->loop(50);
+/*
+b.set_style(Graph::POINTS);
+Application::get_instance()->loop(5);
+b.set_delay(0.15);
+b.replay();
+Application::get_instance()->loop(5);
+b.set_style(Graph::ISOLINES);
+Application::get_instance()->loop(5);*/
+b.set_style(Graph::LINES);
+Application::get_instance()->loop(150);

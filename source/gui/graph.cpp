@@ -1,4 +1,9 @@
 #include "graph.hpp"
+#include "glwindow.hpp"
+#include <iostream>
+
+using scigma::common::connect;
+using scigma::common::disconnect;
 
 namespace scigma
 {
@@ -41,10 +46,14 @@ namespace scigma
 
     
     Graph::Graph(GLWindow* glWindow, std::string identifier):
-      glWindow_(glWindow),identifier_(identifier),doubleClickTime_(0.25),lastClickTime_(-1.0),
+      glWindow_(glWindow),identifier_(identifier),
+      doubleClickTime_(0.25),lastClickTime_(-1.0),
+      startTime_(-1),
       marker_(Marker::STAR),point_(Marker::DOT),
       markerSize_(16),pointSize_(1),
-      delay_(0),style_(POINTS)
+      delay_(0),style_(POINTS),
+      lastDrawn_(-1),lastTotal_(0xFFFFFFF),
+      pickPoint_(-1),hovering_(false)
     {
       if(!dummyBuffer_)
 	{
@@ -61,26 +70,27 @@ namespace scigma
     Graph::~Graph()
     {}
     
-    void Graph::set_marker_style(Marker::Type marker){marker_=marker;}
+    void Graph::set_marker_style(Marker::Type marker){marker_=marker;glWindow_->gl_context()->request_redraw();}
     Marker::Type Graph::marker_style() const {return marker_;}
 
-    void Graph::set_marker_size(GLfloat size){markerSize_=size<1.0f?1.0f:size;}
+    void Graph::set_marker_size(GLfloat size){markerSize_=size<1.0f?1.0f:size;glWindow_->gl_context()->request_redraw();}
     GLfloat Graph::marker_size() const{return markerSize_;}
     
-    void Graph::set_point_style(Marker::Type marker){point_=marker;}
+    void Graph::set_point_style(Marker::Type marker){point_=marker;glWindow_->gl_context()->request_redraw();}
     Marker::Type Graph::point_style() const{return point_;}
     
-    void Graph::set_point_size(GLfloat size){pointSize_=size<1.0f?1.0f:size;}
+    void Graph::set_point_size(GLfloat size){pointSize_=size<1.0f?1.0f:size;glWindow_->gl_context()->request_redraw();}
     GLfloat Graph::point_size() const{return pointSize_;}
     
     void Graph::set_color(const GLfloat* color)
     {
       for(size_t i(0);i<4;++i)
 	color_[i]=color[i];
+      glWindow_->gl_context()->request_redraw();
     }
     const GLfloat* Graph::color() const{return color_;}
 
-    void Graph::set_delay(GLfloat delay){delay_=delay<0.0?0.0:delay_;}
+    void Graph::set_delay(GLfloat delay){delay_=delay<0.0?0.0:delay;}
     GLfloat Graph::delay() const{return delay_;}
 
     void Graph::set_style(Style style){style_=style;}
@@ -101,6 +111,66 @@ namespace scigma
 	return &dir[0];
       return NULL;
     }
-        
+
+    void Graph::replay()
+    {
+      startTime_=glfwGetTime();
+      if(delay_>0)
+	{
+	  lastDrawn_=0;
+	  connect<LoopEvent>(Application::get_instance(),this);
+	}
+      else
+	glWindow_->gl_context()->request_redraw();
+	
+    }
+    
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
+    bool Graph::process(LoopEvent event)
+    {
+      if(!(delay_>0&&lastDrawn_<lastTotal_))
+	{
+	  disconnect<LoopEvent>(Application::get_instance(),this);
+	  lastDrawn_=-1;
+	  glWindow_->gl_context()->request_redraw();
+	  return false;
+	}
+      GLsizei newLastDrawn(GLsizei((glfwGetTime()-startTime_)/delay_));
+      if(newLastDrawn!=lastDrawn_)
+	{
+	  lastDrawn_=newLastDrawn;
+	  glWindow_->gl_context()->request_redraw();
+	}
+      return false;
+    }
+
+    bool Graph::process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods)
+    {
+      if(GLFW_MOUSE_BUTTON_LEFT==button&&GLFW_PRESS==action)
+	{
+	  double time(glfwGetTime());
+	  double dt(time-lastClickTime_);
+	  lastClickTime_=time;
+	  if(dt>doubleClickTime_)
+	    return true;
+	  if(pickPoint_>=0)
+	    {
+	      EventSource<PointClickEvent>::Type::emit(identifier_.c_str(),int(pickPoint_));
+	      std::cout<<identifier_.c_str()<<", "<<int(pickPoint_)<<std::endl;
+	    }
+	  else
+	    {
+	      EventSource<GraphClickEvent>::Type::emit(identifier_.c_str());
+	      std::cout<<identifier_.c_str()<<std::endl;
+	    }
+	  return true;
+	}
+      return false;
+    }
+
+#pragma GCC diagnostic pop
+    
   } /* end namespace gui */
 } /* end namespace scigma */

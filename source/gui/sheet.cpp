@@ -45,10 +45,7 @@ namespace scigma
       isoEndPointsBuffer_(&mesh->iso_end_points()),
       triangleIndexBuffer_(&mesh->triangle_indices()),
       varyingBuffer_(&mesh->triangle_data()),
-      /*last_(-1),*/pickPoint_(-1),
-      varyingAttributesInvalid_(true),
-      hovering_(false),
-      picking_(false)
+      varyingAttributesInvalid_(true)
     {
       constants->lock();
       for(size_t i(0), size(constants->size()*Mesh::NVALS_PER_DIM);i<size;++i)
@@ -79,10 +76,6 @@ namespace scigma
 
     }
 
-    void Sheet::replay()
-    {
-
-    }
     
     void Sheet::finalize()
     {
@@ -114,24 +107,6 @@ namespace scigma
     {
       glContext->delete_programs<Sheet>();
       GLERR;
-    }
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
-    bool Sheet::process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods)
-    {
-      if(GLFW_MOUSE_BUTTON_LEFT==button&&GLFW_PRESS==action)
-	{
-	  double time(glfwGetTime());
-	  double dt(time-lastClickTime_);
-	  lastClickTime_=time;
-	  if(dt>doubleClickTime_)
-	    return true;
-	  EventSource<PointClickEvent>::Type::emit(identifier_.c_str(),int(pickPoint_));
-	  return true;
-	}
-      return false;
     }
 
     void Sheet::on_addition(GLContext* glContext)
@@ -232,10 +207,10 @@ namespace scigma
 	  substring(fShader,"__REPLACE_COLOR_IN_END__","");
 	}
 
-      /*      std::cout<<"------------------------------------------------------------------"<<std::endl;
+      std::cout<<"------------------------------------------------------------------"<<std::endl;
       std::cout<<vShader;
       std::cout<<"------------------------------------------------------------------"<<std::endl;
-      std::cout<<fShader;*/
+      std::cout<<fShader;
 
       
       glContext->delete_programs<Sheet>();
@@ -252,8 +227,9 @@ namespace scigma
 
       /* if color is defined by uniform, get the location */
       if(""==expressions[4])
-	colorLocationMap_[glContext]=glGetUniformLocation(program_,"rgba_");
+	  colorLocationMap_[glContext]=glGetUniformLocation(program_,"rgba_");
       else
+	    
 	colorLocationMap_[glContext]=-1;
 
       GLERR;
@@ -293,6 +269,9 @@ namespace scigma
 	lightParameter_[i]=parameter[i];
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
     void Sheet::draw(GLContext* glContext)
     {
       /* setup vertex attributes (if necessary) */
@@ -311,7 +290,7 @@ namespace scigma
       //      std::cout<<"colorLocation:"<<colorLocation_<<", ";
       GLERR;
       /* display the bundle in a lighter color, if hovering */
-      if(hovering_&&!picking_)
+      if(hovering_&&pickPoint_<0)
 	glUniform1i(lighterLocation_,1);
       else
 	glUniform1i(lighterLocation_,0);
@@ -320,37 +299,65 @@ namespace scigma
 
       switch(style_)
 	{
-	case Graph::WIREFRAME:
+	case WIREFRAME:
 	  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	  draw_triangles();
 	  break;
-	case Graph::SOLID:
+	case SOLID:
 	  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	  draw_triangles();
 	  break;
-	case Graph::LINES:
+	case LINES:
 	  draw_isolines();
 	  break;
-	case Graph::ISOLINES:
+	case ISOLINES:
 	  draw_isolines();
 	  break;
-	case Graph::POINTS:
+	case POINTS:
 	  draw_points();
 	  break;
+	}
+
+      /* if we are in point picking mode, highlight the
+	 point under the mouse cursor */
+      if(pickPoint_>=0)
+	{
+	  glBindTexture(GL_TEXTURE_2D,Marker::cross_hair_texture_id());
+	  glUniform1i(spriteLocation_,2);
+	  glPointSize(Marker::cross_hair_size());
+	  glUniform1f(sizeLocation_,Marker::cross_hair_size());
+	  glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT,reinterpret_cast<const void*>(GLsizei(sizeof(GLuint))*pickPoint_));
 	}
     }
 
     void Sheet::on_hover_begin(GLContext* glContext)
     {
+      hovering_=true;
+      glContext->request_redraw();
+      connect_before<MouseButtonEvent>(glWindow_,this);
+
     }
     
     void Sheet::on_hover(GLContext* glContext, GLuint value)
     {
-      //glfwGetKey
+      /*      GLsizei newPickPoint;
+      if(glfwGetKey(glWindow_->glfw_window(),GLFW_KEY_RIGHT_CONTROL)==GLFW_PRESS
+	 ||glfwGetKey(glWindow_->glfw_window(),GLFW_KEY_LEFT_CONTROL)==GLFW_PRESS)
+	newPickPoint=GLsizei(value);
+      else
+	newPickPoint=-1;
+      if(newPickPoint==pickPoint_)
+	return;
+      pickPoint_=newPickPoint;
+      glContext->request_redraw();*/
     }
 
     void Sheet::on_hover_end(GLContext* glContext)
     {
+      disconnect<MouseButtonEvent>(glWindow_,this);
+      hovering_=false;
+      pickPoint_=-1;
+      glContext->request_redraw();
     }
   
 #pragma GCC diagnostic pop
@@ -398,6 +405,10 @@ namespace scigma
     {
       /* check how many layers are available for drawing */
       size_t availableLayer(mesh_->available_triangle_layer(triangleIndexBuffer_.size(),varyingBuffer_.size()));
+
+      if(lastDrawn_>=0)
+	availableLayer = size_t(lastDrawn_)<availableLayer?size_t(lastDrawn_):availableLayer;
+
       GLsizei maxIndex((GLsizei(mesh_->max_for_triangle_layer(availableLayer))));
 
       glDisableVertexAttribArray(1);
@@ -418,6 +429,9 @@ namespace scigma
       size_t availableLayer(mesh_->available_iso_layer(isoIndexBuffer_.size(),
 						       isoEndPointsBuffer_.size(),
 						       varyingBuffer_.size()));
+      if(lastDrawn_>=0)
+	availableLayer = size_t(lastDrawn_)<availableLayer?size_t(lastDrawn_):availableLayer;
+
       GLsizei maxIndex((GLsizei(mesh_->max_for_iso_layer(availableLayer))));
 
       /* draw line strip */
@@ -438,15 +452,19 @@ namespace scigma
       size_t availableLayer(mesh_->available_iso_layer(isoIndexBuffer_.size(),
 						       isoEndPointsBuffer_.size(),
 						       varyingBuffer_.size()));
+      if(lastDrawn_>=0)
+	availableLayer = size_t(lastDrawn_)<availableLayer?size_t(lastDrawn_):availableLayer;
+
       GLsizei maxIndex((GLsizei(mesh_->max_for_iso_layer(availableLayer))));
 
+      
       /* draw line strip */
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,isoIndexBuffer_.buffer_ID());
       glDisableVertexAttribArray(1);
       glVertexAttrib1f(1,0.f);
 
       GLfloat factor(1.0f);
-      if(hovering_&&!picking_)
+      if(hovering_&&pickPoint_<0)
 	factor=1.2f;
       glBindTexture(GL_TEXTURE_2D,Marker::texture_id(point_));
       glUniform1i(spriteLocation_,1);

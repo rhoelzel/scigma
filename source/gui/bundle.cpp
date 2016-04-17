@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 
+using scigma::common::connect;
 using scigma::common::connect_before;
 using scigma::common::disconnect;
 
@@ -43,12 +44,10 @@ namespace scigma
       length_(length), nRays_(nRays),
       nVars_(nVars), nConsts_(GLsizei(constants->size())),
       varyingBuffer_(varyings,length*nRays),
-      last_(-1),
-      pickPoint_(-1),
-      varyingAttributesInvalid_(true),
-      hovering_(false),
-      picking_(false)
+      varyingAttributesInvalid_(true)
     {
+      lastTotal_=length_;
+      
       glGenBuffers(1,&isoIndexBuffer_);
       glGenBuffers(1,&rayIndexBuffer_);
       glGenBuffers(1,&rayIndexAttributeBuffer_);
@@ -65,9 +64,7 @@ namespace scigma
 	      rayIndices[size_t(ray*length_+point)]=GLuint(point*nRays_+ray);
 	      rayAttributeIndices[size_t(point*nRays_+ray)]=GLuint(ray*length_+point);
 	    }
-	}
-      for(size_t i(0);i<size_t(length_*nRays_);++i)
-	std::cout<<rayIndices[i]<<", "<<std::endl;
+	}       
       
       glBindBuffer(GL_ARRAY_BUFFER,isoIndexBuffer_);
       glBufferData(GL_ARRAY_BUFFER,GLsizeiptr(sizeof(GLuint))*length_*nRays_,
@@ -87,7 +84,8 @@ namespace scigma
 	constants_.push_back(constants->data()[i]);
       constants->unlock();
 
-
+      
+      connect<GLBufferInvalidateEvent>(&varyingBuffer_,this);
       varyingBuffer_.begin_transfer();
       
       padding_[0]=0;
@@ -100,10 +98,6 @@ namespace scigma
       glDeleteBuffers(1,&isoIndexBuffer_);
     }
 
-    void Bundle::replay()
-    {
-
-    }
     
     void Bundle::finalize()
     {
@@ -137,21 +131,6 @@ namespace scigma
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-    bool Bundle::process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods)
-    {
-      if(GLFW_MOUSE_BUTTON_LEFT==button&&GLFW_PRESS==action)
-	{
-	  double time(glfwGetTime());
-	  double dt(time-lastClickTime_);
-	  lastClickTime_=time;
-	  if(dt>doubleClickTime_)
-	    return true;
-	  EventSource<PointClickEvent>::Type::emit(identifier_.c_str(),int(pickPoint_));
-	  return true;
-	}
-      return false;
-    }
-
     void Bundle::on_addition(GLContext* glContext)
     {
       glContext->request_redraw();
@@ -177,7 +156,6 @@ namespace scigma
       glActiveTexture(GL_TEXTURE0);
       glEnable(GL_DEPTH_TEST);
       glDisable(GL_BLEND);
-      GLERR;
     }
     
     
@@ -283,8 +261,8 @@ namespace scigma
     {
       if(style!=style_)
 	{
-	  this->Graph::set_style(style);
 	  varyingAttributesInvalid_=true;
+	  this->Graph::set_style(style);
 	}
     }
     
@@ -299,134 +277,168 @@ namespace scigma
       prepare_varying_attributes();
 #endif
       prepare_constant_attributes();
-      GLERR;
+     
       /* set the color, if we do not use a color map */
       if(-1!=colorLocation_)
 	glUniform4fv(colorLocation_,1,color_);
-      std::cout<<"colorLocation:"<<colorLocation_<<", ";
-      GLERR;
+     
       /* display the bundle in a lighter color, if hovering */
-      if(hovering_&&!picking_)
+      if(hovering_&&pickPoint_<0)
 	glUniform1i(lighterLocation_,1);
       else
 	glUniform1i(lighterLocation_,0);
-      std::cout<<"lighterLocation:"<<lighterLocation_<<", ";
-      GLERR;
-      /* check how many points are available for drawing */
-      GLsizei availablePoints((GLsizei(varyingBuffer_.size())/(nRays_*nVars_))*nRays_);
-      GLERR;
-      /* draw rays, if we are using LINES style */
-      std::cout<<"nRays_:"<<nRays_<<", ";
-      std::cout<<"availablePoints:"<<availablePoints<<", ";
-      if(LINES==style_)
-	{
-	  /* points that are drawn per ray depend on availability of points in memory */
-	  GLsizei nDrawn(availablePoints/nRays_);
-	  /* if we are currently replaying, adjust the number of drawn points accordingly */
-	  if(last_>=0)
-	    nDrawn=nDrawn>last_?last_:nDrawn;
-      GLERR;
-	  /* this is the index up to which we need to draw */
-	  GLsizei maxIndex(GLsizei(length_*(nRays_-1)+nDrawn));
-	  GLERR;
-	  /* inform shader about ray length, and how much of the ray we want do draw */
-	  std::cout<<"maxIndex:"<<maxIndex<<", ";
-	  std::cout<<"lenght_:"<<length_<<", ";
-	  glUniform1i(nTotalLocation_,GLint(length_));
-	  std::cout<<"nTotalLocation:"<<nTotalLocation_<<", ";
-	  glUniform1i(nDrawnLocation_,GLint(nDrawn));
-	  std::cout<<"nDrawnLocation:"<<nDrawnLocation_<<", ";
-      GLERR;
-	  /* draw line strip */
-	  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,rayIndexBuffer_);
-	  if(nRays_>1)
-	    {
-	      glBindBuffer(GL_ARRAY_BUFFER,rayIndexAttributeBuffer_);
-	      glVertexAttribPointer(0,1,GL_UNSIGNED_INT,GL_FALSE,0,0);
-	    }
-	  glUniform1i(spriteLocation_,0);
-	  std::cout<<"spriteLocation:"<<spriteLocation_<<", ";
-	  glDrawElements(GL_LINE_STRIP,maxIndex,GL_UNSIGNED_INT,reinterpret_cast<const void*>(0));
-	  if(nRays_>1)
-	    {
-	      glBindBuffer(GL_ARRAY_BUFFER,isoIndexAttributeBuffer_);
-	      glVertexAttribPointer(0,1,GL_UNSIGNED_INT,GL_FALSE,0,0);
-	    }
-	}
-      GLERR;
-      /* from here on, everything can be drawn with ISOLINES compatible index buffer */
+
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,isoIndexBuffer_);
       glUniform1i(nTotalLocation_,GLint(nRays_));
-      std::cout<<"nTotalLocation:"<<nTotalLocation_<<", nTotal:"<<nRays_<<", ";
       glUniform1i(nDrawnLocation_,GLint(nRays_));
-      std::cout<<"nDrawnLocation:"<<nDrawnLocation_<<", nDrawn:"<<nRays_<<", ";
-      GLERR;
-      /* if we are currently replaying, adjust the number of available points accordingly */
-      if(last_>=0)
-	availablePoints=availablePoints>last_*nRays_?last_*nRays_:availablePoints;
-                  GLERR;
-      /* draw markers, if necessary */
-      if(last_>=0&&Marker::NONE!=marker_)
-	{
-	  glBindTexture(GL_TEXTURE_2D,Marker::texture_id(marker_));
-	  glUniform1i(spriteLocation_,1);
-	  glPointSize(markerSize_);
-	  glUniform1f(sizeLocation_,markerSize_);
-	  if(availablePoints>=nRays_)
-	    glDrawElements(GL_POINTS, nRays_, GL_UNSIGNED_INT,reinterpret_cast<const void*>(availablePoints-nRays_));   
-      GLERR;
-	}
       
-      /* draw bundle with sprites*/
-      if(ISOLINES!=style_&&LINES!=style_)
+      /* determine how many points are drawn */
+      GLsizei availablePoints((GLsizei(varyingBuffer_.size())/(nRays_*nVars_))*nRays_);
+
+      /* draw markers if we are currently replaying and
+	 markers are not switched off */
+      
+      if(lastDrawn_>=0&&Marker::NONE!=marker_)
+	draw_markers(availablePoints);
+
+      switch(style_)
 	{
-	  GLfloat factor(1.0f);
-	  if(1==length_&&nRays_==1&&hovering_&&!picking_)
-	    factor=1.2f;
-	  glBindTexture(GL_TEXTURE_2D,Marker::texture_id(point_));
-	  glUniform1i(spriteLocation_,1);
-      GLERR;
-	  glPointSize(pointSize_*factor);
-      GLERR;
-	  glUniform1f(sizeLocation_,pointSize_*factor);
-	  GLERR;
-	  glDrawElements(GL_POINTS, availablePoints, GL_UNSIGNED_INT,0);
-	}
-      else if(LINES!=style_) /* draw bundle with isolines */
-	{
-	  glUniform1i(spriteLocation_,0);
-      GLERR;
-	  glDrawElements(GL_LINE_STRIP, availablePoints,GL_UNSIGNED_INT,0);
+	case LINES:
+	  draw_lines(availablePoints);
+	  break;
+	case ISOLINES:
+	  draw_isolines(availablePoints);
+	  break;
+	case POINTS:
+	  draw_points(availablePoints);
+	  break;
+	case SOLID:
+	case WIREFRAME:
+	  draw_points(availablePoints);
+	  break;
 	}
 
-      /* draw the point currently available for picking */
+      /* if we are in point picking mode, highlight the
+	 point under the mouse cursor */
       if(pickPoint_>=0)
-	{      GLERR;
+	{
 	  glBindTexture(GL_TEXTURE_2D,Marker::cross_hair_texture_id());
-      GLERR;
 	  glUniform1i(spriteLocation_,2);
-      GLERR;
 	  glPointSize(Marker::cross_hair_size());
-      GLERR;
 	  glUniform1f(sizeLocation_,Marker::cross_hair_size());
-      GLERR;
-	  glDrawArrays(GL_POINTS, GLsizei(pickPoint_), 1);
+	  glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT,reinterpret_cast<const void*>(GLsizei(sizeof(GLuint))*pickPoint_));
 	}
     }
 
+    void Bundle::draw_isolines(GLsizei availablePoints)
+    {
+      if(lastDrawn_>=0)
+	availablePoints=availablePoints>lastDrawn_*nRays_?lastDrawn_*nRays_:availablePoints;
+
+      glUniform1i(spriteLocation_,0);
+      glDrawElements(GL_LINE_STRIP, availablePoints,GL_UNSIGNED_INT,0);
+    }
+
+    void Bundle::draw_lines(GLsizei availablePoints)
+    {
+      /* points that are drawn per ray depend on availability of points in memory */
+      GLsizei nDrawn(availablePoints/nRays_);
+      /* if we are currently replaying, adjust the number of drawn points accordingly */
+      if(lastDrawn_>=0)
+	nDrawn=nDrawn>lastDrawn_?lastDrawn_:nDrawn;
+      /* this is the index up to which we need to draw */
+      GLsizei maxIndex(GLsizei(length_*(nRays_-1)+nDrawn));
+      /* inform shader about ray length, and how much of the ray we want do draw */
+      glUniform1i(nTotalLocation_,GLint(length_));
+      glUniform1i(nDrawnLocation_,GLint(nDrawn));
+
+      /* draw line strip */
+      if(nRays_>1)
+	{
+	  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,rayIndexBuffer_);
+	  glBindBuffer(GL_ARRAY_BUFFER,rayIndexAttributeBuffer_);
+	  glVertexAttribPointer(0,1,GL_UNSIGNED_INT,GL_FALSE,0,0);
+	}
+      glUniform1i(spriteLocation_,0);
+      glDrawElements(GL_LINE_STRIP,maxIndex,GL_UNSIGNED_INT,reinterpret_cast<const void*>(0));
+
+      if(nRays_>1)
+	{
+	  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,isoIndexBuffer_);
+	  glBindBuffer(GL_ARRAY_BUFFER,isoIndexAttributeBuffer_);
+	  glVertexAttribPointer(0,1,GL_UNSIGNED_INT,GL_FALSE,0,0);
+	}
+    }
+
+    void Bundle::draw_points(GLsizei availablePoints)
+    {
+      if(lastDrawn_>=0)
+	availablePoints=availablePoints>lastDrawn_*nRays_?lastDrawn_*nRays_:availablePoints;
+
+      GLfloat factor(1.0f);
+      if(1==length_&&nRays_==1&&hovering_&&pickPoint_<=0)
+	factor=1.2f;
+      glBindTexture(GL_TEXTURE_2D,Marker::texture_id(point_));
+      glUniform1i(spriteLocation_,1);
+      glPointSize(pointSize_*factor);
+      glUniform1f(sizeLocation_,pointSize_*factor);
+      glDrawElements(GL_POINTS, availablePoints, GL_UNSIGNED_INT,reinterpret_cast<const void*>(0));
+    }
+
+    void Bundle::draw_markers(GLsizei availablePoints)
+    {
+      if(lastDrawn_>=0)
+	availablePoints=availablePoints>lastDrawn_*nRays_?lastDrawn_*nRays_:availablePoints;
+
+      glBindTexture(GL_TEXTURE_2D,Marker::texture_id(marker_));
+      glUniform1i(spriteLocation_,1);
+      glPointSize(markerSize_);
+      glUniform1f(sizeLocation_,markerSize_);
+      if(availablePoints>=nRays_)
+	  glDrawElements(GL_POINTS, nRays_, GL_UNSIGNED_INT,reinterpret_cast<const void*>(GLsizei(sizeof(GLuint))*(availablePoints-nRays_)));
+    }
+    
     void Bundle::on_hover_begin(GLContext* glContext)
     {
+      hovering_=true;
+      glContext->request_redraw();
+      connect_before<MouseButtonEvent>(glWindow_,this);
     }
     
     void Bundle::on_hover(GLContext* glContext, GLuint value)
     {
-      //glfwGetKey
+      GLsizei newPickPoint;
+      if(glfwGetKey(glWindow_->glfw_window(),GLFW_KEY_RIGHT_CONTROL)==GLFW_PRESS
+	 ||glfwGetKey(glWindow_->glfw_window(),GLFW_KEY_LEFT_CONTROL)==GLFW_PRESS)
+	{
+	  newPickPoint=GLsizei(value);
+	  if(LINES==style_)
+	    {
+	      newPickPoint=(newPickPoint%length_)*nRays_+newPickPoint/length_;
+	    }
+	}
+      else
+	newPickPoint=-1;
+      if(newPickPoint==pickPoint_)
+	return;
+      pickPoint_=newPickPoint;
+      glContext->request_redraw();
     }
 
     void Bundle::on_hover_end(GLContext* glContext)
     {
+      disconnect<MouseButtonEvent>(glWindow_,this);
+      hovering_=false;
+      pickPoint_=-1;
+      glContext->request_redraw();
     }
-  
+
+    bool Bundle::process(GLBufferInvalidateEvent e)
+    {
+      varyingAttributesInvalid_=true;
+      return false;
+    }
+    
 #pragma GCC diagnostic pop
 
     void Bundle::prepare_varying_attributes()
@@ -448,7 +460,6 @@ namespace scigma
 				GLsizei(nVars_*GLsizei(sizeof(GLfloat))), 
 				reinterpret_cast<const GLvoid*>(sizeof(GLfloat)*varyingBaseIndex_[i]));
       GLERR;
-      std::cout<<attLoc<<std::endl;
 	}
       varyingAttributesInvalid_=false;
     }
@@ -464,7 +475,6 @@ namespace scigma
 	  glDisableVertexAttribArray(attLoc);
 	  glVertexAttrib1f(attLoc,GLfloat(constants_[i]));
       GLERR;
-            std::cout<<attLoc<<std::endl;
 	}
     }
 

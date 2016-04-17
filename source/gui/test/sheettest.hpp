@@ -58,7 +58,7 @@ exp.push_back("z*z*z");
 
 //exp.push_back("pow(u,2)+pow(v,2)");
 exp.push_back("0");
-exp.push_back("");
+exp.push_back("x*x+y*y+z*z");
 
 s.adjust_shaders_for_view(w.gl_context(),ind,exp,0);
 
@@ -100,6 +100,9 @@ GLfloat color[]={1,0,0,0.5};
 s.set_color(color);
 s.set_style(Graph::SOLID);
 
+//s.set_delay(0.5);
+s.replay();
+
 for(double e(0.001);e<5;e*=1.02)
   {
     std::vector<std::string> ex;
@@ -109,7 +112,7 @@ for(double e(0.001);e<5;e*=1.02)
     ex.push_back("pow(abs(y),"+ss.str()+")*sign(y)");
     ex.push_back("pow(abs(z),"+ss.str()+")*sign(z)");
     ex.push_back("0");
-    ex.push_back("");
+    ex.push_back("z");
     s.adjust_shaders_for_view(w.gl_context(),ind,ex,0);
     w.gl_context()->request_redraw();
     Application::get_instance()->loop(0.05);

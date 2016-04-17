@@ -213,7 +213,7 @@ namespace scigma
       "    }\n"
       "  else // color if we are actually hovering (picking of individual points (uniqueID.z==2)\n"
       "    {\n"
-      "      gl_FragColor=vec4(mod(indexF_/(256*256),256)/256.0,mod(indexF_/256,256)/256.0,(mod(indexF_,256)+0.5)/256.0,1.0);\n"
+      "      gl_FragColor=vec4(mod(int(indexF_/(256*256)),256)/256.0,mod(int(indexF_/256),256)/256.0,(mod(indexF_,256)+0.5)/256.0,1.0);\n"
       "    }\n"
       "}\n";
     const std::string Bundle::fragmentShaderGL3_=
@@ -290,7 +290,7 @@ namespace scigma
       "    }\n"
       "  else\n"
       "    {\n"
-      "      color_=vec4(mod(indexF_/(256*256),256)/256.0,mod(indexF_/256,256)/256.0,(mod(indexF_,256)+0.5)/256.0,1.0);\n"
+      "      color_=vec4(mod(int(indexF_/(256*256)),256)/256.0,mod(int(indexF_/256),256)/256.0,(mod(indexF_,256)+0.5)/256.0,1.0);\n"
       "    }\n"
       "}\n";
 

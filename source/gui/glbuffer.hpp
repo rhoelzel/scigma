@@ -1,6 +1,5 @@
 #ifndef SCIGMA_GUI_GLBUFFER_HPP
 #define SCIGMA_GUI_GLBUFFER_HPP
-
 #include "../common/pythonobject.hpp"
 #include "../common/events.hpp"
 #include "../dat/wave.hpp"
@@ -10,6 +9,7 @@
 
 using scigma::common::PythonObject;
 using scigma::common::EventSink;
+using scigma::common::EventSource;
 using scigma::common::connect;
 using scigma::common::disconnect;
 using scigma::dat::AbstractWave;
@@ -19,11 +19,14 @@ namespace scigma
 {
   namespace gui
   {
+    struct GLBufferInvalidateEvent{  
+      typedef LOKI_TYPELIST_0 Arguments;};
     
     template <class T,class U> class AbstractGLBuffer:
       public PythonObject< AbstractGLBuffer<T,U> >,
       public EventSink<WaveInvalidateEvent>::Type,
-      public EventSink<IdleEvent>::Type
+      public EventSink<IdleEvent>::Type,
+      public EventSource<GLBufferInvalidateEvent>::Type
       {
     public:
     	AbstractGLBuffer(const AbstractWave<U>* wave, GLsizei initialCapacity=0x4000);
@@ -94,7 +97,6 @@ namespace scigma
     }
     template <class T, class U> bool AbstractGLBuffer<T,U>::is_transferring(){return isTransferring_;}
     
-    
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
@@ -130,7 +132,7 @@ namespace scigma
 	  usedFullChunk_=false;
 	}
       
-      if(timeSinceLastTransfer<0.33)  // do not try to upload more than three times per second
+      if(timeSinceLastTransfer<0.05)  // do not try to upload too often
 	{
 	  wave_->unlock();
 	  return false;
@@ -179,6 +181,7 @@ namespace scigma
 	  capacity_=newCapacity;
 	  GLuint oldBufferID(bufferID_);
 	  bufferID_=newBufferID;
+	  emit();
 	  glDeleteBuffers(1,&oldBufferID);
 	  size_=dataMax;
 	}
