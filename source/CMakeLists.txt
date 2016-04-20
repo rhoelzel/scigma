@@ -16,3 +16,12 @@ add_subdirectory(common)
 add_subdirectory(num)
 add_subdirectory(gui)
 add_subdirectory(dat)
+
+file(WRITE empty.cpp "")
+add_library(scigma SHARED empty.cpp) 
+
+target_link_libraries(scigma gui num dat common
+			     lapack odessa tinythread
+			     libpng zlib glew glfw
+			     anttweakbar ${GLFW_LIBRARIES})
+

@@ -21,7 +21,8 @@ namespace scigma
 
     class Sheet: public Graph,
 		 public Drawable,
-		 public PythonObject<Sheet>
+		 public PythonObject<Sheet>,
+		 public EventSink<GLBufferInvalidateEvent>::Type
     {
     private:
       typedef AbstractWave<double> Wave;
@@ -58,11 +59,15 @@ namespace scigma
       virtual void set_style(Style style);
       void set_light_direction(GLfloat* direction);
       void set_light_parameters(GLfloat* parameter);
+
+      using Graph::process;
+      bool process(GLBufferInvalidateEvent e);
       
     private:
       void prepare_varying_attributes();
       void prepare_constant_attributes();
 
+      void draw_markers();
       void draw_triangles();
       void draw_isolines();
       void draw_points();

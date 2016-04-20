@@ -272,7 +272,8 @@ namespace scigma
 #else
       glBindBuffer(GL_ARRAY_BUFFER,glBuffer_);   
       prepare_attributes();
-#endif    
+#endif
+      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
       glDrawArrays(GL_TRIANGLES, 0, GLsizei(usedSize_/5));
 
       GLERR;

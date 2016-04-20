@@ -3,6 +3,7 @@
 
 #include <map>
 #include "../common/events.hpp"
+#include "drawable.hpp"
 #include "marker.hpp"
 #include "glwindowevents.hpp"
 #include "../common/pythonobject.hpp"

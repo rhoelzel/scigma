@@ -52,6 +52,11 @@ namespace scigma
 	constants_.push_back(GLfloat(constants->data()[i/Mesh::NVALS_PER_DIM]));
       constants->unlock();
 
+      connect<GLBufferInvalidateEvent>(&isoIndexBuffer_,this);
+      connect<GLBufferInvalidateEvent>(&isoEndPointsBuffer_,this);
+      connect<GLBufferInvalidateEvent>(&triangleIndexBuffer_,this);
+      connect<GLBufferInvalidateEvent>(&varyingBuffer_,this);
+      
       isoIndexBuffer_.begin_transfer();
       isoEndPointsBuffer_.begin_transfer();
       triangleIndexBuffer_.begin_transfer();
@@ -272,6 +277,12 @@ namespace scigma
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
+    bool Sheet::process(GLBufferInvalidateEvent e)
+    {
+      varyingAttributesInvalid_=true;
+      return false;
+    }
+
     void Sheet::draw(GLContext* glContext)
     {
       /* setup vertex attributes (if necessary) */
@@ -297,6 +308,9 @@ namespace scigma
       //std::cout<<"lighterLocation:"<<lighterLocation_<<", ";
       GLERR;
 
+      if(lastDrawn_>=0&&Marker::NONE!=marker_)
+	draw_markers();
+      
       switch(style_)
 	{
 	case WIREFRAME:
@@ -413,6 +427,7 @@ namespace scigma
 
       glDisableVertexAttribArray(1);
       glVertexAttrib1f(1,0.f);
+      glUniform1i(spriteLocation_,0);
       //std::cout<<"availableLayers: "<<availableLayer<<"; maxIndex: "<<maxIndex<<std::endl;
       GLERR;
       /* draw line strip */
@@ -435,6 +450,7 @@ namespace scigma
       GLsizei maxIndex((GLsizei(mesh_->max_for_iso_layer(availableLayer))));
 
       /* draw line strip */
+      glUniform1i(spriteLocation_,0);
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,isoIndexBuffer_.buffer_ID());
       glBindBuffer(GL_ARRAY_BUFFER,isoEndPointsBuffer_.buffer_ID());
       glEnableVertexAttribArray(1);
@@ -478,6 +494,32 @@ namespace scigma
 
     }
 
+    void Sheet::draw_markers()
+    {
+      /* check how many layers are available for drawing */
+      size_t availableLayer(mesh_->available_iso_layer(isoIndexBuffer_.size(),
+						       isoEndPointsBuffer_.size(),
+						       varyingBuffer_.size()));
+      if(lastDrawn_>=0)
+	availableLayer = size_t(lastDrawn_)<availableLayer?size_t(lastDrawn_):availableLayer;
+
+      GLsizei maxIndex((GLsizei(mesh_->max_for_iso_layer(availableLayer))));
+      GLsizei minIndex(availableLayer>0?(GLsizei(mesh_->max_for_iso_layer(availableLayer-1))):0);
+      
+      
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,isoIndexBuffer_.buffer_ID());
+      glDisableVertexAttribArray(1);
+      glVertexAttrib1f(1,0.f);
+
+      glBindTexture(GL_TEXTURE_2D,Marker::texture_id(marker_));
+      glUniform1i(spriteLocation_,1);
+      glPointSize(markerSize_);
+      glUniform1f(sizeLocation_,markerSize_);
+      //      glBindBuffer(GL_ARRAY_BUFFER,varyingBuffer_.buffer_ID());
+      glDrawElements(GL_POINTS,maxIndex-minIndex,GL_UNSIGNED_INT,reinterpret_cast<const void*>(GLsizei(sizeof(GLuint))*minIndex));
+      GLERR;
+
+    }
     
 
   } /* end namespace gui */

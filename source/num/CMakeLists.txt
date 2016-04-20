@@ -1,6 +1,6 @@
 enable_language(Fortran)
 include_directories(../external/tinythread)
-add_library(num SHARED function.cpp operator.cpp parser.cpp
+add_library(num STATIC function.cpp operator.cpp parser.cpp
 		equationsystem.cpp internalequationsystem.cpp externalequationsystem.cpp
 		odessa.cpp
 		stepper.cpp integrationstepper.cpp mapstepper.cpp) 

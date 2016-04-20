@@ -98,9 +98,9 @@ Application::get_instance()->loop(10);
 
 GLfloat color[]={1,0,0,0.5};
 s.set_color(color);
-s.set_style(Graph::SOLID);
+s.set_style(Graph::WIREFRAME);
 
-//s.set_delay(0.5);
+s.set_delay(0.5);
 s.replay();
 
 for(double e(0.001);e<5;e*=1.02)

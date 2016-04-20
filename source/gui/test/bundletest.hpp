@@ -45,13 +45,13 @@ b.set_color(col);
   b.adjust_shaders_for_view(w.gl_context(),ind,exp,0);
 
   w.gl_context()->add_drawable(&b);
-/*
+
 b.set_style(Graph::POINTS);
 Application::get_instance()->loop(5);
 b.set_delay(0.15);
 b.replay();
 Application::get_instance()->loop(5);
 b.set_style(Graph::ISOLINES);
-Application::get_instance()->loop(5);*/
+Application::get_instance()->loop(5);
 b.set_style(Graph::LINES);
 Application::get_instance()->loop(150);

@@ -8,7 +8,7 @@ include_directories(../external/loki)
 include_directories(../external/lpng1610)
 include_directories(../external/anttweakbar)
 
-add_library(gui SHARED application.cpp glutil.cpp glcontext.cpp
+add_library(gui STATIC application.cpp glutil.cpp glcontext.cpp
 		viewingarea.cpp viewingvolume.cpp glwindow.cpp
 		font.cpp marker.cpp screentext.cpp spacetext.cpp
 		ruler.cpp picker.cpp drawable.cpp navigator.cpp
