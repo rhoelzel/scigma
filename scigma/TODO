@@ -1,0 +1,39 @@
+-dict-Teil von util könnte zu einer eigenen Ordner-Klasse oder so ähnlich werden, die mit Punktnotation angesprochen wird und Callbacks für Anlegen, löschen und dergleichen hat
+- atwpanel.py sollte min max beschränkungen erzwingen
+- blobs sollten immer destroyed werden, wenn sie nicht mehr gebraucht werden (möglicherweise mit __del__, damit nie explizit)
+- blobs sollten konsequenter eingesetzt werden (z.B. auch eqsysID und waveID drin)
+- CurveClickEvent ist kein zeitgemäßer Name mehr
+- bei OPEN-GL 3.2: glVertexAttrib gehört nicht zu VAO-State!
+- auf Python-Seite evtl Kommandos in files nach Algorithmen/Tools gruppieren
+- anderes Schneiden von Trajektorien?! (viele gleichzeitig im gleichen Buffer?) -> wird gemacht
+- bei Flows: nur ein Thread pro Flow, nicht pro Trajektorie
+- commands: auslagern in verschiedene py-files (general, graphics, integration, auto etc)
+- Warnings bei console einführen, z.B. benutzen, wenn statt negativer periode absoluter wert
+  benutzt wird -> da aber auch noch mal nachschauen, ob nicht ein negativer Wert auch sinnvoll
+  sein kann
+- speichern, wo die Panels liegen, Fensteranpassung etc.
+- nach Abschluss einer Trajektorie sollte t auch die verstrichene Zeit anzeigen - nur wenn
+  neu geplottet wird wieder auf 0 zurücksetzen!
+- Numerical -> Iteration
+- AUTO -> Continuation
+- enforce read-only variables with ATWPanel set method
+- nervtötende Crashes wenn man bei Anttweakbar in einer Zeile etwas ändert und dann auf eine zweite klickt
+- better error handling for integrator
+- multithreading will break standard T and P parameters -> arguments in system_f and so on are in place but not yet used!
+- understand adjustment of jacobian for poincare maps
+- lambda expressions should probably have ->'s
+- Winkelvariablen implementieren
+- die optionalen std::vector<std::string> > parameters argumente werden noch nicht beruecksichtigt
+- banded Jacobians for Odessa
+- have F/DFDX on the one hand and F_DFDX on the other hand have different signatures
+- maybe do something about the explicit paddings
+- in the brusselator homoclinic tangle example, why does it freeze for alphamax=1 and below?
+- make sprites transparent
+- it appears that i never use screenToDevice and deviceToScreen as 4x4-matrices
+- mouse coordinates are noticably off -> solve in event handler, remove workaround in Glcontext
+- context_redraws should also be standard in on_removal functions -> move the on_removal call in glContext and rewrite drawables
+- commented out delete [] oldData_ in Wave::release, no idea why this is there!!
+- application loop is not quite right
+- Navigator scrolls z-direction even in 2d mode -> keep?
+- dejavu serif large problems with ' ' and '-' textures (and possibly others as well)
+- tinythread bei Gelegenheit durch c++11 threads ersetzen (benutze ja auch lambdas)
