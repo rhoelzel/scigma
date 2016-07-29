@@ -1,4 +1,5 @@
 #include <string>
+#include <sstream>
 #include "log.hpp"
 
 using namespace scigma::common;
@@ -12,37 +13,21 @@ using namespace scigma::common;
 extern "C"
 {
   // wrappers for the Log class
-  PythonID scigma_create_log(){Log* ptr=new Log("");return ptr->get_python_id();}
-  void scigma_destroy_log(PythonID objectID){PYOBJ(Log,ptr,objectID);if(ptr)delete ptr;}
+  PythonID scigma_common_create_log(){Log* ptr=new Log("");return ptr->get_python_id();}
+  void scigma_common_destroy_log(PythonID objectID){PYOBJ(Log,ptr,objectID);if(ptr)delete ptr;}
 
   std::string logMessage;
   
-  const char* scigma_common_log_pop(PythonID objectID, Log::Type type)
+  const char* scigma_common_log_pop(PythonID objectID)
   {
     PYOBJ(Log,ptr,objectID);
     if(ptr)
       {
-	switch(type)
-	  {
-	  case Log::LOG_SUCCESS:
-	    logMessage=ptr->pop<Log::LOG_SUCCESS>();
-	    break;
-	  case Log::LOG_FAIL:
-	    logMessage=ptr->pop<Log::LOG_FAIL>();
-	    break;
-	  case Log::LOG_DATA:
-	    logMessage=ptr->pop<Log::LOG_DATA>();
-	    break;	    
-	  case Log::LOG_WARNING:
-	    logMessage=ptr->pop<Log::LOG_WARNING>();
-	    break;
-	  case Log::LOG_ERROR:
-	    logMessage=ptr->pop<Log::LOG_ERROR>();
-	    break;
-	  case Log::LOG_DEFAULT:
-	    logMessage=ptr->pop<Log::LOG_DEFAULT>();
-	    break;
-	  }
+	std::pair<scigma::common::Log::Type,std::string> result(ptr->pop());
+	std::stringstream ss;
+	ss<<result.first;
+	ss<<result.second;
+	logMessage=ss.str();
 	return logMessage.c_str();
       }
     else

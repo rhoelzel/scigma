@@ -6,14 +6,12 @@
 #include <algorithm>
 #include <cmath>
 #include "../common/pythonobject.hpp"
-#include "../common/events.hpp"
 #include "definitions.hpp"
 #include "drawable.hpp"
 #include "drawabletypes.hpp"
 #include "glutil.hpp"
 
 using scigma::common::PythonObject;
-using scigma::common::EventSink;
 
 namespace scigma
 {
@@ -23,8 +21,7 @@ namespace scigma
     /*!
       GLContext acts as a container for drawable objects.
     */
-    class GLContext:public PythonObject<GLContext>,
-      public EventSink<LoopEvent>::Type
+    class GLContext:public PythonObject<GLContext>
     {
       friend class GLWindow;
       
@@ -55,10 +52,7 @@ namespace scigma
 
       void destroy();
      
-      virtual bool process(LoopEvent event);
       void check_for_hover(GLfloat x, GLfloat y);
-      void continuous_refresh_needed();
-      void continuous_refresh_not_needed();
       double get_current_frame_start_time();
       
       //!create programs for drawable objects
@@ -313,7 +307,6 @@ namespace scigma
 		{
 		  if(color[i*3]!=0xFF||color[i*3+1]!=0xFF||color[i*3+2]!=0xFF)
 		    {
-		      std::cout<<int(color[i*3])<<", "<<int(color[i*3+1])<<", "<<int(color[i*3+2])<<std::endl;
 		      value=color[i*3]*0x10000+color[i*3+1]*0x100+color[i*3+2];
 		      break;
 		    }
@@ -365,7 +358,6 @@ namespace scigma
       size_t stalled_;
 
       size_t hoverIndex_;      
-      size_t refreshContinuously_;
 
 #ifdef SCIGMA_USE_OPENGL_3_2
       GLuint globalUniformBuffer_;

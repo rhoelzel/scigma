@@ -24,14 +24,14 @@ namespace scigma
     public:
       InternalEquationSystem();
 
-      std::string parse(std::string expression);
-      
-      void stall();
+      virtual uint64_t time_stamp() const;
+      virtual std::string parse(std::string expression);
+
+      virtual void stall();
       void request_rebuild(bool lean=false);
-      void flush();
+      virtual void flush();
 
       void clear();
-      uint64_t time_stamp() const;
 
       virtual void set(const std::string& name, double value);
       virtual double get(const std::string& name);
@@ -52,9 +52,9 @@ namespace scigma
       virtual const std::string* function_names() const;
       virtual const std::string* constant_names() const;
 
-      const std::string* variable_definitions() const;
-      const std::string* function_definitions() const;
-      const std::string* constant_definitions() const;
+      virtual const std::string* variable_definitions() const;
+      virtual const std::string* function_definitions() const;
+      virtual const std::string* constant_definitions() const;
 
       virtual bool is_autonomous() const;
 
@@ -92,10 +92,10 @@ namespace scigma
 			     const FunctionSet& funcSet, const FunctionSet& constSet) const;
 
       void detach(Function& t, VecF& x, VecF& p, VecF& rhs, VecF& func) const;
-      
+
       size_t stalled_;
       unsigned long long timeStamp_;
-
+      
       double t_;
       Function tFunc_;
 

@@ -3,23 +3,29 @@
 
 #include <string>
 #include <functional>
+#include "../common/pythonobject.hpp"
 
-typedef std::function<void(const double*, double*)> F;
-typedef std::function<void(const double*, const double*, double*)> F_p;
-typedef std::function<void(double t, const double*, double*)> F_t;
-typedef std::function<void(double t, const double*, const double*, double*)> F_pt;
+using scigma::common::PythonObject;
 
 namespace scigma
 {
   namespace num
   {
-
-    class EquationSystem
+    
+    typedef std::function<void(const double*, double*)> F;
+    typedef std::function<void(const double*, const double*, double*)> F_p;
+    typedef std::function<void(double t, const double*, double*)> F_t;
+    typedef std::function<void(double t, const double*, const double*, double*)> F_pt;
+    
+    class EquationSystem: public PythonObject<EquationSystem>
     {
       
     public:
       EquationSystem();
       virtual ~EquationSystem();
+
+      virtual uint64_t time_stamp() const=0;
+      virtual std::string parse(std::string expression)=0;
       
       virtual void set(const std::string& name, double value)=0;
       virtual double get(const std::string& name)=0;
@@ -40,6 +46,10 @@ namespace scigma
       virtual const std::string* function_names() const=0;
       virtual const std::string* constant_names() const=0;
 
+      virtual const std::string* variable_definitions() const=0;
+      virtual const std::string* function_definitions() const=0;
+      virtual const std::string* constant_definitions() const=0;
+      
       virtual bool is_autonomous() const=0;
 
       virtual F f() const=0;
@@ -57,10 +67,13 @@ namespace scigma
       virtual F_pt dfdp_pt() const=0;
       virtual F_pt func_pt() const=0;
 
+      virtual void stall();
+      virtual void flush();
+      
     private:
       EquationSystem(const EquationSystem&);
       EquationSystem& operator=(const EquationSystem&); 
-
+      
     };
     
   } /* end namespace num */

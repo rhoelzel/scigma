@@ -39,10 +39,10 @@
 ! Initialization :
 ! ID and i/o units
       AC%ID=ID
-      AC%CUNIT=ID*4+3
-      AC%SUNIT=ID*4+4
-      AC%BUNIT=ID*4+5
-      AC%DUNIT=ID*4+6
+      AC%CUNIT=(ID+1)*4+3
+      AC%SUNIT=(ID+1)*4+4
+      AC%BUNIT=(ID+1)*4+5
+      AC%DUNIT=(ID+1)*4+6
       
       CALL MPIINI()
       IF(MPIIAM()/=0)THEN 

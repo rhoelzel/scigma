@@ -3,6 +3,10 @@
 
 #include <vector>
 #include <stddef.h>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#include <tinythread.h>
+#pragma clang diagnostic pop
 
 /* Macros to retrieve object pointers from PythonIDs
    and call member functions of these objects.
@@ -29,6 +33,8 @@ namespace scigma
 	//!create a PythonObject from a pointer
 	PythonObject(T* ptr)
 	  {
+	    
+	    mutex.lock();
 	    if(availablePythonIDs.empty())     
 	      {
 		id_=int(objects.size());
@@ -41,13 +47,16 @@ namespace scigma
 		objects[size_t(id_)]=ptr;
 	      }
 	    padding_[0]=0;
+	    mutex.unlock();
 	  }
 	
 	//!destroy a PythonObject
 	~PythonObject()
 	  {
+	    mutex.lock();
 	    objects[size_t(id_)]=NULL;
 	    availablePythonIDs.push_back(id_);
+	    mutex.unlock();
 	  }
 	
 	//!get PythonID from this object 
@@ -67,15 +76,18 @@ namespace scigma
 	*/
 	static T* get_pointer(PythonID id)
 	{
+	  T* retval(NULL);
+	  mutex.lock();
 	  if(id<int(objects.size())&&id>=0)
-	    return objects.at(size_t(id));
-	  else
-	    return NULL;
+	    retval=objects.at(size_t(id));
+	  mutex.unlock();
+	  return retval;
 	}
 	
       private:
 	static std::vector<T*> objects;
 	static std::vector<PythonID> availablePythonIDs;
+	static tthread::mutex mutex;
 	
 	PythonID id_; 
 	char padding_[4];
@@ -86,6 +98,7 @@ namespace scigma
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
     template<class T> std::vector<T*> PythonObject<T>::objects;
     template<class T> std::vector<PythonID> PythonObject<T>::availablePythonIDs;
+    template<class T> tthread::mutex PythonObject<T>::mutex;
 #pragma clang diagnostic pop
   } /* end namespace common */
 } /* end namespace scigma */

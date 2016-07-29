@@ -24,6 +24,7 @@ namespace scigma
     std::map<GLContext*,GLint> Bundle::sizeLocationMap_;
     std::map<GLContext*,GLint> Bundle::colorLocationMap_;
     std::map<GLContext*,GLint> Bundle::lighterLocationMap_;
+    std::map<GLContext*,double> Bundle::shaderTimeStampMap_;
 #pragma clang diagnostic pop
 
     GLint Bundle::nDrawnLocation_;
@@ -34,7 +35,6 @@ namespace scigma
     GLint Bundle::lighterLocation_;
 
     GLuint Bundle::program_(0);
-    double Bundle::shaderTimeStamp_(-1);
     
     Bundle::Bundle(GLWindow* glWindow, std::string identifier,
 		   GLsizei length, GLsizei nRays, GLsizei nVars,
@@ -46,7 +46,7 @@ namespace scigma
       varyingBuffer_(varyings,length*nRays),
       varyingAttributesInvalid_(true)
     {
-      lastTotal_=length_;
+      lastTotal_=nVars_>0?length_:1;
       
       glGenBuffers(1,&isoIndexBuffer_);
       glGenBuffers(1,&rayIndexBuffer_);
@@ -101,7 +101,7 @@ namespace scigma
     
     void Bundle::finalize()
     {
-      varyingBuffer_.end_transfer();
+      varyingBuffer_.finalize();
     }
 
     void Bundle::on_gl_context_creation(GLContext* glContext)
@@ -159,25 +159,40 @@ namespace scigma
     }
     
     
-    void Bundle::set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
-					 const std::vector<size_t>& constantIndex)
+    void Bundle::set_attributes_for_view(const std::vector<int>& indices)
     {
-      varyingBaseIndex_=varyingBaseIndex;
-      constantIndex_=constantIndex;
-
+      varyingBaseIndex_.clear();varyingAttributeIndex_.clear();
+      constantIndex_.clear();constantAttributeIndex_.clear();
+      emptyAttributeIndex_.clear();
+      size_t n(indices.size());
+      for(size_t i(0);i<n;++i)
+	{
+	  if(indices[i]>0)
+	    {
+	      varyingBaseIndex_.push_back((size_t(indices[i]-1)));
+	      varyingAttributeIndex_.push_back((GLuint(i+1)));
+	    }
+	  else if(indices[i]<0)
+	    {
+	      constantIndex_.push_back((size_t(-indices[i]-1)));
+	      constantAttributeIndex_.push_back((GLuint(i+1)));
+	    }
+	  else
+	    emptyAttributeIndex_.push_back(GLuint(i+1));
+	}
       varyingAttributesInvalid_=true;
     }
     
     using scigma::common::substring;
     
-    void Bundle::adjust_shaders_for_view(GLContext* glContext,
-					 const VecS& independentVariables,
+    void Bundle::adjust_shaders_for_view(const VecS& independentVariables,
 					 const VecS& expressions,
 					 double timeStamp)
     {
-      if(timeStamp<shaderTimeStamp_)
+      GLContext* glContext(glWindow_->gl_context());
+      if(timeStamp<shaderTimeStampMap_[glContext])
 	return;
-      shaderTimeStamp_=timeStamp;
+      shaderTimeStampMap_[glContext]=timeStamp;
       
 #ifdef SCIGMA_USE_OPENGL_3_2
       std::string vShader(vertexShaderGL3_);
@@ -195,10 +210,9 @@ namespace scigma
       substring(vShader,"__REPLACE_X__",expressions[0]);
       substring(vShader,"__REPLACE_Y__",expressions[1]);
       substring(vShader,"__REPLACE_Z__",expressions[2]);
-      substring(vShader,"__REPLACE_TIME__",expressions[3]);
-
+      substring(vShader,"__REPLACE_TIME__",expressions[4]);
       /* color: defined by uniform or by expression? */
-      if(""==expressions[4])
+      if(""==expressions[3])
 	{
 	  substring(vShader,"__REPLACE_COLOR_START__","/*");
 	  substring(vShader,"__REPLACE_COLOR_END__","*/");
@@ -211,17 +225,17 @@ namespace scigma
 	{
 	  substring(vShader,"__REPLACE_COLOR_START__","");
 	  substring(vShader,"__REPLACE_COLOR_END__","");
-	  substring(vShader,"__REPLACE_COLOR__",expressions[4]);
+	  substring(vShader,"__REPLACE_COLOR__",expressions[3]);
 	  substring(fShader,"__REPLACE_COLOR_UNIFORM_START__","/*");
 	  substring(fShader,"__REPLACE_COLOR_UNIFORM_END__","*/");
 	  substring(fShader,"__REPLACE_COLOR_IN_START__","");
 	  substring(fShader,"__REPLACE_COLOR_IN_END__","");
 	}
 
-      std::cout<<"------------------------------------------------------------------"<<std::endl;
+      /*      std::cout<<"------------------------------------------------------------------"<<std::endl;
       std::cout<<vShader;
       std::cout<<"------------------------------------------------------------------"<<std::endl;
-      std::cout<<fShader;
+      std::cout<<fShader;*/
 
       
       glContext->delete_programs<Bundle>();
@@ -236,7 +250,7 @@ namespace scigma
       glContext->link_program(program_);
 
       /* if color is defined by uniform, get the location */
-      if(""==expressions[4])
+      if(""==expressions[3])
 	colorLocationMap_[glContext]=glGetUniformLocation(program_,"rgba_");
       else
 	colorLocationMap_[glContext]=-1;
@@ -268,6 +282,7 @@ namespace scigma
     
     void Bundle::draw(GLContext* glContext)
     {
+      //      std::cout<<"drawing, ";std::cout.flush();
       /* setup vertex attributes (if necessary) */
 #ifdef SCIGMA_USE_OPENGL_3_2
       glBindVertexArray(vertexArray_);
@@ -293,7 +308,7 @@ namespace scigma
       glUniform1i(nDrawnLocation_,GLint(nRays_));
       
       /* determine how many points are drawn */
-      GLsizei availablePoints((GLsizei(varyingBuffer_.size())/(nRays_*nVars_))*nRays_);
+      GLsizei availablePoints(nVars_?(GLsizei(varyingBuffer_.size())/(nRays_*nVars_))*nRays_:1);
 
       /* draw markers if we are currently replaying and
 	 markers are not switched off */
@@ -454,7 +469,7 @@ namespace scigma
       for(size_t i(0);i<nVaryingAttributes;++i)
 	{
 	  GLERR;
-	  GLuint attLoc((GLuint(i+1)));
+	  GLuint attLoc(varyingAttributeIndex_[i]);
 	  glEnableVertexAttribArray(attLoc);
 	  glVertexAttribPointer(attLoc,1,GL_FLOAT, GL_FALSE,
 				GLsizei(nVars_*GLsizei(sizeof(GLfloat))), 
@@ -467,13 +482,20 @@ namespace scigma
     void Bundle::prepare_constant_attributes()
     {
       GLERR;
-      size_t nVaryingAttributes(varyingBaseIndex_.size());
       size_t nConstAttributes(constantIndex_.size());
       for(size_t i(0);i<nConstAttributes;++i)
 	{
-	  GLuint attLoc((GLuint(i+nVaryingAttributes+1)));
+	  GLuint attLoc(constantAttributeIndex_[i]);
 	  glDisableVertexAttribArray(attLoc);
-	  glVertexAttrib1f(attLoc,GLfloat(constants_[i]));
+	  glVertexAttrib1f(attLoc,GLfloat(constants_[constantIndex_[i]]));
+      GLERR;
+	}
+      size_t nEmptyAttributes(emptyAttributeIndex_.size());
+      for(size_t i(0);i<nEmptyAttributes;++i)
+	{
+	  GLuint attLoc(emptyAttributeIndex_[i]);
+	  glDisableVertexAttribArray(attLoc);
+	  glVertexAttrib1f(attLoc,GLfloat(0.0));
       GLERR;
 	}
     }

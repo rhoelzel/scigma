@@ -10,15 +10,6 @@ namespace scigma
   namespace num
   {
 
-    Stepper* create_map_stepper(const EquationSystem& eqsys, bool computeJacobian);
-    
-    Stepper* create_integration_stepper(const EquationSystem& eqsys, bool computeJacobian, double dt, bool extJac, 
-					bool stiff, double aTol, double rTol, size_t maxIter);
-
-    Stepper* create_poincare_stepper(const EquationSystem& eqsys, bool computeJacobian,double maxtime, double dt,
-				     int secvar, int secdir, double secval, double tol,
-				     bool extJac, bool stiff, double aTol, double rTol, size_t maxIter);
-
     Task* create_stepping_task(std::string identifier, Log* log, Stepper* stepper, size_t nSteps, size_t nPeriod, size_t showAllIterates, dat::Wave* wave);
 
   } /* end namespace num */

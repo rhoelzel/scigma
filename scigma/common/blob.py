@@ -14,18 +14,18 @@ class Blob(object):
     lib.scigma_common_blob_set_string.argtypes=[c_int,c_char_p,c_char_p]
 
     def __init__(self, data=None):
-        self.objectID=lib.scigma_create_blob()
+        self.objectID=lib.scigma_common_create_blob()
         if not data:
             return
         else:
             self.set_from_dict(data,"")
         
     def destroy(self):
-        lib.scigma_destroy_blob(self.objectID)
+        lib.scigma_common_destroy_blob(self.objectID)
 
     def set_from_dict(self,data,identifier):
         for key in data:
-            idf = key if identifier is "" else identifier+"."+key
+            idf = key if identifier == "" else identifier+"."+key
             if isinstance(data[key], dict):
                 self.set_from_dict(data[key],idf);
             else:

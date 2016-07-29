@@ -245,7 +245,12 @@ extern "C"
     if(window&&picker)
       window->gl_context()->remove_drawable(picker);
   }
-
+  void scigma_gui_gl_window_set_theme(PythonID windowID, int theme)
+  {
+    PYOBJ(GLWindow,window,windowID);
+    if(window)
+      window->set_theme(GLWindow::Theme(theme));
+  }
   
 } /* end extern "C" block */
 

@@ -19,11 +19,9 @@ class Log(object):
     def destroy(self):
         lib.scigma_common_destroy_log(self.objectID)
         
-    def pop(self,logType):
-        retval=lib.scigma_log_pop(self.objectID, logType)
-        if not retval:
-            return ""
-        else:
-            return str(retval.decode())
+    def pop(self):
+        retval=lib.scigma_common_log_pop(self.objectID)
+        retval=str(retval.decode())
+        return int(retval[0]), str(retval[1:])
 
                                                                         

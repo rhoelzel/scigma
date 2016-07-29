@@ -24,12 +24,20 @@ namespace scigma
       public EventSink<CharEvent>::Type
       {
       public:
+
+	enum Theme
+	  {
+	    DARK=0,
+	    LIGHT=1
+	  };
+	
 	Console(GLContext* context,bool largeFontsFlag=false);
 	virtual ~Console();
 	virtual bool process(CharEvent event, GLWindow* window, unsigned int unicode);
 	virtual bool process(KeyEvent event, GLWindow* window, int key,int scancode,int action,int mods);
 	void set_displayed_screen_lines(unsigned int number);
 	void set_history_fadeout(bool yesNo);
+	void set_theme(Theme theme);
 	void set_foreground_color(const float* rgba);
 	void set_error_color(const float* rgba);
 	void set_data_color(const float* rgba);
@@ -88,6 +96,7 @@ namespace scigma
 	bool delayedLineFeed;
 
 	char padding_[2];
+
       };
 
   } /* end namespace gui */

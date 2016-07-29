@@ -41,7 +41,3 @@ def from_string(colstring):
             return values[names[index]]
         else:
             raise Exception
-
-
-
-

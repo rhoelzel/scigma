@@ -4,30 +4,22 @@ from .. import lib
 class Wave(object):
     """ Wrapper for Wave objects """
 
-    lib.scigma_dat_create_wave.argtypes=[c_int,c_int, POINTER(c_double),c_int]
+    lib.scigma_dat_create_wave.argtypes=[c_int]
     lib.scigma_dat_wave_push_back.argtypes=[c_int,POINTER(c_double),c_int]
     lib.scigma_dat_wave_data.restype=POINTER(c_double)
 
-    def __init__(self, values=None, columns = None, rows = 0x1000):
-        if not values:
-            cValues=None
-            nValues=0
-            if not columns:
-                columns=0
+    def __init__(self, capacity = 0x1000, objectID=-1):
+        if objectID != -1:
+            self.objectID=objectID
         else:
-            C_DoubleArrayType=c_double*len(values)
-            cValuesArray=C_DoubleArrayType(*values)
-            cValues=cast(cValuesArray,POINTER(c_double))
-            nValues=len(values)
-            if not columns:
-                columns=nValues
-        self.objectID = lib.scigma_dat_create_wave(rows,columns,cValues,nValues)
+            self.objectID = lib.scigma_dat_create_wave(capacity)
 
     def destroy(self):
         lib.scigma_dat_destroy_wave(self.objectID)
 
     def __str__(self):
-        return 'Wave('+str(self.columns())+'x'+str(self.rows())+')'
+        size=str(self.size())
+        return 'Wave('+size+')'
 
     def __repr__(self):
         return self.__str__()
@@ -37,11 +29,15 @@ class Wave(object):
         cValuesArray=C_DoubleArrayType(*values)
         cValues=cast(cValuesArray,POINTER(c_double))
         nValues=len(values)
+        self.lock()
         lib.scigma_dat_wave_push_back(self.objectID, cValues,nValues)
-
-    def push_back(self, nValues):
-        lib.scigma_dat_wave_pop_back(self.objectID,nValues)
+        self.unlock()
         
+    def pop_back(self, nValues):
+        self.lock()
+        lib.scigma_dat_wave_pop_back(self.objectID,nValues)
+        self.unlock()
+                
     def lock(self):
         lib.scigma_dat_wave_lock(self.objectID)
 
@@ -49,8 +45,11 @@ class Wave(object):
         lib.scigma_dat_wave_unlock(self.objectID)
 
     def size(self):
-        return lib.scigma_dat_wave_size(self.objectID)
-
+        self.lock()
+        size= lib.scigma_dat_wave_size(self.objectID)
+        self.unlock()
+        return size
+        
     def data(self):
         return lib.scigma_dat_wave_data(self.objectID)
 

@@ -37,6 +37,7 @@ namespace scigma
       static void on_gl_context_creation(GLContext* glContext);
       static void on_gl_context_destruction(GLContext* glContext);
       static void before_batch_draw(GLContext* glContext);
+
       void on_addition(GLContext* context);
       void on_removal(GLContext* context);
       void draw(GLContext* glContext);
@@ -47,11 +48,9 @@ namespace scigma
       // virtual methods inherited from Graph
       virtual void finalize();
 
-      virtual void set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
-					   const std::vector<size_t>& constantIndex);
+      virtual void set_attributes_for_view(const std::vector<int>& indices);
 
-      virtual void adjust_shaders_for_view(GLContext* glContext,
-					   const VecS& independentVariables,
+      virtual void adjust_shaders_for_view(const VecS& independentVariables,
 					   const VecS& expressions,
 					   double timeStamp);
       virtual void set_style(Style style);
@@ -88,7 +87,7 @@ namespace scigma
       static GLint lighterLocation_;
 
       static GLuint program_;
-      static double shaderTimeStamp_;
+      static std::map<GLContext*, double> shaderTimeStampMap_;
       
       GLsizei length_;
       GLsizei nRays_;
@@ -106,6 +105,10 @@ namespace scigma
       std::vector<size_t> varyingBaseIndex_;
       std::vector<size_t> constantIndex_;
       
+      std::vector<GLuint> varyingAttributeIndex_;
+      std::vector<GLuint> constantAttributeIndex_;
+      std::vector<GLuint> emptyAttributeIndex_;
+
       bool varyingAttributesInvalid_;
       
       char padding_[7];

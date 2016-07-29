@@ -37,7 +37,6 @@ namespace scigma
 	  std::ostringstream combine;
 	  combine<<"OpenGL error code "<<std::hex<<code<<std::dec;
 	  Application::get_instance()->push_error(combine.str(),file,line);
-	  std::cout<<combine.str()<<file<<line<<std::endl;
 	}
     }
 

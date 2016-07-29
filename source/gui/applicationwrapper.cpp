@@ -48,6 +48,8 @@ extern "C"
   }
   void scigma_gui_application_loop(double seconds){Application::get_instance()->loop(seconds);}
   void scigma_gui_application_break_loop(){Application::get_instance()->break_loop();}
+  void scigma_gui_application_idle(double seconds){Application::get_instance()->idle(seconds);}
+  void scigma_gui_application_sleep(double seconds){Application::get_instance()->sleep(seconds);}
   void scigma_gui_application_set_loop_callback(void(*python_callback)())
   {
     if(python_callback)

@@ -1,5 +1,5 @@
-#ifndef __SCIGMA_NUM_FUNCTION_H__
-#define __SCIGMA_NUM_FUNCTION_H__
+#ifndef SCIGMA_NUM_FUNCTION_HPP
+#define SCIGMA_NUM_FUNCTION_HPP
 
 #include <vector>
 #include "operator.hpp"
@@ -87,4 +87,4 @@ namespace scigma
   } /* end namespace num */
 } /* end namespace scigma */
 
-#endif /* __SCIGMA_NUM_FUNCTION_H__ */
+#endif /* SCIGMA_NUM_FUNCTION_HPP */

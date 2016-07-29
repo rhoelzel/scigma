@@ -98,7 +98,7 @@ def dict_full_paths(identifier,parent,results,isnode=stdisnode,dir=''):
     for key in parent:
         subdir=dir+'.'+key
         if key == parts[0]:
-            if parts[1] is '':
+            if parts[1] == '':
                 current.append(subdir.strip('.'))
             elif isnode(parent[key]):
                 dict_full_paths(parts[2],parent[key],current,isnode,subdir)

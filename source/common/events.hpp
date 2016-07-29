@@ -43,6 +43,7 @@ namespace scigma
 					       typename EventSink<Event>::Type* sink)
     {
       source->sinks_.insert(source->sinks_.begin(),sink);
+      ++source->processIndex_;
       sink->sources_.push_back(source);
     }
 
@@ -58,7 +59,17 @@ namespace scigma
     {
       auto iSink=std::find(source->sinks_.begin(),source->sinks_.end(),sink); 
       if(iSink!=source->sinks_.end())
-	source->sinks_.erase(iSink);
+	{
+	  for(size_t i(0);i<source->processIndex_;++i)
+	    {
+	      if(source->sinks_[i]==*iSink)
+		{
+		  source->processIndex_-=1;
+		  break;
+		}
+	    }
+	  source->sinks_.erase(iSink);
+	}
       auto iSource=std::find(sink->sources_.begin(),sink->sources_.end(),source); 
       if(iSource!=sink->sources_.end())
 	sink->sources_.erase(iSource);
@@ -212,9 +223,9 @@ namespace scigma
       }
     };
     
-        
-  template <class Event, unsigned int nArguments> class EventSourceWithNArguments; 
     
+    template <class Event, unsigned int nArguments> class EventSourceWithNArguments;
+        
     template <class Event> class EventSourceWithNArguments<Event,0>
     {
       friend void connect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
@@ -222,12 +233,17 @@ namespace scigma
       friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
+      mutable size_t processIndex_;
       mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit()
       {
-	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
-	  if((*i)->process(Event()))
-	    return;
+	processIndex_=0;
+	while(processIndex_<sinks_.size())
+	  {
+	    if(sinks_[processIndex_]->process(Event()))
+	      return;
+	    ++processIndex_;
+	  }
       }
     public:
       ~EventSourceWithNArguments<Event,0>()
@@ -249,12 +265,17 @@ namespace scigma
       friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
+      mutable size_t processIndex_;
       mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1)
       {
-	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
-	  if((*i)->process(Event(), arg1))
-	    return;
+	processIndex_=0;
+	while(processIndex_<sinks_.size())
+	  {
+	    if(sinks_[processIndex_]->process(Event(),arg1))
+	      return;
+	    ++processIndex_;
+	  }
       }
     public:
       ~EventSourceWithNArguments<Event,1>()
@@ -277,13 +298,18 @@ namespace scigma
       friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
+      mutable size_t processIndex_;
       mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 		typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2)
       {
-	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
-	  if((*i)->process(Event(), arg1, arg2))
-	    return;
+	processIndex_=0;
+	while(processIndex_<sinks_.size())
+	  {
+	    if(sinks_[processIndex_]->process(Event(),arg1,arg2))
+	      return;
+	    ++processIndex_;
+	  }
       }
     public:
       ~EventSourceWithNArguments<Event,2>()
@@ -306,14 +332,19 @@ namespace scigma
       friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
+      mutable size_t processIndex_;
       mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 		typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2,
 		typename Loki::TL::TypeAt<typename Event::Arguments,2>::Result arg3)
       {
-	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
-	  if((*i)->process(Event(), arg1, arg2, arg3))
-	    return;
+	processIndex_=0;
+	while(processIndex_<sinks_.size())
+	  {
+	    if(sinks_[processIndex_]->process(Event(),arg1,arg2,arg3))
+	      return;
+	    ++processIndex_;
+	  }
       }
     public:
       ~EventSourceWithNArguments<Event,3>()
@@ -336,15 +367,20 @@ namespace scigma
     friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
     
   protected:
+    mutable size_t processIndex_;
     mutable std::vector<typename EventSink<Event>::Type*> sinks_;
     void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 	      typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2,
 	      typename Loki::TL::TypeAt<typename Event::Arguments,2>::Result arg3,
 	      typename Loki::TL::TypeAt<typename Event::Arguments,3>::Result arg4)
     {
-      for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
-	if((*i)->process(Event(), arg1, arg2, arg3, arg4))
-	  return;
+      processIndex_=0;
+      while(processIndex_<sinks_.size())
+	{
+	  if(sinks_[processIndex_]->process(Event(),arg1,arg2,arg3,arg4))
+	    return;
+	  ++processIndex_;
+	}
     }
   public:
       ~EventSourceWithNArguments<Event,4>()
@@ -367,6 +403,7 @@ namespace scigma
       friend void disconnect<Event>(const typename EventSource<Event>::Type*,typename EventSink<Event>::Type*);
 
     protected:
+      mutable size_t processIndex_;
       mutable std::vector<typename EventSink<Event>::Type*> sinks_;
       void emit(typename Loki::TL::TypeAt<typename Event::Arguments,0>::Result arg1,
 		typename Loki::TL::TypeAt<typename Event::Arguments,1>::Result arg2,
@@ -374,9 +411,13 @@ namespace scigma
 		typename Loki::TL::TypeAt<typename Event::Arguments,3>::Result arg4,
 		typename Loki::TL::TypeAt<typename Event::Arguments,4>::Result arg5)
       {
-	for(typename std::vector<typename EventSink<Event>::Type *>::iterator i=sinks_.begin(),end=sinks_.end();i!=end;++i)
-	  if((*i)->process(Event(), arg1, arg2, arg3, arg4, arg5))
-	    return;
+	processIndex_=0;
+	while(processIndex_<sinks_.size())
+	  {
+	    if(sinks_[processIndex_]->process(Event(),arg1,arg2,arg3,arg4,arg5))
+	      return;
+	    ++processIndex_;
+	  }
       }
     public:
       ~EventSourceWithNArguments<Event,5>()

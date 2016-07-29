@@ -101,7 +101,6 @@ namespace scigma
 					  glfwWindowPointer_(ptr),
 					  stalled_(0),
 					  hoverIndex_(0xFFFFFFFF),
-					  refreshContinuously_(0),
 					  redrawRequested_(false),
 					  colorPicking_(false)
 
@@ -129,8 +128,6 @@ namespace scigma
       glPointParameterf(GL_POINT_SIZE_MAX, sizes[1]);
 #endif
       creation_notify<DrawableTypes>();
-      
-      connect<LoopEvent>(Application::get_instance(),this);
     }
 
     void GLContext::destroy()
@@ -145,31 +142,11 @@ namespace scigma
     GLContext::~GLContext()
     {}
     
-    void GLContext::continuous_refresh_needed()
-    {
-      ++refreshContinuously_;
-      //      request_redraw();
-    }
-
-    void GLContext::continuous_refresh_not_needed()
-    {
-      --refreshContinuously_;
-    }
-    
     double GLContext::get_current_frame_start_time()
     {
       return currentFrameStartTime_;
     }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-    bool GLContext::process(LoopEvent event)
-    {
-      if(refreshContinuously_)
-	request_redraw();
-      return false;
-    }
-#pragma GCC diagnostic pop
     
     void GLContext::check_for_hover(GLfloat x, GLfloat y)
     {
@@ -459,6 +436,8 @@ namespace scigma
 	ptr[i]=vector[i];
       update_4_uniform_in_all_programs(uniform,vector);
 #endif
+      if(uniform==BACKGROUND_COLOR)
+	glClearColor(vector[0],vector[1],vector[2],vector[3]);
       GLERR;
     }
 
@@ -535,8 +514,8 @@ namespace scigma
 	  currentFrameStartTime_=now;
 
 	  draw_frame();
-	  
 	  glfwSwapBuffers(glfwWindowPointer_);
+
 	  currentFrameRenderingTime_=glfwGetTime()-currentFrameStartTime_;
 	  redrawRequested_=false;
 	}

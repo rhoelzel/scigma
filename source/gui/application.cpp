@@ -1,4 +1,6 @@
 #include <unistd.h>
+#include <chrono>
+#include <thread>
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -98,10 +100,7 @@ extern "C"
   void key_callback(GLFWwindow* w, int key, int scancode, int action, int mods)
   {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-      {
 	++ESCAPE_COUNT;
-	std::cout<<ESCAPE_COUNT<<std::endl;
-      }
     
     scigma::gui::GLWindow* glWindow(static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w))); 
     TwSetCurrentWindow(size_t(glWindow->gl_context()));
@@ -241,7 +240,7 @@ namespace scigma
     
     std::string Application::pop_error()
     {
-      return log_->pop();
+      return log_->pop().second;
     }
     
     void Application::push_error(std::string error, const char* file, int line)
@@ -254,33 +253,6 @@ namespace scigma
       bool noIdle(false);
       if(!(seconds>0))
 	 noIdle=true;
-      if(loopIsRunning_) //nested loop call
-	{
-	  double lt(glfwGetTime());
-	  while(true)
-	    {
-	      loopMutex_.lock();
-	      EventSource<LoopEvent>::Type::emit();
-	      loopMutex_.unlock();
-
-	      if(noIdle)
-		return;
-	      
-	      idleMutex_.lock();
-	      size_t nIdleSinks;
-	      while((nIdleSinks=EventSource<IdleEvent>::Type::sinks_.size())!=0)
-		{
-		  IdleEvent e;
-		  idleIndex_=idleIndex_%nIdleSinks;
-		  EventSource<IdleEvent>::Type::sinks_[idleIndex_]->process(e,glfwGetTime());
-		  ++idleIndex_;
-		}
-	      idleMutex_.unlock();
-
-	      if(glfwGetTime()>=seconds+lt)
-		return;
-	    }	      
-	}
 
       loopIsRunning_=true;
       if(seconds<REFRESH_INTERVAL)
@@ -294,10 +266,9 @@ namespace scigma
 	      return;
 	    }
 	  double remainingSecondsAtStart(seconds);	 
-	  // refresh
-	  loopMutex_.lock();
+
 	  EventSource<LoopEvent>::Type::emit();
-	  loopMutex_.unlock();
+
 	  glfwPollEvents();
 	  if(!loopIsRunning_)
 	    return;
@@ -311,7 +282,7 @@ namespace scigma
 	  // as long as there is time, emit IdleEvents, if there are connected sinks
 	  double t(glfwGetTime());
 	  seconds-=(t-lt);
-	  idleMutex_.lock();
+
 	  size_t nIdleSinks;
 	  while((nIdleSinks=EventSource<IdleEvent>::Type::sinks_.size())!=0)
 	    {
@@ -321,14 +292,13 @@ namespace scigma
 	      ++idleIndex_;
 	      glfwPollEvents();
 	      if(!loopIsRunning_)
-		return;
+		  return;
 	      lt=t;
 	      t=glfwGetTime();
 	      seconds-=(t-lt);
 	      if(seconds<remainingSecondsAtStart-REFRESH_INTERVAL)
 		break;
 	    }
-	  idleMutex_.unlock();
 	  
 	  /* if there is still more time, but no EventSinks for IdleEvent any more, insert a waiting period
 	     to avoid busy waits
@@ -344,6 +314,32 @@ namespace scigma
 	      seconds-=(t-lt);
 	    }
 	}
+    }
+
+    void Application::idle(double seconds)
+    {
+      double t(glfwGetTime()), lt(0);
+      size_t nIdleSinks;
+      while((nIdleSinks=EventSource<IdleEvent>::Type::sinks_.size())!=0)
+	{
+	  IdleEvent e;
+	  idleIndex_=idleIndex_%nIdleSinks;
+	  EventSource<IdleEvent>::Type::sinks_[idleIndex_]->process(e,glfwGetTime());
+	  ++idleIndex_;
+	  lt=t;
+	  t=glfwGetTime();
+	  seconds-=(t-lt);
+	  if(seconds<0)
+	    break;
+	}
+      if(seconds>0)
+	sleep(seconds);
+    }
+    
+    void Application::sleep(double seconds)
+    {
+      std::chrono::duration<double> d(seconds);
+      std::this_thread::sleep_for(d);
     }
     
     void Application::break_loop()

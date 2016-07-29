@@ -1,4 +1,5 @@
 import re, os
+from common import Log
 from . import num
 from . import gui
 from . import common
@@ -8,13 +9,6 @@ from . import equations
 from . import picking
 from . import graphs
 from .windowlist import windows
-
-SUCCESS_PREFIX='__succ__'
-FAIL_PREFIX='__fail__'
-DATA_PREFIX='__data__'
-WARNING_PREFIX='__warn__'
-ERROR_PREFIX='__err___'
-PREFIX_LENGTH=8
 
 class Window(object):
     """ Manages a single Scigma window.
@@ -82,23 +76,23 @@ class Window(object):
             self.glWindow.request_redraw()
             
     def loop_callback(self):
-        message=self.log.pop()
+        mtype, message=self.log.pop()
         while message is not "":
-            if message[0:PREFIX_LENGTH]==DATA_PREFIX:
+            if mtype==Log.DATA:
                 self.console.write_data(message)
-            elif message[0:PREFIX_LENGTH]==WARNING_PREFIX:
-                self.console.write_warning(message[PREFIX_LENGTH:])
-            elif message[0:PREFIX_LENGTH]==ERROR_PREFIX:
-                self.console.write_error(message[PREFIX_LENGTH:])
-            elif message[0:PREFIX_LENGTH]==SUCCESS_PREFIX:
-                identifier=message[PREFIX_LENGTH:]
-                graphs.success(identifier,self)
-            elif message[0:PREFIX_LENGTH]==FAIL_PREFIX:
-                identifier=message[PREFIX_LENGTH:]
-                graphs.failure(identifier,self)
+            elif mtype==Log.WARNING:
+                self.console.write_warning(message)
+            elif mtype==Log.ERROR:
+                self.console.write_error(message)
+            elif mtype==Log.SUCCESS:
+                args=message.split("|")
+                graphs.success(args[0],args[1:],self)
+            elif mtype==Log.FAIL:
+                args=message.split("|")
+                graphs.fail(args[0],args[1:],self)
             else:
                 self.console.write(message)
-            message=self.log.pop()
+            mtype,message=self.log.pop()
 
     def on_console(self,line):
         line=line.partition('#')[0]         # remove any comment
@@ -120,7 +114,7 @@ class Window(object):
                 try:
                     if len(args)==0:
                         result=options.get_string(cmd,self)
-                        self.console.write_data(result)
+                        self.console.write_data(result+"\n")
                     else:
                         options.set(cmd,' '.join(args),self)
                 except Exception as ee:

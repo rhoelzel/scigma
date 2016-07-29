@@ -139,11 +139,13 @@ def fit(win=None):
     for symbol in visvar:
         mi=1e300
         ma=-1e300
-        for g in graphs.get_all(win):
-            if g['__visible__']:
-                value = g['__min__'][symbol] if (('__min__' in g) and (symbol in g['__min__'])) else 1e300
+        glist=[]
+        common.dict_leaves(win.graphs,glist,lambda entry: 'callbacks' not in entry)
+        for g in glist:
+            if g['visible']:
+                value = g['min'][symbol] if (('min' in g) and (symbol in g['min'])) else 1e300
                 mi = value if value < mi else mi
-                value = g['__max__'][symbol] if (('__max__' in g) and (symbol in g['__max__'])) else -1e300
+                value = g['max'][symbol] if (('max' in g) and (symbol in g['max'])) else -1e300
                 ma = value if value > ma else ma
         mi=0.0 if mi==1e300 else mi
         ma=0.0 if ma==-1e300 else ma
@@ -273,7 +275,7 @@ def plug(win=None):
     panel.add('sep2',gui.Separator())
     for coord in gui.COORDINATE_NAME:
         panel.add(coord+'range.min',common.Float(-1.0),False)
-        panel.add(coord+'range.max',comon.Float(1.0),False)
+        panel.add(coord+'range.max',common.Float(1.0),False)
     panel.add('trange.duration', common.Float(10.0))
     panel.define('trange.duration', 'min=0.0')
     for coord in gui.COORDINATE_NAME[gui.Z_INDEX:]:

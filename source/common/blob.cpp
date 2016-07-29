@@ -45,7 +45,7 @@ namespace scigma
     float Blob::get_float(const char* identifier){return floatValues_[identifier];}
     double Blob::get_double(const char* identifier){return doubleValues_[identifier];}
     std::string Blob::get_string(const char* identifier){return stringValues_[identifier];}
-    void Blob::get_color(const char* identifier,float* values)
+    void Blob::get_color(const char* identifier,float* values) 
     {
       float* ptr((floatArrayValues_[identifier]));
       if(!ptr)
@@ -53,7 +53,7 @@ namespace scigma
       for(size_t i(0);i<4;++i)
 	values[i]=ptr[i];
     }
-    void Blob::get_direction(const char* identifier, float* values)
+    void Blob::get_direction(const char* identifier, float* values) 
     {
       float* ptr((floatArrayValues_[identifier]));
       if(!ptr)

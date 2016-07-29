@@ -34,7 +34,7 @@ namespace scigma
 	T* data();
 	
 	void push_back(T value);
-	void push_back(T* values, size_t nValues);
+	void push_back(const T* values, size_t nValues);
 
 	void pop_back();
 	void pop_back(size_t nValues);
@@ -75,7 +75,7 @@ namespace scigma
       push_back(&value,1);
     }
 
-    template <class T> void AbstractWave<T>::push_back(T* values, size_t nValues)
+    template <class T> void AbstractWave<T>::push_back(const T* values, size_t nValues)
     {
       if(capacity_<size_+nValues)
 	{

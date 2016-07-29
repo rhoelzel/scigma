@@ -22,6 +22,19 @@ namespace scigma
 	return &file[found+1];
       return file;
     }
+
+    std::pair<Log::Type,std::string> Log::pop()
+    {
+      tthread::lock_guard<tthread::mutex> guard(mutex_);
+      if(!list_.empty())
+	{
+	  std::pair<Log::Type,std::string>result(list_.front());
+	  list_.pop_front();
+	  return result;
+	}
+      return std::pair<Log::Type,std::string>(DEFAULT,"");
+    }
+     
     
   } /* end namespace common */
 } /* end namespace scigma */

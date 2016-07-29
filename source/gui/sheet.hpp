@@ -49,16 +49,14 @@ namespace scigma
       // virtual methods inherited from Graph
       virtual void finalize();
 
-      virtual void set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
-					   const std::vector<size_t>& constantIndex);
+      virtual void set_attributes_for_view(const std::vector<int>& indices);
 
-      virtual void adjust_shaders_for_view(GLContext* glContext,
-					   const VecS& independentVariables,
+      virtual void adjust_shaders_for_view(const VecS& independentVariables,
 					   const VecS& expressions,
 					   double timeStamp);
       virtual void set_style(Style style);
-      void set_light_direction(GLfloat* direction);
-      void set_light_parameters(GLfloat* parameter);
+      void set_light_direction(const GLfloat* direction);
+      void set_light_parameters(const GLfloat* parameters);
 
       using Graph::process;
       bool process(GLBufferInvalidateEvent e);
@@ -92,7 +90,7 @@ namespace scigma
       static GLint lightParamLocation_;
 
       static GLuint program_;
-      static double shaderTimeStamp_;
+      static std::map<GLContext*,double> shaderTimeStampMap_;
       
       GLsizei nVars_;
       GLsizei nConsts_;
@@ -109,8 +107,12 @@ namespace scigma
       std::vector<size_t> varyingBaseIndex_;
       std::vector<size_t> constantIndex_;
 
+      std::vector<GLuint> varyingAttributeIndex_;
+      std::vector<GLuint> constantAttributeIndex_;
+      std::vector<GLuint> emptyAttributeIndex_;
+
       GLfloat lightDirection_[4];
-      GLfloat lightParameter_[4];
+      GLfloat lightParameters_[4];
       
       bool varyingAttributesInvalid_;
       

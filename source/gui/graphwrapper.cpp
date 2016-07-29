@@ -1,9 +1,11 @@
+#include <iostream>
 #include <map>
 #include "../dat/wave.hpp"
 #include "../common/util.hpp"
 #include "graph.hpp"
 #include "bundle.hpp"
 #include "sheet.hpp"
+#include "glwindow.hpp"
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-prototypes"
@@ -62,6 +64,7 @@ extern "C"
 	Bundle* ptr1=new Bundle(glWindow,std::string(id),
 				GLsizei(length),GLsizei(nRays), GLsizei(nVars),
 				varWave,constWave);
+
 	ScigmaGuiGraphEventMonitor* ptr2(new ScigmaGuiGraphEventMonitor(python_callback));
 	connect<GraphClickEvent>(ptr1,ptr2);
 	connect<PointClickEvent>(ptr1,ptr2);
@@ -97,11 +100,52 @@ extern "C"
   {PYCLL(Bundle,objectID,set_point_size(size))}
   void scigma_gui_bundle_set_color(PythonID objectID, const GLfloat* color)
   {PYCLL(Bundle,objectID,set_color(color))}
+  void scigma_gui_bundle_set_delay(PythonID objectID, GLfloat size)
+  {PYCLL(Bundle,objectID,set_delay(size))}
   void scigma_gui_bundle_replay(PythonID objectID)
   {PYCLL(Bundle,objectID,replay())}
   void scigma_gui_bundle_finalize(PythonID objectID)
   {PYCLL(Bundle,objectID,finalize())}
 
+  void scigma_gui_bundle_test(PythonID windowID, PythonID bundleID)
+  {
+    PYOBJ(GLWindow,ptr,windowID);
+    PYOBJ(Bundle,ptr2,bundleID);
+    
+    ptr2->set_point_size(7);
+    
+    GLfloat col[]={1,0,0,1}; 
+    ptr2->set_color(col);
+
+    std::vector<int> indices;
+    indices.push_back(-1);
+    indices.push_back(-2);
+    indices.push_back(-3);
+
+    ptr2->set_attributes_for_view(indices);
+
+  
+    std::vector<std::string> ind;
+    std::vector<std::string> exp;
+    
+    ind.push_back("u");
+    ind.push_back("v");
+    ind.push_back("pi");
+
+    
+    exp.push_back("cos(2*pi*v)*sqrt(1-pow(u-1,2))");
+    exp.push_back("sin(2*pi*v)*sqrt(1-pow(u-1,2))");
+
+    exp.push_back("u-1");
+    exp.push_back("");
+    exp.push_back("0");
+
+
+    ptr2->adjust_shaders_for_view(ind,exp,0);
+
+    ptr->gl_context()->add_drawable(ptr2);
+    
+  }
 
   const char* scigma_gui_bundle_set_view(PythonID objectID, int nIndices, const int* indices,
 					 const char* expressions, const char* independentVariables,
@@ -110,16 +154,11 @@ extern "C"
     PYOBJ(Bundle,ptr,objectID);
     if(!ptr)
       return NULL;
-    std::vector<size_t> varyingIndices;
-    std::vector<size_t> constantIndices;
+    std::vector<int> vIndices;
     for(size_t i(0);i<size_t(nIndices);++i)
-      {
-	if(indices[i]>=0)
-	  varyingIndices.push_back(size_t(indices[i]));
-	else
-	  constantIndices.push_back(size_t(-1-indices[i]));
-      }
-    ptr->set_attributes_for_view(varyingIndices,constantIndices);
+	vIndices.push_back(indices[i]);
+
+    ptr->set_attributes_for_view(vIndices);
 
     std::vector<std::string> exp;
     append_tokens(expressions,exp,'|');
@@ -139,7 +178,7 @@ extern "C"
     append_tokens(independentVariables,var,'|');
     try
       {
-	ptr->adjust_shaders_for_view(exp,var,timeStamp);
+	ptr->adjust_shaders_for_view(var,exp,timeStamp);
       }
     catch(std::string error)
       {
@@ -199,6 +238,8 @@ extern "C"
   {PYCLL(Sheet,objectID,set_point_size(size))}
   void scigma_gui_sheet_set_color(PythonID objectID, const GLfloat* color)
   {PYCLL(Sheet,objectID,set_color(color))}
+  void scigma_gui_sheet_set_delay(PythonID objectID, GLfloat size)
+  {PYCLL(Sheet,objectID,set_delay(size))}
   void scigma_gui_sheet_replay(PythonID objectID)
   {PYCLL(Sheet,objectID,replay())}
   void scigma_gui_sheet_finalize(PythonID objectID)
@@ -215,16 +256,12 @@ extern "C"
     PYOBJ(Sheet,ptr,objectID);
     if(!ptr)
       return NULL;
-    std::vector<size_t> varyingIndices;
-    std::vector<size_t> constantIndices;
+
+    std::vector<int> vIndices;
     for(size_t i(0);i<size_t(nIndices);++i)
-      {
-	if(indices[i]>=0)
-	  varyingIndices.push_back(size_t(indices[i]));
-	else
-	  constantIndices.push_back(size_t(-1-indices[i]));
-      }
-    ptr->set_attributes_for_view(varyingIndices,constantIndices);
+	vIndices.push_back(indices[i]);
+
+    ptr->set_attributes_for_view(vIndices);
 
     std::vector<std::string> exp;
     append_tokens(expressions,exp,'|');
@@ -244,7 +281,7 @@ extern "C"
     append_tokens(independentVariables,var,'|');
     try
       {
-	ptr->adjust_shaders_for_view(exp,var,timeStamp);
+	ptr->adjust_shaders_for_view(var,exp,timeStamp);
       }
     catch(std::string error)
       {

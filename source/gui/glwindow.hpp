@@ -31,8 +31,14 @@ namespace scigma
       public EventSource<CharEvent>::Type,
       public EventSource<KeyEvent>::Type
       {
-	
+
       public:
+	enum Theme
+	  {
+	    DARK=0,
+	    LIGHT=1
+	  };
+	
 	GLWindow();
 	~GLWindow();
 	GLFWwindow* glfw_window();
@@ -48,6 +54,7 @@ namespace scigma
 
 	const GLfloat* cursor_position() const; 
 	void set_title(const char* title);
+	void set_theme(Theme theme);
 	void set_foreground_color(const GLfloat* color);
 	void set_background_color(const GLfloat* color);
 	

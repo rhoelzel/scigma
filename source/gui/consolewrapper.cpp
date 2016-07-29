@@ -72,7 +72,10 @@ extern "C"
   {PYCLL(Console,objectID,write_data(text))}  
   void scigma_gui_console_write_error(PythonID objectID, const char* text)
   {PYCLL(Console,objectID,write_error(text))} 
-  
+
+  void scigma_gui_console_set_theme(PythonID objectID, int theme)
+  {PYCLL(Console,objectID,set_theme(Console::Theme(theme)))} 
+
 } /* end extern "C" block */
 
 #pragma GCC diagnostic pop

@@ -17,7 +17,6 @@ namespace scigma
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
     class ExternalEquationSystem: public EquationSystem
-#pragma clang diagnostic pop;      
     {
 
     public:
@@ -26,6 +25,9 @@ namespace scigma
       ExternalEquationSystem(VecS variables, F_t f, F_t dfdx=NULL, VecS functions=VecS(), F_t func=NULL);
       ExternalEquationSystem(VecS variables, VecS parameters, F_pt f, F_pt dfdx=NULL, F_pt dfdp=NULL, VecS functions=VecS(), F_pt func=NULL);
 
+      virtual uint64_t time_stamp() const;
+      virtual std::string parse(std::string expression);
+      
       virtual void set(const std::string& name, double value);
       virtual double get(const std::string& name);
       
@@ -44,6 +46,10 @@ namespace scigma
       virtual const std::string* parameter_names() const;
       virtual const std::string* function_names() const;
       virtual const std::string* constant_names() const;
+
+      virtual const std::string* variable_definitions() const;
+      virtual const std::string* function_definitions() const;
+      virtual const std::string* constant_definitions() const;
 
       virtual bool is_autonomous() const;
 
@@ -64,14 +70,16 @@ namespace scigma
 
     private:
       void update_function_values();
+      std::string trim(std::string s) const;
       
       double t_;
-      
-      VecS varNames_; VecD varValues_;
+      unsigned long long timeStamp_;
+
+      VecS varNames_; VecS varDefs_; VecD varValues_;
       VecS parNames_; VecD parValues_;
-      VecS funcNames_; VecD funcValues_;
-      VecS constNames_; VecD constValues_;
-      
+      VecS funcNames_; VecS funcDefs_; VecD funcValues_;
+      VecS constNames_; VecS constDefs_; VecD constValues_;
+
       F f_, dfdx_, func_;
       F_p f_p_, dfdx_p_, dfdp_p_, func_p_;
       F_t f_t_, dfdx_t_, func_t_;
@@ -80,6 +88,7 @@ namespace scigma
       bool isAutonomous_;
       bool hasChanged_;
     };
+#pragma clang diagnostic pop;
     
   } /* end namespace num */
 } /* end namespace scigma */

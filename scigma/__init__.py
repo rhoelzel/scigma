@@ -7,6 +7,7 @@ from . import view
 from . import style
 from . import iteration
 from . import guessing
+from . import continuation
 from . import window
 from . import windowlist
 
@@ -28,6 +29,7 @@ def new(win=None):
     picking.plug(w)
     iteration.plug(w)
     guessing.plug(w)
+    continuation.plug(w)
     return w
 
 def load(filename=None,win=None):

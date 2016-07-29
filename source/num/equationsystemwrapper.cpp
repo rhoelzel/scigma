@@ -120,7 +120,7 @@ extern "C"
   {
     PYOBJ(EquationSystem,ptr,objectID);
     if(ptr)
-      return ptr->time();
+      return ptr->is_autonomous()?0:ptr->time();
     else 
       return 0.0;
   }

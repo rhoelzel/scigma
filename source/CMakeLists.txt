@@ -1,6 +1,8 @@
 Cmake_minimum_required(VERSION 3.0)
 project(scigma)
 
+enable_language(Fortran)
+
 add_subdirectory(external)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -20,7 +22,8 @@ add_subdirectory(dat)
 file(WRITE empty.cpp "")
 add_library(scigma SHARED empty.cpp) 
 
-target_link_libraries(scigma gui num dat common
+target_link_libraries(scigma "-Wl,-all_load"
+			     gui num dat common
 			     lapack odessa tinythread
 			     libpng zlib glew glfw
 			     anttweakbar ${GLFW_LIBRARIES})

@@ -1,6 +1,7 @@
 from . import gui
 from . import common
 from . import windowlist
+from . import color
 
 def get(identifier, win=None):
     win = windowlist.fetch(win)
@@ -16,7 +17,7 @@ def get_string(identifier,win=None):
     if isinstance(result,list):
         return ' '.join([str(x) for x in result])
     else:
-        return result
+        return str(result)
 
 def set(identifier, value, win=None):
     win = windowlist.fetch(win)

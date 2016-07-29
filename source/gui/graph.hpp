@@ -71,11 +71,9 @@ namespace scigma
 
       virtual void finalize()=0;
 
-      virtual void set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
-					   const std::vector<size_t>& constantIndex)=0;
+      virtual void set_attributes_for_view(const std::vector<int>& indices)=0;
 
-      virtual void adjust_shaders_for_view(GLContext* glContext,
-					   const VecS& independentVariables,
+      virtual void adjust_shaders_for_view(const VecS& independentVariables,
 					   const VecS& expressions,
 					   double timeStamp)=0;
 

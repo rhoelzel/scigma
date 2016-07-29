@@ -1,10 +1,9 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
-
+#include <sstream>
 #include "externalequationsystem.hpp"
-
-
+#include "../common/util.hpp"
 
 namespace scigma
 {
@@ -22,7 +21,7 @@ namespace scigma
 	  throw(std::string("name is not unique: ")+(*i));
     }
 
-    int test_if_well_formed(VecS& names)
+    int test_if_well_formed(const VecS& names)
     {
       size_t index(0);
       for(VecS::const_iterator i(names.begin()),end(names.end());i!=end;++i)
@@ -43,8 +42,12 @@ namespace scigma
 						   F f, F dfdx,
 						   VecS functions,
 						   F func):
-      varNames_(variables),varValues_(variables.size()), 
-      funcNames_(functions),funcValues_(functions.size()),
+      varNames_(variables),
+      varDefs_(VecS(variables.size(),"external")),
+      varValues_(variables.size()), 
+      funcNames_(functions),
+      funcDefs_(VecS(functions.size(),"external")),
+      funcValues_(functions.size()),
       f_(f),dfdx_(dfdx),func_(func),
       isAutonomous_(true),hasChanged_(true)
     {
@@ -65,15 +68,22 @@ namespace scigma
       VecS names(varNames_);
       names.insert(names.end(),functions.begin(),functions.end());
       test_uniqueness(names);
+      using namespace std::chrono;
+      nanoseconds ns = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch());
+      timeStamp_= uint64_t (ns.count());
     }
     
     ExternalEquationSystem::ExternalEquationSystem(VecS variables, VecS parameters,
 						   F_p f, F_p dfdx, F_p dfdp,
 						   VecS functions,
 						   F_p func):
-      varNames_(variables),varValues_(variables.size()),
+      varNames_(variables),
+      varDefs_(VecS(variables.size(),"external")),
+      varValues_(variables.size()),
       parNames_(parameters),parValues_(parameters.size()),
-      funcNames_(functions),funcValues_(functions.size()), 
+      funcNames_(functions),
+      funcDefs_(VecS(functions.size(),"external")),
+      funcValues_(functions.size()), 
       f_p_(f),dfdx_p_(dfdx),dfdp_p_(dfdp),func_p_(func),
       isAutonomous_(true),hasChanged_(true)
     {
@@ -99,14 +109,21 @@ namespace scigma
       names.insert(names.end(),parameters.begin(),parameters.end());
       names.insert(names.end(),functions.begin(),functions.end());
       test_uniqueness(names);
+      using namespace std::chrono;
+      nanoseconds ns = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch());
+      timeStamp_= uint64_t (ns.count());
     }
     
     ExternalEquationSystem::ExternalEquationSystem(VecS variables,
 						   F_t f, F_t dfdx,
 						   VecS functions,
 						   F_t func):
-      varNames_(variables),varValues_(variables.size()),
-      funcNames_(functions), funcValues_(functions.size()),
+      varNames_(variables),
+      varDefs_(VecS(variables.size(),"external")),
+      varValues_(variables.size()),
+      funcNames_(functions),
+      funcDefs_(VecS(functions.size(),"external")),
+      funcValues_(functions.size()),
       f_t_(f),dfdx_t_(dfdx),func_t_(func),
       isAutonomous_(false),hasChanged_(true)
     {
@@ -127,14 +144,21 @@ namespace scigma
       VecS names(varNames_);
       names.insert(names.end(),functions.begin(),functions.end());
       test_uniqueness(names);
+      using namespace std::chrono;
+      nanoseconds ns = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch());
+      timeStamp_= uint64_t (ns.count());
     }
     
     ExternalEquationSystem::ExternalEquationSystem(VecS variables, VecS parameters,
 						   F_pt f, F_pt dfdx, F_pt dfdp,
 						   VecS functions, F_pt func):
-      varNames_(variables),varValues_(variables.size()),
+      varNames_(variables),
+      varDefs_(VecS(variables.size(),"external")),
+      varValues_(variables.size()),
       parNames_(parameters),parValues_(parameters.size()),
-      funcNames_(functions),funcValues_(functions.size()),
+      funcNames_(functions),
+      funcDefs_(VecS(functions.size(),"external")),
+      funcValues_(functions.size()),
       f_pt_(f),dfdx_pt_(dfdx),dfdp_pt_(dfdp),func_pt_(func),
       isAutonomous_(false),hasChanged_(true)
     {
@@ -160,8 +184,41 @@ namespace scigma
       names.insert(names.end(),parameters.begin(),parameters.end());
       names.insert(names.end(),functions.begin(),functions.end());
       test_uniqueness(names);
+      using namespace std::chrono;
+      nanoseconds ns = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch());
+      timeStamp_= uint64_t (ns.count());
     }
 
+    uint64_t ExternalEquationSystem::time_stamp() const
+    {
+      return timeStamp_;
+    }
+    
+    std::string ExternalEquationSystem::parse(std::string expression)
+    {
+      std::string exp(trim(expression));
+      if(exp.size()>0&&exp[0]=='$')
+	{
+	  exp[0]=' ';
+	  double result(get(exp));
+	  std::stringstream ss;
+	  ss<<result;
+	  return ss.str();
+	}
+      VecS tokens;
+      common::append_tokens(exp,tokens,'=');
+      if(tokens.size()==2)
+	{
+	  std::stringstream ss;
+	  ss<<tokens[1];
+	  double value;
+	  ss>>value;
+	  set(tokens[0],value);
+	  return "";
+	}
+      throw(std::string("could not parse expression '")+expression+"'");
+    }
+    
     void ExternalEquationSystem::set(const std::string& name, double value)
     {
       if(name=="t"&&!is_autonomous())
@@ -253,6 +310,11 @@ namespace scigma
     const std::string* ExternalEquationSystem::parameter_names() const {return parNames_.size()==0?NULL:&parNames_[0];}
     const std::string* ExternalEquationSystem::function_names() const {return funcNames_.size()==0?NULL:&funcNames_[0];}
     const std::string* ExternalEquationSystem::constant_names() const {return constNames_.size()==0?NULL:&constNames_[0];}
+
+    const std::string* ExternalEquationSystem::variable_definitions() const {return varDefs_.size()==0?NULL:&varDefs_[0];}
+    const std::string* ExternalEquationSystem::function_definitions() const {return funcDefs_.size()==0?NULL:&funcDefs_[0];}
+    const std::string* ExternalEquationSystem::constant_definitions() const {return constDefs_.size()==0?NULL:&constDefs_[0];}
+
     
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
@@ -404,6 +466,35 @@ namespace scigma
       else if(func_t_) return [func_t] (double t, const double* x, const double* p, double* funcval){func_t(t,x,funcval);};
       else if(func_pt_) return func_pt_;
       else return NULL;
+    }
+
+    std::string ExternalEquationSystem::trim(std::string s) const
+    {   
+      if(s.length()==0)
+	return "";
+      size_t val = 0;
+      for (size_t cur = 0; cur < s.length(); ++cur)
+	{
+	  if((s[cur] != ' ')&&(s[cur] != '\t')&&(s[cur]!='\r'))
+	    {
+	      if(val>0)// replace "**" by "^"
+		{
+		  if(s[val-1]=='*'&&s[cur]=='*')
+		    {
+		      s[val-1]='^';
+		      continue;
+		    }
+		}
+	      s[val] = s[cur];
+	      ++val;
+	    }
+	}
+      if(!val)
+	return "";
+      s.resize(val);
+      if(s.at(val-1)!='\n')
+	s+="\n";
+      return s;
     }
 
 #pragma GCC diagnostic pop

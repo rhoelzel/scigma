@@ -2,6 +2,7 @@ import re
 from ctypes import *
 from time import time
 from . import gui
+from . import library
 from . import dat
 from . import common
 from . import equations
@@ -10,111 +11,205 @@ from . import lib
 
 commands={}
 independentVariables={}
+expBuffer={}
+indBuffer={}
+timeStamp={}
 
-def show(g, win=None):
+def show(g=None, win=None):
     win=windowlist.fetch(win)
     g=get(g,win)
-    if not g['__visible__']:
-        g['__visible__']=True
-        set_view(g,independentVariables[win])
-        win.glWindow.add_drawable(g['__cgraph__'])        
+    if not g['visible']:
+        g['visible']=True
+        set_view(g,expBuffer[win], indBuffer[win],timeStamp[win],independentVariables[win])
+        win.glWindow.add_drawable(g['cgraph'])        
 
 commands['show']=show
         
-def hide(g, win=None):
+def hide(g=None, win=None):
     win=windowlist.fetch(win)
     g=get(g,win)
-    if g['__visible__']:
-        g['__visible__']=False
-        win.glWindow.remove_drawable(g['__cgraph__'])
+    if g['visible']:
+        g['visible']=False
+        win.glWindow.remove_drawable(g['cgraph'])
 
 commands['hide']=hide
 
-def delete(identifier, win=None):
+def replay(g=None, delay=None, win=None):
     win=windowlist.fetch(win)
+    g=get(g,win)
+    win.glWindow.stall()
+    show(g,win)
+    delay = float(delay) if delay else win.options['Drawing']['delay'].value
+    g['cgraph'].set_delay(delay)
+    win.glWindow.flush()
+    g['cgraph'].replay()
+
+commands['rep']=commands['repl']=commands['repla']=commands['replay']=replay
+
+def delete(identifier=None, win=None):
+    win=windowlist.fetch(win)
+
+    if not identifier:
+        g = get(None,win)
+        identifier = g['identifier']
+
     path=None
     # this deletes named graph, or a node with all graphs below that node
-    path=common.dict_single_path(identifier,win.graphs,'graph',lambda entry: '__fcleanup__' not in entry)
+    path=common.dict_single_path(identifier,win.graphs,'graph',lambda entry: 'cgraph' not in entry)
     entry=common.dict_entry(path,win.graphs)
     glist=[]
-    common.dict_leaves(entry,glist, lambda entry: '__fcleanup__' not in entry)
+    common.dict_leaves(entry,glist,lambda entry: 'cgraph' not in entry)
+
     for g in glist:
+        if win.selection is g:
+            win.selection is None
+            show(win.cursor,win)
         destroy(g,win)
     parts=path.rpartition('.')
     parent=common.dict_entry(parts[0],win.graphs)
     child=parts[2]
     del parent[child]
 
-def get(g, win):
-    if isinstance(g,str):
-        return common.dict_single_entry(g,win.graphs,'graph',lambda entry: '__fcleanup__' not in entry)
-    else:
-        return g
+commands['del']=commands['dele']=commands['delet']=commands['delete']=delete
 
-def get_all(win):
-    def g(dictionary):
-        graph_keys = [key for key in dictionary if isinstance(dictionary[key],dict) and '__fcleanup__' in dictionary[key]]
-        other_keys = [key for key in dictionary if isinstance(dictionary[key],dict) and not '__fcleanup__' in dictionary[key]]
-        return [dictionary[key] for key in graph_keys]+[graph for key in other_keys for graph in g(dictionary[key])]
-    return g(win.graphs)
+def clear(win=None):
+    win=windowlist.fetch(win)
+    keys = win.graphs.keys()
+    for key in keys:
+        delete(key,win)
+
+commands['cl']=commands['cle']=commands['clea']=commands['clear']=clear
+
+
+def save(g=None,filename='',win=None):
+    win=windowlist.fetch(win)
+    g=get(g,win)
+    identifier=g['identifier']
+    varying=g['varying']
+    const=g['const']
+    varWave=g['varwave']
+    constWave=g['constwave']
+    nPoints=g['npoints']
+    nParts=g['nparts']
+    nVaryings=len(varying)
+    nConsts=len(const)
+
+    if filename=='':
+        filename=identifier.replace('.','/')+".dat"
     
+    with open(filename,"w") as f:
+        # print header with trajectory information and constants
+        f.write('#'+g['identifier']+': '+str(nParts)+'x'+str(nPoints) +' points\n')
+        if nConsts:
+            constWave.lock()
+            constData=constWave.data()
+            f.write('#constant values\n#')
+            for i in range(nConsts-1):
+                f.write(const[i]+"\t")
+            f.write(const[-1]+"\n#")
+            for i in range(nConsts-1):
+                f.write(str(constData[i])+'\t')
+            f.write(str(constData[nConsts-1])+"\n")
+            constWave.unlock()
+        # print time and variables
+        if nVaryings:
+            varWave.lock()
+            varData=varWave.data()
+            f.write('#variable values\n')
+            for i in range(nVaryings*nParts-1):
+                f.write(varying[i%nVaryings]+"\t")
+            f.write(varying[-1]+"\n")
+            for i in range(nPoints):
+                for j in range(nVaryings*nParts-1):
+                    f.write(str(varData[i*nVaryings*nParts+j])+'\t')
+                f.write(str(varData[(i+1)*nVaryings*nParts-1])+'\n')
+            varWave.unlock()
+
+commands['sav']=commands['save']=save
+            
+def get(g, win=None, isnode=lambda entry:'cgraph' not in entry):
+    win=windowlist.fetch(win)
+    if isinstance(g,str):
+        return common.dict_single_entry(g,win.graphs,'graph',isnode)
+    elif not g:
+        if win.selection:
+            return win.selection
+        else:
+            raise Exception("no object selected to perform this operation")
+    return g
+
 def destroy(g, win):
-    if g['__visible__']:
-        win.glWindow.remove_drawable(g['__cgraph__'])
+    if g['visible']:
+        win.glWindow.remove_drawable(g['cgraph'])
 
-    if g['__cgraph__']:
-        g['__cgraph__'].destroy()
+    if g['cgraph']:
+        g['cgraph'].destroy()
 
-    g['__mesh__'].destroy()
-    g['__varwave__'].destroy()
-    g['__constwave__'].destroy()
+    g['varwave'].destroy()
+    g['constwave'].destroy()
 
-    if g['__fcleanup__']:
-        g['__fcleanup__'](g,win)
+    if g['callbacks']['cleanup']:
+        g['callbacks']['cleanup']()
 
 def gen_ID(prefix,win):
     """generates a unique name with given prefix
     
-    This generates a name of the form 'TR_00001' (if prefix is 'TR').
-    The counter is increased for each prefix, to ensure that all 
-    names are unique (as long as no more than 100000 graphs have
-    the same prefix)
+    This generates a name of the form 'tr_01' (if prefix is 'tr').
+    The counter is increased for each prefix, to ensure that tje 
+    names are unique 
     """
     if prefix not in win.graphIDs:
         win.graphIDs[prefix]=1
     count = win.graphIDs[prefix]
-    ID = prefix + str(count).zfill(7)
+    ID = prefix + str(count).zfill(2)
     win.graphIDs[prefix]=count+1
     return ID
 
-def new(win,path=None,nPoints=1,nParts=1,meshVals=None,varying=None,const=None,varVals=None,constVals=None, finit=None, fcleanup=None):
+def new(win,nPoints,nParts,varying,const,varVals,constVals,path=None):
     """ adds a new graph to the window 
     """    
 
-    if meshVals is None:
-        meshVals=range(nParts)
+    callbacks={'cleanup':None,'success':None,'fail':None,'minmax':None,'select':None}
+        
+    g={'varying':varying,'const':const,'visible':False,
+       'npoints':nPoints,'nparts':nParts,'callbacks':callbacks,
+       'timestamp': win.eqsys.timestamp()}
+
+    if path:
+        common.dict_enter(path,win.graphs,g)
+        g['identifier']=path
+          
+    # only initizialize Waves here, in case
+    # something goes wrong with the new dict entry
+    g['varwave']=dat.Wave(capacity=len(varying)*nPoints*nParts)
+    g['constwave']=dat.Wave(capacity=len(constVals))
+    g['varwave'].push_back(varVals)
+    g['constwave'].push_back(constVals)
+    return g
+
+def move_cursor(win,varying=None,const=None,varVals=None,constVals=None):
 
     # use current point if no data given
     if varying is None and const is None and varVals is None and constVals is None:
         const, constVals = equations.point(win)
         varying=[]
         varVals=[]
-        
-    g={'__varying__':varying,'__const__':const,'__visible__':False,'__npoints__':nPoints,
-       '__nparts__':nParts,'__finit__': finit,'__fcleanup__':fcleanup,'__cgraph__':None}
 
-    if path:
-        common.dict_enter(path,win.graphs,g)    
-          
-    # only initizialize Wave here, in case something goes wrong
-    # with the new dict entry
-    g['__mesh__']=dat.Mesh(meshVals,columns=1,rows=nPoints*nParts)
-    g['__varwave__']=dat.Wave(varVals,columns=len(varying),rows=nPoints*nParts)
-    g['__constwave__']=dat.Wave(constVals,rows=1)
+    if win.cursor:
+        destroy(win.cursor,win)
+
+    nParts=1 if len(varying)== 0 else len(varVals)/len(varying)
     
-    return g
-
-
+    win.cursor = new(win,1,nParts,varying,const,varVals,constVals)
+    win.cursor['cgraph']=gui.Bundle(win.glWindow,'cursor',1,win.cursor['nparts'],len(win.cursor['varying']),
+                                        win.cursor['varwave'],win.cursor['constwave'])
+    win.cursor['cgraph'].set_point_style(gui.RCROSS)
+    win.cursor['cgraph'].set_point_size(50 if library.largeFontsFlag else 25)
+    win.cursor['cgraph'].set_color([1.0,1.0,1.0,1.0])
+    win.cursor['cgraph'].finalize()
+    gui.application.idle(0.05)
+    show(win.cursor,win)
+    
 GLSL_BUILT_IN_FUNCTIONS=["sin","cos","tan","asin","acos","atan","abs",
                            "mod","sign","step","pow","exp","log","sqrt"]
 
@@ -161,8 +256,9 @@ def independent_variables(expressions):
 
 def set_view(g, expBuffer,indBuffer,timeStamp,independentVariables):
     indices=[]
-    varying=g['__varying__']
-    const=g['__const__']
+    varying=g['varying']
+    const=g['const']
+
     for var in independentVariables:
         try: 
             index=varying.index(var)
@@ -173,13 +269,13 @@ def set_view(g, expBuffer,indBuffer,timeStamp,independentVariables):
                 indices.append(-index-1)
             except:
                 indices.append(0)
-                
-    g['__cgraph__'].set_view(indices,expBuffer,indBuffer,timeStamp)
+
+    g['cgraph'].set_view(indices,expBuffer,indBuffer,timeStamp)
 
 def on_view_change(win):
     expressions=coordinate_expressions(win)
     independentVariables[win]=independent_variables(expressions)
-
+    
     arg1=''
     for x in expressions:
         arg1+='|'+x
@@ -190,72 +286,42 @@ def on_view_change(win):
         arg2+='|'+x
     arg2=bytes(arg2.strip('|').encode("ascii"))
     
-    
     glist=[]
-    common.dict_leaves(win.graphs,glist,lambda entry: '__fcleanup__' not in entry)
+    common.dict_leaves(win.graphs,glist,lambda entry: 'cgraph' not in entry)
 
-    timeStamp=time()
-    expBuffer=create_string_buffer(arg1)
-    indBuffer=create_string_buffer(arg2)
-    
+    timeStamp[win]=time()
+    expBuffer[win]=create_string_buffer(arg1)
+    indBuffer[win]=create_string_buffer(arg2)
+
     for g in glist:
-        set_view(g,expBuffer,indBuffer,independentVariables[win],timeStamp)
+        set_view(g,expBuffer[win],indBuffer[win],timeStamp[win],independentVariables[win])
 
     if win.has_plugin('picking'):
-        set_view(win.cursor,expBuffer,indBuffer,independentVariables[win],timeStamp)
+        set_view(win.cursor,expBuffer[win],indBuffer[win],timeStamp[win],independentVariables[win])
         
     win.glWindow.request_redraw()
 
-
-def min_max(g):
-    g['__min__']={}
-    g['__max__']={}
-    mi=g['__min__']
-    ma=g['__max__']
-    varWave = g['__varwave__']
-    d=varWave.data()
-    rows=varWave.rows()
-    columns=varWave.columns()
-    minima=[1e300]*columns
-    maxima=[-1e300]*columns
-    
-    for i in range(rows):
-        for j in range(columns):
-            value=d[i*columns+j]
-            if value<minima[j]:
-                minima[j]=value
-            if value>maxima[j]:
-                maxima[j]=value
-    varying=g['__varying__']
-    for i in range(columns):
-        mi[varying[i]]=minima[i]
-        ma[varying[i]]=maxima[i]
-    constWave=g['__constwave__']
-    const=g['__const__']
-    for i in range(constWave.columns()):
-        mi[const[i]]=constWave[i]
-        ma[const[i]]=constWave[i]
-
-def fail(identifier, win):
-    g=get(identifier,win)
+def fail(identifier,args,win):
+    g=get(identifier,win, lambda entry: 'callbacks' not in entry)
     # the next two lines are needed to stop drawing if
     # delay is set and the computation ended prematurely
-    g['__cgraph__'].set_n_points(0)
-    win.glWindow.request_redraw()
-    
+    # g['cgraph'].set_n_points(0)
+    # win.glWindow.request_redraw()
+
+    if g['callbacks']['fail']:
+        g['callbacks']['fail'](args)
+
     delete(identifier,win)
     
-def success(identifier, win):
-    g=get(identifier,win)
+def success(identifier,args,win):
+    g=get(identifier,win, lambda entry: 'callbacks' not in entry)
     # get minima and maxima
-    min_max(g)
+    if g['callbacks']['minmax']:
+        g['callbacks']['minmax']()
 
     # perform any other initialization tasks
-    if g['__finit__']:
-        g['__finit__'](identifier,win)
-
-    lib.scigma_num_destroy_thread(g['__thread__'])
-    g['__thread__']=None
+    if g['callbacks']['success']:
+        g['callbacks']['success'](args)
 
 def plug(win):
     if not win.register_plugin('graphs', lambda:unplug(win),commands):
@@ -264,6 +330,9 @@ def plug(win):
     setattr(win,'graphIDs',{})
 
     independentVariables[win]=None
+    expBuffer[win]=None
+    indBuffer[win]=None
+    timeStamp[win]=None
     
     #initial build of GL shaders occurs here
     on_view_change(win)

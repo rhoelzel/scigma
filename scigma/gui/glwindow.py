@@ -30,6 +30,7 @@ class GLWindow(object):
     lib.scigma_gui_gl_window_rotateII.argtypes=[c_int,c_int,c_float]
     lib.scigma_gui_gl_window_min.restype=POINTER(c_float)
     lib.scigma_gui_gl_window_max.restype=POINTER(c_float)
+    lib.scigma_gui_gl_window_set_theme.argtypes=[c_int,c_int]
 
     def __init__(self):
         self.objectID = lib.scigma_gui_create_gl_window()
@@ -154,5 +155,6 @@ class GLWindow(object):
         elif isinstance(drawable,Picker):
             lib.scigma_gui_gl_window_remove_picker(self.objectID,drawable.objectID)
 
-
+    def set_theme(self,theme):
+        lib.scigma_gui_gl_window_set_theme(self.objectID,theme)
 

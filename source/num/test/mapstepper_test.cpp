@@ -29,8 +29,8 @@ SCENARIO("Testing MapStepper","[stepper][map]")
       ExternalEquationSystem eqsys(varNames,f_t,NULL,funcNames,func_t);
       eqsys.set("t",3.0);
       eqsys.set("x",1.2345); eqsys.set("y",6.7890);
-      MapStepper stepper(eqsys,true);
-      MapStepper backStepper(eqsys,false,false);
+      MapStepper stepper(eqsys);
+      MapStepper backStepper(eqsys,false);
       
       THEN("n_variables() returns the correct number of variables")
 	REQUIRE(stepper.n_variables()==eqsys.n_variables());
@@ -41,7 +41,7 @@ SCENARIO("Testing MapStepper","[stepper][map]")
 	  stepper.advance();
 	  THEN("t() is increased by 1.0")
 	    REQUIRE(stepper.t()==eqsys.time()+1.0);
-	  THEN("new x() values are correctly mapped from the initial conditions")
+	  THEN("new x() and func() values are correctly mapped from the initial conditions")
 	    {
 	      double rhs[2];
 	      f_t(eqsys.time(),eqsys.variable_values(),rhs);
@@ -49,7 +49,7 @@ SCENARIO("Testing MapStepper","[stepper][map]")
 	      std::cerr<<rhs[0]<<"..."<<rhs[1]<<std::endl;
 
 	      double funcVals[3];
-	      func_t(eqsys.time(),eqsys.variable_values(),funcVals);
+	      func_t(eqsys.time()+1.0,rhs,funcVals);
 	      std::cerr<<rhs[0]<<"..."<<rhs[1]<<std::endl;
 	      for(size_t i(0);i<stepper.n_variables();++i)
 		REQUIRE(stepper.x()[i]==rhs[i]);

@@ -254,7 +254,7 @@ class ATWPanel(object):
         name=parts[2]
         d0=None # node two levels above
         d1=common.dict_entry(parts[0],self.data) # node one level above
-        if not parts[0] is '':
+        if not parts[0] == '':
             parts=parts[0].rpartition('.')
             dname=parts[2]
             d0=common.dict_entry(parts[0],self.data)

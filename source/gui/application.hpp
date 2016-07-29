@@ -74,6 +74,8 @@ namespace scigma
 	event loop is currently not running, this function does nothing.
       */
       void break_loop();
+      void idle(double seconds);
+      void sleep(double seconds);
 
     private:
       Application();

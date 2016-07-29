@@ -1,10 +1,15 @@
 enable_language(Fortran)
 include_directories(../external/tinythread)
+include_directories(../external/loki)
 add_library(num OBJECT function.cpp operator.cpp parser.cpp
 		equationsystem.cpp internalequationsystem.cpp externalequationsystem.cpp
 		odessa.cpp
-		stepper.cpp integrationstepper.cpp mapstepper.cpp
-		equationsystemwrapper.cpp
+		stepper.cpp integrationstepper.cpp mapstepper.cpp auto.cpp
+		poincarestepper.cpp newton.cpp eigen.cpp function.cpp
+		operator.cpp task.cpp
+		guessingwrapper.cpp iterationwrapper.cpp
+		continuationwrapper.cpp
+		equationsystemwrapper.cpp taskwrapper.cpp
 		$<TARGET_OBJECTS:common>) 
 set_target_properties(num PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 add_subdirectory(test)

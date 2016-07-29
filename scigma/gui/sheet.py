@@ -12,6 +12,7 @@ class Sheet(object):
                                           C_CallbackType]
     lib.scigma_gui_sheet_set_marker_size.argtypes=[c_int,c_float]
     lib.scigma_gui_sheet_set_point_size.argtypes=[c_int,c_float]
+    lib.scigma_gui_sheet_set_delay.argtypes=[c_int,c_float]
     lib.scigma_gui_sheet_set_color.argtypes=[c_int,POINTER(c_float)]
     lib.scigma_gui_sheet_set_view.argtypes=[c_int,c_int, POINTER(c_int), c_char_p,c_char_p,c_double]
     lib.scigma_gui_sheet_set_view.restype=c_char_p
@@ -60,6 +61,9 @@ class Sheet(object):
         colorArray=C_FloatArrayType(*color)
         lib.scigma_gui_sheet_set_color(self.objectID,cast(colorArray,POINTER(c_float)))
 
+    def set_delay(self,delay):
+        lib.scigma_gui_sheet_set_delay(self.objectID,delay)
+        
     def set_light_direction(self,direction):
         C_FloatArrayType=c_float*3
         directionArray=C_FloatArrayType(*direction)
@@ -71,10 +75,10 @@ class Sheet(object):
         lib.scigma_gui_sheet_set_light_parameters(self.objectID,cast(parameterArray,POINTER(c_float)))
         
     def replay(self):
-        lib.scigma_gui_sheet_replay()
+        lib.scigma_gui_sheet_replay(self.objectID)
 
     def finalize(self):
-        lib.scigma_gui_sheet_finalize()
+        lib.scigma_gui_sheet_finalize(self.objectID)
 
     def set_view(self,indices,expBuffer,indBuffer,timeStamp):
         C_IntArrayType=c_int*len(indices)

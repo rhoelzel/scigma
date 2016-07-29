@@ -78,7 +78,6 @@ extern "C"
       return NULL;
   }
 
-
   /* Wrappers for Mesh */
 
   PythonID scigma_dat_create_mesh(int nDim, int nInitial, double* initial)

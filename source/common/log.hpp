@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <deque>
+#include <utility>
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
 #include <tinythread.h>
@@ -20,18 +21,18 @@ namespace scigma
       
       enum Type
 	{
-	  LOG_SUCCESS=0,
-	  LOG_FAIL=1,
-	  LOG_DATA=2,
-	  LOG_WARNING=3,
-	  LOG_ERROR=4,
-	  LOG_DEFAULT=5
+	  SUCCESS=0,
+	  FAIL=1,
+	  DATA=2,
+	  WARNING=3,
+	  ERROR=4,
+	  DEFAULT=5
 	};
 
       Log();
       Log(std::string fileName);
       
-      template <Type T=LOG_DEFAULT> void push(const std::string& text, const char* file=NULL, int line=0)
+      template <Type T=DEFAULT> void push(const std::string& text, const char* file=NULL, int line=0)
       {
 	if(text=="")
 	  return;
@@ -43,7 +44,7 @@ namespace scigma
 	  combine<<text;
 	
 	tthread::lock_guard<tthread::mutex> guard(mutex_);
-	list_[T].push_back(combine.str());
+	list_.push_back(std::pair<Type,std::string>(T,combine.str()));
 	if(""!=file_)
 	  {
 	    FILE * pFile;
@@ -55,18 +56,8 @@ namespace scigma
 	      }
 	  }
       }
-      
-      template <Type T=LOG_DEFAULT> std::string pop()
-      {
-	tthread::lock_guard<tthread::mutex> guard(mutex_);
-	if(!list_[T].empty())
-	  {
-	    std::string(result)(list_[T].front());
-	    list_[T].pop_front();
-	    return result;
-	  }
-	return "";
-      }
+
+      std::pair<Type,std::string> pop();
       
     private:
       
@@ -74,7 +65,7 @@ namespace scigma
       Log& operator=(const Log&);
       const char* strip_path(const char* file);
       
-      std::deque<std::string> list_[LOG_DEFAULT+1];
+      std::deque<std::pair<Type,std::string> >list_;
       tthread::mutex mutex_;
       std::string file_;
     };

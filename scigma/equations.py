@@ -51,10 +51,12 @@ def mode(mode=None,win=None,silent=False):
         win.equationPanel.define('secvar','visible=true')
         win.equationPanel.define('secval','visible=true')
         win.equationPanel.define('secdir','visible=true')
+        win.equationPanel.define('maxtime','visible=true')
     else:
         win.equationPanel.define('secvar','visible=false')
         win.equationPanel.define('secval','visible=false')
         win.equationPanel.define('secdir','visible=false')
+        win.equationPanel.define('maxtime','visible=false')
         
     win.glWindow.flush()
 
@@ -127,11 +129,25 @@ def secdir(secdir=None,win=None,silent=False):
             win.console.write_data(secdir+"\n")
         return secdir
     if secdir not in ['+','-']:
-        print secdir+secdir
         raise Exception("secdir must either be '+' or '-'")   
     win.equationPanel.set('secdir',secdir)
 
 commands['secdir']=secdir
+
+def maxtime(maxtime=None,win=None,silent=False):
+    """ secval <secval>
+    Changes the value used for Poincare sections.
+    """
+    win=windowlist.fetch(win)
+    if not maxtime:
+        secval=win.equationPanel.get('maxtime')
+        if not silent:
+            win.console.write_data(str(maxtime)+"\n")
+        return secval
+    win.equationPanel.set('maxtime',float(maxtime))
+
+commands['maxtime']=maxtime
+
 
 def parse(line,win=None):
     """Used to parse differential equations and maps.
@@ -225,7 +241,7 @@ def rebuild_panels(win):
     win.valuePanel.remove('step.t = ')
     ids=[]
     for group in win.equationPanel.data:
-        if group in ['mode','period','nperiod','secvar','secval','secdir']:
+        if group in ['mode','period','nperiod','secvar','secval','secdir','maxtime']:
             continue
         for entry in win.equationPanel.data[group]:
             if not entry == '__anchor__':
@@ -265,7 +281,6 @@ def plug(win):
 
     setattr(win,'eqsys',num.EquationSystem())
     setattr(win,'invsys',num.EquationSystem())
-    setattr(win,'timestamp',win.eqsys.timestamp())
     
     setattr(win,'equationPanel',gui.ATWPanel(win.glWindow,'Equations'))
 
@@ -278,6 +293,7 @@ def plug(win):
     win.equationPanel.define('nperiod','min=1')
     win.equationPanel.add('secvar','x',True,'visible=false')
     win.equationPanel.add('secval', 0.0,True,'visible=false')
+    win.equationPanel.add('maxtime',100.0,True,'visible=false')
     enum=common.Enum({'+':0,'-':1},'+')
     win.equationPanel.add('secdir',enum,True,'visible=false')
     win.equationPanel.add('variables.__anchor__',False,True,"visible=false")
@@ -308,4 +324,3 @@ def unplug(win):
     delattr(win,'valuePanel')
     delattr(win,'eqsys')
     delattr(win,'invsys')
-    delattr(win,'timestamp')

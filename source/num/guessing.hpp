@@ -1,33 +1,28 @@
-#ifndef __SCIGMA_NUM_GUESSING_H__
-#define __SCIGMA_NUM_GUESSING_H__
+#ifndef SCIGMA_NUM_GUESSING_HPP
+#define SCIGMA_NUM_GUESSING_HPP
 
-#include "../log.h"
-#include "../dat/wave.h"
-#include "definitions.h"
-#include "newton.h"
-#include "equationsystem.h"
-#include "stepper.h"
-#include "task.h"
+#include "../common/log.hpp"
+#include "../dat/wave.hpp"
+#include "newton.hpp"
+#include "equationsystem.hpp"
+#include "stepper.hpp"
+#include "task.hpp"
+
+using scigma::common::Log;
+typedef scigma::dat::AbstractWave<double> Wave;
 
 namespace scigma
 {
   namespace num
   {
     
-    Newton::F* create_ode_newton_function(const EquationSystem& eqsys, bool extJac);
+    Task* create_guessing_task(std::string identifier, Log* log, Stepper* stepper, Wave* varyingWave,
+			       Wave* evWave, double tol, size_t nPeriod, size_t showAllIterates, long secvar);
 
-    Newton::F* create_map_newton_function(const EquationSystem& eqsys, size_t nPeriod, bool extJac);
-
-    F* create_additional_function_evaluator(const EquationSystem& eqsys);
-    
-    Task* create_guessing_task(std::string identifier, Log* log, Stepper* stepper, dat::Wave* varyingWave,
-			       dat::Wave* evWave, double tol, size_t nPeriod, size_t showAllIterates, long secvar);
-
-    Task* create_guessing_task(std::string identifier, Log* log, size_t nVar, size_t nFunc,
-			       Newton::F* f, std::function<void(const double*, double*)>* ff,
-			       dat::Wave* varyingWave, dat::Wave* evWave, bool extJac, double tol, bool isMap);
+    Task* create_guessing_task(std::string identifier, Log* log, EquationSystem* eqsys, 
+			       Wave* varyingWave, Wave* evWave, double tol);
     
   } /* end namespace num */
 } /* end namespace scigma */
 
-#endif /* __SCIGMA_NUM_GUESSING_H__ */
+#endif /* SCIGMA_NUM_GUESSING_HPP */

@@ -14,7 +14,7 @@ namespace scigma
     class IntegrationStepper:public Stepper
     {
     public:
-      IntegrationStepper(const EquationSystem& eqsys, double dt,bool stiff=true, double aTol=1e-9, double rTol=1e-9, size_t maxIter=20000);
+      IntegrationStepper(const EquationSystem& eqsys, double dt,bool stiff=true, double aTol=1e-9, double rTol=1e-9, size_t maxIter=20000, bool computeJacobian=false);
 
       virtual double t() const;
       virtual const double* x() const;
@@ -40,12 +40,15 @@ namespace scigma
       Odessa odessa_;
       
       double* x_;
+      double* p_;
       double* jac_;
+
+      double dt_;
       
       F_t func_t_;
       std::vector<double> funcVals_;
 
-      double dt_;
+      char padded_[8];
     };
 
   } /* end namespace num */

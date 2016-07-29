@@ -13,6 +13,7 @@ class Bundle(object):
                                            C_CallbackType]
     lib.scigma_gui_bundle_set_marker_size.argtypes=[c_int,c_float]
     lib.scigma_gui_bundle_set_point_size.argtypes=[c_int,c_float]
+    lib.scigma_gui_bundle_set_delay.argtypes=[c_int,c_float]
     lib.scigma_gui_bundle_set_color.argtypes=[c_int,POINTER(c_float)]
     lib.scigma_gui_bundle_set_view.argtypes=[c_int,c_int, POINTER(c_int), c_char_p,c_char_p,c_double]
     lib.scigma_gui_bundle_set_view.restype=c_char_p
@@ -23,7 +24,7 @@ class Bundle(object):
         identifier=bytes(str(identifier).encode("ascii"))
         self.c_callback=C_CallbackType(lambda id_ptr, point: self.callback(id_ptr,point)) 
         self.py_callback=cbfun
-        self.objectID = lib.scigma_gui_create_bundle(glWindow.objectID,identifier,nlength,
+        self.objectID = lib.scigma_gui_create_bundle(glWindow.objectID,identifier,length,
                                                      nRays,nVars,varWave.objectID,constWave.objectID,
                                                      self.c_callback)
     def destroy(self):
@@ -60,12 +61,15 @@ class Bundle(object):
         C_FloatArrayType=c_float*4
         colorArray=C_FloatArrayType(*color)
         lib.scigma_gui_bundle_set_color(self.objectID,cast(colorArray,POINTER(c_float)))
+
+    def set_delay(self,delay):
+        lib.scigma_gui_bundle_set_delay(self.objectID,delay)
         
     def replay(self):
-        lib.scigma_gui_bundle_replay()
+        lib.scigma_gui_bundle_replay(self.objectID)
 
     def finalize(self):
-        lib.scigma_gui_bundle_finalize()
+        lib.scigma_gui_bundle_finalize(self.objectID)
 
     def set_view(self,indices,expBuffer,indBuffer,timeStamp):
         C_IntArrayType=c_int*len(indices)

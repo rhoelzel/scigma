@@ -16,7 +16,7 @@ add_library(gui OBJECT application.cpp glutil.cpp glcontext.cpp
 		console.cpp atwpanel.cpp
 		applicationwrapper.cpp glwindowwrapper.cpp
 		cosywrapper.cpp consolewrapper.cpp pickerwrapper.cpp
-		navigator.cpp atwpanelwrapper.cpp graphwrapper.cpp)
+		navigatorwrapper.cpp atwpanelwrapper.cpp graphwrapper.cpp)
 set_target_properties(gui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 add_subdirectory(test)

@@ -1,6 +1,5 @@
-#include "guessing.h"
-#include "eigen.h"
-#include "functionwrappers.h"
+#include "guessing.hpp"
+
 #include <iostream>
 
 namespace scigma
@@ -8,134 +7,26 @@ namespace scigma
   namespace num
   {
 
-    Newton::F* create_map_newton_function(const EquationSystem& eqsys, size_t(nPeriod), bool extJac)
-    {
-      if(eqsys.is_internal())
-	{
-	  Function tFunc;
-	  VecF xFuncs,rhsFuncs,funcFuncs;
-	  eqsys.detach(tFunc,xFuncs,rhsFuncs,funcFuncs);
-	  size_t nVar(xFuncs.size());
-	  
-	  VecF jacobian;
-	  build_partial_derivative_matrix(xFuncs,rhsFuncs,jacobian);
-	  return new Newton::F
-	    ([=](const double* x, double* rhs) mutable
-	     {
-	       /*	       VecD work1(nVar*nVar);VecD work2(nVar*nVar);
-	       double* result(nPeriod==1?(rhs+nVar):&work1[0]);
-	       double* oldJac(&work2[0]);
-	       double* newJac(rhs+nVar);*/
-	       
-	       double t0(tFunc.evaluate());
-
-	       for(size_t n(0);n<nPeriod;++n)
-		 {
-		   tFunc.set_value(t0+n);
-		   for(size_t i(0);i<nVar;++i)
-		     xFuncs[i].set_value(x[i]);
-		   for(size_t i(0);i<nVar;++i)
-		     rhs[i]=rhsFuncs[i].evaluate()-x[i];
-		   for(size_t i(0);i<nVar*nVar;++i)
-		     rhs[i+nVar]=jacobian[i].evaluate();
-		   for(size_t i(0);i<nVar;++i)
-		     rhs[nVar+i*(nVar+1)]-=1.0;
-		 }
-	     });
-	}
-      else
-	if(extJac)
-	  void();
-      return NULL;
-    }
-
-    Newton::F* create_ode_newton_function(const EquationSystem& eqsys, bool extJac)
-    {
-      if(eqsys.is_internal())
-	{
-	  Function tFunc;
-	  VecF xFuncs,rhsFuncs,funcFuncs;
-	  eqsys.detach(tFunc,xFuncs,rhsFuncs,funcFuncs);
-	  size_t nVar(xFuncs.size());
-	  
-	  VecF jacobian;
-	  build_partial_derivative_matrix(xFuncs,rhsFuncs,jacobian);
-	  return new Newton::F
-	    ([=](const double* x, double* rhs) mutable
-	     {
-		   for(size_t i(0);i<nVar;++i)
-		     xFuncs[i].set_value(x[i]);
-		   for(size_t i(0);i<nVar;++i)
-		     rhs[i]=rhsFuncs[i].evaluate();
-		   for(size_t i(0);i<nVar*nVar;++i)
-		     rhs[i+nVar]=jacobian[i].evaluate();
-	     });
-	}
-      else
-	{
-	  if(!extJac)
-	    return new Newton::F(eqsys.f());
-	  else
-	    {
-	      F f_(eqsys.f());
-	      F dfdx_(eqsys.dfdx());
-	      size_t nVar(eqsys.n_variables());
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
-	      return new Newton::F([f_,dfdx_,nVar](const double* x, double* rhs)
-		{
-		  f_(x,rhs);
-		  dfdx_(x,rhs+nVar);
-		});
-#pragma clang diagnostic pop
-	    }
-	}
-      return NULL;
-    }
-
-    F* create_additional_function_evaluator(const EquationSystem& eqsys)
-    {
-      if(eqsys.is_internal())
-	{
-	  Function tFunc;
-	  VecF xFuncs,rhsFuncs,funcFuncs;
-	  eqsys.detach(tFunc,xFuncs,rhsFuncs,funcFuncs);
-	  size_t nVar(xFuncs.size());
-	  size_t nFunc(funcFuncs.size());
-
-	  return new F
-	    ([=](const double* x, double* funcs) mutable
-	     {
-	       for(size_t i(0);i<nVar;++i)
-		 xFuncs[i].set_value(x[i]);
-	       for(size_t i(0);i<nFunc;++i)
-		 funcs[i]=funcFuncs[i].evaluate();
-	     });
-	}
-      else
-	{
-	  return new F(eqsys.func());
-	}
-      return NULL;
-    }
-
-    Task* create_guessing_task(std::string identifier, Log* log, Stepper* stepper, dat::Wave* varyingWave,
-			       dat::Wave* evWave, double tol, size_t nPeriod, size_t showAllIterates, long secvar)
+    Task* create_guessing_task(std::string identifier, Log* log, Stepper* stepper, Wave* varyingWave,
+			       Wave* evWave, double tol, size_t nPeriod, size_t showAllIterates, long secvar)
     {
       Task* task = new Task
 	([=]() mutable
 	 {
-
-	   size_t nVar(stepper->nVar);	   
-
-	   auto f = [nVar,stepper,nPeriod,tol](const double* x, double* rhs)
+	   varyingWave->lock();
+	   
+	   size_t nVar(stepper->n_variables());
+	   size_t nFunc(stepper->n_functions());	   
+	   double t(stepper->t());
+	   
+	   auto f = [nVar,nFunc,stepper,nPeriod,tol,t](const double* x, double* rhs)
 	   {
-	     stepper->reset(x);
+	     stepper->reset(t,x);
 	     stepper->advance(nPeriod);
 	     for(size_t i(0);i<nVar;++i)
-	       rhs[i]=stepper->x(i)-x[i];
+	       rhs[i]=stepper->x()[i]-x[i];
 	     for(size_t i(0);i<nVar*nVar;++i)
-	       rhs[i+nVar]=stepper->jac(i);	     
+	       rhs[i+nVar]=stepper->jac()[i];	     
 	     // subtract 1 from the diagonal of the Jacobian
 	     for(size_t i(0);i<nVar;++i)
 	       rhs[nVar+i*(nVar+1)]-=1.0;
@@ -143,8 +34,8 @@ namespace scigma
 
 	   double* x(new double[nVar]);
 	   for(size_t i(0);i<nVar;++i)
-	       x[i]=(*varyingWave)[uint32_t(i)+1];
-	   varyingWave->remove_last_line();
+	     x[i]=varyingWave->data()[i+1];
+	   varyingWave->pop_back(1+nVar+nFunc);
 	   bool success(false);
 	   try
 	     {
@@ -166,18 +57,18 @@ namespace scigma
 	       VecSZ types;
 	       double* jac(new double[nVar*nVar]);
 	       for(size_t i(0);i<nVar*nVar;++i)
-		 jac[i]=stepper->jac(i);
+		 jac[i]=stepper->jac()[i];
 	       if(secvar>=0) // in Poincare mode, restore the artificial zero-multiplier to 1
 		 jac[size_t(secvar)*(nVar+1)]=1;
 	       floquet(nVar,jac,evals,evecs,types);
-	       evWave->append(&evals[0],uint32_t(nVar*2));
-	       evWave->append(&evecs[0],uint32_t(nVar*nVar));
+	       evWave->push_back(&evals[0],nVar*2);
+	       evWave->push_back(&evecs[0],nVar*nVar);
 	       for(size_t i(0);i<types.size();++i)
-		 evWave->append(double(types[i]));
+		 evWave->push_back(double(types[i]));
 	       delete[] jac;
 
 	       size_t factor(showAllIterates?nPeriod:1);
-	       stepper->reset(x);
+	       stepper->reset(t,x);
 	       for(size_t j(0);j<factor;++j)
 		 {
 		   try
@@ -190,11 +81,9 @@ namespace scigma
 		       success=false;
 		       break;
 		     }
-		   varyingWave->append(stepper->t());
-		   for(size_t i(0);i<nVar;++i)
-		     varyingWave->append(stepper->x(i));
-		   for(size_t i(0);i<stepper->nFunc;++i)
-		     varyingWave->append(stepper->func(i));
+		   varyingWave->push_back(stepper->t());
+		   varyingWave->push_back(stepper->x(),nVar);
+		   varyingWave->push_back(stepper->func(),nFunc);
 		 }
 	     }
 	   delete[] x;
@@ -203,35 +92,53 @@ namespace scigma
 	     log->push<Log::SUCCESS>(identifier);
 	   else
 	     log->push<Log::FAIL>(identifier);
+
+	   varyingWave->unlock();
 	 });
       return task;
 
     }  
 					      
     
-    Task* create_guessing_task(std::string identifier, Log* log, size_t nVar, size_t nFunc,
-			       Newton::F* f, std::function<void(const double*,double*)>* ff,
-			       dat::Wave* varyingWave, dat::Wave* evWave, bool extJac, double tol, bool mapMode)
+    Task* create_guessing_task(std::string identifier, Log* log, EquationSystem* eqsys,
+			       Wave* varyingWave, Wave* evWave, double tol)
     {
-    
-      int genJac(extJac?0:1);
-      int map(mapMode?1:0);
 
+      size_t nVar(eqsys->n_variables());
+      size_t nFunc(eqsys->n_functions());
+      
+      auto f_(eqsys->f());
+      auto dfdx_(eqsys->dfdx());
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+      Newton::F f = eqsys->dfdx()?
+	Newton::F([f_,dfdx_,nVar](const double* x, double* rhs)
+		  {
+		    f_(x,rhs);
+		    dfdx_(x,rhs+nVar);
+		  }):
+	Newton::F(f_);
+            
+      auto ff(eqsys->func());
+
+      bool genJac = eqsys->dfdx()?false:true;
+      
       Task* task = new Task
-	([nVar,nFunc,f,ff,varyingWave,evWave,tol,genJac,map,identifier,log]() mutable
+	([nVar,nFunc,f,ff,varyingWave,evWave,tol,genJac,identifier,log]() mutable
 	 {
+	   varyingWave->lock();
 	   double* x(new double[nVar]);
 	   double* funcs(new double[nFunc]);
-	   double t((*varyingWave)[0]);
+	   double t(varyingWave->data()[0]);
 	   for(size_t i(0);i<nVar;++i)
-	     x[i]=(*varyingWave)[uint32_t(i)+1];	   
-
-	   varyingWave->remove_last_line();
+	     x[i]=varyingWave->data()[i+1];
+	   varyingWave->pop_back(1+nVar+nFunc);
 	   bool success(false);
-
+	   
 	   try
 	     {
-	       success=newton(int(nVar),x,*f,genJac,tol);
+	       success=newton(int(nVar),x,f,genJac,tol);
 	     }
 	   catch(std::string error)
 	     {
@@ -244,49 +151,42 @@ namespace scigma
 	     {
 	       // get eigenvalue and eigenvector info
 	       double* rhs(new double[nVar*(nVar+1)]);
-	       (*f)(x,rhs);
+	       f(x,rhs);
 	       double* jac=rhs+nVar;
 	       VecD evals,evecs;
 	       VecSZ types;
-	       if(map)
-		 {
-		   for(size_t i(0);i<nVar;++i)
-		     jac[i*(nVar+1)]+=1.0;
-		   floquet(nVar,jac,evals,evecs,types);
-		 }
-	       else
-		 {
-		   eigen(nVar,jac,evals,evecs,types);
-		 }
-
-	       evWave->append(&evals[0],uint32_t(nVar*2));
-	       evWave->append(&evecs[0],uint32_t(nVar*nVar));
+	       eigen(nVar,jac,evals,evecs,types);
+	       evWave->push_back(&evals[0],nVar*2);
+	       evWave->push_back(&evecs[0],nVar*nVar);
 	       for(size_t i(0);i<types.size();++i)
-		 evWave->append(double(types[i]));
+		 evWave->push_back(double(types[i]));
 	       /*	       for(size_t i(0),size(size_t(evWave->data_max()));i<size;++i)
 			       std::cout<<evWave->data()[i]<<std::endl;*/
 	       delete[] rhs;
 	     }
-	   varyingWave->append(t);
-	   for(size_t i(0);i<nVar;++i)
-	     varyingWave->append(x[i]);
+	   varyingWave->push_back(t);
+	   varyingWave->push_back(x,nVar);
 	   if(nFunc)
-	     (*ff)(x,funcs);
-	   for(size_t i(0);i<nFunc;++i)
-	     varyingWave->append(funcs[i]);
-
-	   delete f;
-	   delete ff;
+	     {
+	       ff(x,funcs);
+	       varyingWave->push_back(funcs,nFunc);
+	     }
+	   
 	   delete[] x;
 	   delete[] funcs;
-
+	   
 	   if(success)
 	     log->push<Log::SUCCESS>(identifier);
 	   else
 	     log->push<Log::FAIL>(identifier);
-	   
-	 });
+
+	   varyingWave->unlock();
+	   });
+      
+#pragma clang diagnostic pop
+
       return task;
+      
     }
     
   } /* end namespace num */

@@ -23,6 +23,7 @@ namespace scigma
     std::map<GLContext*,GLint> Sheet::lighterLocationMap_;
     std::map<GLContext*,GLint> Sheet::lightDirLocationMap_;
     std::map<GLContext*,GLint> Sheet::lightParamLocationMap_;
+    std::map<GLContext*,double> Sheet::shaderTimeStampMap_;
 #pragma clang diagnostic pop
 
     GLint Sheet::spriteLocation_;
@@ -33,7 +34,6 @@ namespace scigma
     GLint Sheet::lightParamLocation_;
 
     GLuint Sheet::program_(0);
-    double Sheet::shaderTimeStamp_(-1);
 
     Sheet::Sheet(GLWindow* glWindow, std::string identifier,
 		 const Mesh* mesh, GLsizei nVars, const Wave* constants):
@@ -142,25 +142,40 @@ namespace scigma
       GLERR;
     }
     
-    
-    void Sheet::set_attributes_for_view(const std::vector<size_t>& varyingBaseIndex,
-					 const std::vector<size_t>& constantIndex)
+    void Sheet::set_attributes_for_view(const std::vector<int>& indices)
     {
-      varyingBaseIndex_=varyingBaseIndex;
-      constantIndex_=constantIndex;
+      varyingBaseIndex_.clear();varyingAttributeIndex_.clear();
+      constantIndex_.clear();constantAttributeIndex_.clear();
+      emptyAttributeIndex_.clear();
+      size_t n(indices.size());
+      for(size_t i(0);i<n;++i)
+	{
+	  if(indices[i]>0)
+	    {
+	      varyingBaseIndex_.push_back((size_t(indices[i]-1)));
+	      varyingAttributeIndex_.push_back((GLuint(i+2)));
+	    }
+	  else if(indices[i]<0)
+	    {
+	      constantIndex_.push_back((size_t(-indices[i]-1)));
+	      constantAttributeIndex_.push_back((GLuint(i+2)));
+	    }
+	  else
+	    emptyAttributeIndex_.push_back(GLuint(i+2));
+	}
       varyingAttributesInvalid_=true;
     }
     
     using scigma::common::substring;
     
-    void Sheet::adjust_shaders_for_view(GLContext* glContext,
-					const VecS& independentVariables,
+    void Sheet::adjust_shaders_for_view(const VecS& independentVariables,
 					const VecS& expressions,
 					double timeStamp)
     {
-      if(timeStamp<shaderTimeStamp_)
+      GLContext* glContext(glWindow_->gl_context());
+      if(timeStamp<shaderTimeStampMap_[glContext])
 	return;
-      shaderTimeStamp_=timeStamp;
+      shaderTimeStampMap_[glContext]=timeStamp;
       
 #ifdef SCIGMA_USE_OPENGL_3_2
       std::string vShader(vertexShaderGL3_);
@@ -189,10 +204,10 @@ namespace scigma
       substring(vShader,"__REPLACE_X__",expressions[0]);
       substring(vShader,"__REPLACE_Y__",expressions[1]);
       substring(vShader,"__REPLACE_Z__",expressions[2]);
-      substring(vShader,"__REPLACE_TIME__",expressions[3]);
+      substring(vShader,"__REPLACE_TIME__",expressions[4]);
 
       /* color: defined by uniform or by expression? */
-      if(""==expressions[4])
+      if(""==expressions[3])
 	{
 	  substring(vShader,"__REPLACE_COLOR_START__","/*");
 	  substring(vShader,"__REPLACE_COLOR_END__","*/");
@@ -205,17 +220,17 @@ namespace scigma
 	{
 	  substring(vShader,"__REPLACE_COLOR_START__","");
 	  substring(vShader,"__REPLACE_COLOR_END__","");
-	  substring(vShader,"__REPLACE_COLOR__",expressions[4]);
+	  substring(vShader,"__REPLACE_COLOR__",expressions[3]);
 	  substring(fShader,"__REPLACE_COLOR_UNIFORM_START__","/*");
 	  substring(fShader,"__REPLACE_COLOR_UNIFORM_END__","*/");
 	  substring(fShader,"__REPLACE_COLOR_IN_START__","");
 	  substring(fShader,"__REPLACE_COLOR_IN_END__","");
 	}
-
+      /*
       std::cout<<"------------------------------------------------------------------"<<std::endl;
       std::cout<<vShader;
       std::cout<<"------------------------------------------------------------------"<<std::endl;
-      std::cout<<fShader;
+      std::cout<<fShader;*/
 
       
       glContext->delete_programs<Sheet>();
@@ -231,7 +246,7 @@ namespace scigma
       glContext->link_program(program_);
 
       /* if color is defined by uniform, get the location */
-      if(""==expressions[4])
+      if(""==expressions[3])
 	  colorLocationMap_[glContext]=glGetUniformLocation(program_,"rgba_");
       else
 	    
@@ -262,16 +277,16 @@ namespace scigma
 	}
     }
 
-    void Sheet::set_light_direction(GLfloat* direction)
+    void Sheet::set_light_direction(const GLfloat* direction)
     {
       for(size_t i(0);i<4;++i)
 	lightDirection_[i]=direction[i];
     }
 
-    void Sheet::set_light_parameters(GLfloat* parameter)
+    void Sheet::set_light_parameters(const GLfloat* parameters)
     {
       for(size_t i(0);i<4;++i)
-	lightParameter_[i]=parameter[i];
+	lightParameters_[i]=parameters[i];
     }
 
 #pragma GCC diagnostic push
@@ -389,7 +404,7 @@ namespace scigma
       for(size_t i(0);i<nVaryingAttributes;++i)
 	{
 	  GLERR;
-	  GLuint attLoc((GLuint(i+2)));
+	  GLuint attLoc(varyingAttributeIndex_[i]);
 	  glEnableVertexAttribArray(attLoc);
 	  glVertexAttribPointer(attLoc,4,GL_FLOAT, GL_FALSE,
 				nVars_*GLsizei(Mesh::NVALS_PER_DIM*sizeof(GLfloat)), 
@@ -403,13 +418,21 @@ namespace scigma
     void Sheet::prepare_constant_attributes()
     {
       GLERR;
-      size_t nVaryingAttributes(varyingBaseIndex_.size());
       size_t nConstAttributes(constantIndex_.size());
       for(size_t i(0);i<nConstAttributes;++i)
 	{
-	  GLuint attLoc((GLuint(i+nVaryingAttributes+2)));
+	  GLuint attLoc(constantAttributeIndex_[i]);
 	  glDisableVertexAttribArray(attLoc);
-	  glVertexAttrib4fv(attLoc,&constants_[i*Mesh::NVALS_PER_DIM]);
+	  glVertexAttrib4fv(attLoc,&constants_[constantIndex_[i]*Mesh::NVALS_PER_DIM]);
+      GLERR;
+      //  std::cout<<attLoc<<std::endl;
+	}
+      size_t nEmptyAttributes(emptyAttributeIndex_.size());
+      for(size_t i(0);i<nEmptyAttributes;++i)
+	{
+	  GLuint attLoc(emptyAttributeIndex_[i]);
+	  glDisableVertexAttribArray(attLoc);
+	  glVertexAttrib4f(attLoc,0.0f,0.0f,0.0f,0.0f);
       GLERR;
       //  std::cout<<attLoc<<std::endl;
 	}

@@ -1,5 +1,6 @@
 #ifndef SCIGMA_GUI_GLBUFFER_HPP
 #define SCIGMA_GUI_GLBUFFER_HPP
+#include <limits>
 #include "../common/pythonobject.hpp"
 #include "../common/events.hpp"
 #include "../dat/wave.hpp"
@@ -41,6 +42,8 @@ namespace scigma
 	void begin_transfer();
 	void end_transfer();
 
+	void finalize();
+
 	bool is_transferring();
 	
     private:
@@ -52,8 +55,9 @@ namespace scigma
 	GLsizei size_;
 	GLsizei chunkSize_;
 	GLsizei capacity_;
-	
 	GLuint bufferID_;
+
+	size_t finalSize_;
 
 	double timeOfLastTransfer_;
 
@@ -67,6 +71,7 @@ namespace scigma
     template <class T, class U> AbstractGLBuffer<T,U>::AbstractGLBuffer(const AbstractWave<U>* wave, GLsizei initialCapacity):
       PythonObject<AbstractGLBuffer<T,U>>(this),wave_(wave),size_(0),
       chunkSize_(0x4000),capacity_(initialCapacity>2?initialCapacity:2),
+      finalSize_(std::numeric_limits<GLsizei>::max()),
       timeOfLastTransfer_(-1),usedFullChunk_(false),
       isTransferring_(false)
     {
@@ -95,6 +100,14 @@ namespace scigma
       disconnect<WaveInvalidateEvent>(wave_,this);
       isTransferring_=false;
     }
+
+    template <class T, class U> void AbstractGLBuffer<T,U>::finalize()
+    {
+      wave_->lock();
+      finalSize_=wave_->size();
+      wave_->unlock();
+    }
+    
     template <class T, class U> bool AbstractGLBuffer<T,U>::is_transferring(){return isTransferring_;}
     
 #pragma GCC diagnostic push
@@ -108,6 +121,11 @@ namespace scigma
     
     template <class T, class U> bool AbstractGLBuffer<T,U>::process(IdleEvent event, double time)
     {
+      if(size_>=GLsizei(finalSize_))
+	{
+	  end_transfer();
+	  return false;
+	}
       wave_->lock();
       GLsizei dataMax(GLsizei(wave_->size()));
       

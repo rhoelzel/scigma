@@ -2,7 +2,7 @@
 #include "glwindow.hpp"
 #include <iostream>
 
-using scigma::common::connect;
+using scigma::common::connect_before;
 using scigma::common::disconnect;
 
 namespace scigma
@@ -118,7 +118,7 @@ namespace scigma
       if(delay_>0)
 	{
 	  lastDrawn_=0;
-	  connect<LoopEvent>(Application::get_instance(),this);
+	  connect_before<LoopEvent>(Application::get_instance(),this);
 	}
       else
 	glWindow_->gl_context()->request_redraw();
@@ -158,12 +158,10 @@ namespace scigma
 	  if(pickPoint_>=0)
 	    {
 	      EventSource<PointClickEvent>::Type::emit(identifier_.c_str(),int(pickPoint_));
-	      std::cout<<identifier_.c_str()<<", "<<int(pickPoint_)<<std::endl;
 	    }
 	  else
 	    {
 	      EventSource<GraphClickEvent>::Type::emit(identifier_.c_str());
-	      std::cout<<identifier_.c_str()<<std::endl;
 	    }
 	  return true;
 	}

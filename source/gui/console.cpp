@@ -18,14 +18,7 @@ namespace scigma
 							     fadeout(true),delayedLineFeed(false)
 
     {
-      float fg[]={1.0f,1.0f,1.0f,1.0f};
-      float da[]={0.0f,0.6f,0.0f,1.0f};
-      float err[]={1.0f,0.0f,0.0f,1.0f};
-      float bg[]={0.0f,0.0f,0.0f,0.0f};
-      set_foreground_color(fg);
-      set_data_color(da);
-      set_error_color(err);
-      set_background_color(bg);
+      set_theme(DARK);
       cursor=currentLine.end();
       historyPoint=history.begin();
       screenLines.push_back(SingleScreenLine(0));
@@ -36,6 +29,30 @@ namespace scigma
       // clean up remaining bitmapstrings
     }
 
+    void Console::set_theme(Theme theme)
+    {
+      float fg1[]={1.0f,1.0f,1.0f,1.0f};
+      float fg2[]={0.0f,0.0f,0.0f,1.0f};
+      float da[]={0.0f,0.6f,0.0f,1.0f};
+      float err[]={1.0f,0.0f,0.0f,1.0f};
+      float bg[]={0.0f,0.0f,0.0f,0.0f};
+      
+      set_data_color(da);
+      set_error_color(err);
+
+      if(theme==DARK)
+	{
+	  set_foreground_color(fg1);
+	  set_background_color(bg);
+	}
+      else
+	{
+	  set_foreground_color(fg2);
+	  set_background_color(bg);
+	}
+    }
+
+    
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
         
@@ -141,6 +158,10 @@ namespace scigma
 	currentLineBitmap->set_color(fColor,bColor);
       if(cursorBitmap)
 	cursorBitmap->set_color(bColor,fColor);
+
+      std::vector<ScreenText*>::iterator i = screenLineBitmaps.begin();
+      while(i!=screenLineBitmaps.end())
+	(*(i++))->set_color(fColor,bColor);
     }
     
     void Console::set_data_color(const float* rgba)
@@ -159,6 +180,14 @@ namespace scigma
     {
       for(unsigned int i =0;i<4;++i)
 	bColor[i]=rgba[i];
+      if(currentLineBitmap)
+	currentLineBitmap->set_color(fColor,bColor);
+      if(cursorBitmap)
+	cursorBitmap->set_color(bColor,fColor);
+
+      std::vector<ScreenText*>::iterator i = screenLineBitmaps.begin();
+      while(i!=screenLineBitmaps.end())
+	(*(i++))->set_color(fColor,bColor);
     }
     
     void Console::feed_line()

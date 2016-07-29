@@ -15,8 +15,10 @@ namespace scigma
       typedef std::function<void(double, const double*, const double*, double*)> F; 
       typedef std::function<void(double, const double*, const double*, double*)> DFDX; 
       typedef std::function<void(double, const double*, const double*, double*, int)> DFDP; 
-      
-      Odessa(size_t nVar, F f, DFDX dfdx=NULL, size_t nPar=0, DFDP dfdp=NULL, bool stiff=true, double aTol=1e-9, double rTol=1e-9, size_t steps=20000);
+
+      /* note that the parameter dfdp is ignored for now!! it is not used for sensitivity analysis */
+      Odessa(size_t nVar, F f, DFDX dfdx=NULL, size_t nPar=0, DFDP dfdp=NULL, bool stiff=true,
+	     double aTol=1e-9, double rTol=1e-9, size_t steps=20000, bool computeSensitivity=false);
       ~Odessa();
 
       double& t();

@@ -85,11 +85,11 @@ def mark(instance=None):
     if origlist[0]['__type__']!='pt' or origlist[0]['__mode__'] == 'ode':
         raise Exception("Can only mark periodic points")
     
-    marker = instance.options['Style']['marker']['style']
+    marker = instance.options['Drawing']['marker']['style']
     marker = marker.definition['none']
     markerSize = 1.0
-    pointSize = instance.options['Style']['marker']['size'].value
-    color=instance.options['Style']['color']
+    pointSize = instance.options['Drawing']['marker']['size'].value
+    color=instance.options['Drawing']['color']
     delay=0.0
     
     instance.options['Numerical']['nperiod']=1
@@ -150,14 +150,14 @@ def plot(nSteps=1,name=None,instance=None,showall=False,noThread=False):
     else:
         objlist=objects.newlist(objects.new_identifier("tr",instance),n+1,instance)
         
-    marker = instance.options['Style']['marker']['style']
+    marker = instance.options['Drawing']['marker']['style']
     marker = marker.definition[marker.label]
-    point = instance.options['Style']['point']['style']
+    point = instance.options['Drawing']['point']['style']
     point = point.definition[point.label]
-    markerSize = instance.options['Style']['marker']['size'].value
-    pointSize = instance.options['Style']['point']['size'].value
-    color=instance.options['Style']['color']
-    delay=instance.options['Style']['delay'].value
+    markerSize = instance.options['Drawing']['marker']['size'].value
+    pointSize = instance.options['Drawing']['point']['size'].value
+    color=instance.options['Drawing']['color']
+    delay=instance.options['Drawing']['delay'].value
     
     # start plotting
     cppwrapper.plot(nSteps,objlist,showall,noThread,instance)
@@ -206,14 +206,14 @@ def manifold(stable,n=1,originlist=None,name=None,instance=None,showall=False,no
         objlist=objects.newlist(objects.new_identifier("mf",instance),1,instance)
     
     eps=instance.options['Numerical']['manifolds']['eps']
-    marker = instance.options['Style']['marker']['style']
+    marker = instance.options['Drawing']['marker']['style']
     marker = marker.definition[marker.label]
-    point = instance.options['Style']['point']['style']
+    point = instance.options['Drawing']['point']['style']
     point = point.definition[point.label]
-    markerSize = instance.options['Style']['marker']['size'].value
-    pointSize = instance.options['Style']['point']['size'].value
-    color=instance.options['Style']['color']
-    delay=instance.options['Style']['delay'].value
+    markerSize = instance.options['Drawing']['marker']['size'].value
+    pointSize = instance.options['Drawing']['point']['size'].value
+    color=instance.options['Drawing']['color']
+    delay=instance.options['Drawing']['delay'].value
     evindex=instance.options['Numerical']['manifolds']['evec1']
     
     mode=instance.options['Numerical']['mode'].label

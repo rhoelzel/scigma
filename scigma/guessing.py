@@ -1,3 +1,4 @@
+import math
 from ctypes import *
 from . import gui
 from . import dat
@@ -75,7 +76,7 @@ def guess(path=None,win=None,showall=False):
     varying=['t']+win.eqsys.var_names()+win.eqsys.func_names()
     const=win.eqsys.par_names()+win.eqsys.const_names()
 
-    nParts = win.cursor['__nparts__']
+    nParts = win.cursor['nparts']
     
     for varVals, constVals in picking.points(win, varying, const):
         if nParts>1 or not path:
@@ -85,48 +86,11 @@ def guess(path=None,win=None,showall=False):
 
         guess_single(adjpath,blob,varying,const,varVals,constVals,win,showall) 
         
-"""
-        new(win,path,nPoints=1,nParts=1,meshVals=None,varying=None,const=None,varVals=None,constVals=None,fdestroy=None):
-        
-    nperiod=win.equationPanel.get('nperiod')   
-    
-    n = nperiod if (showall and mode!='ode') else 1 
-    
-    # get a dictionary to store data and graph handles
-    if path:
-        objlist=objects.newlist(path,n,instance)
-    else:
-        objlist=objects.newlist(objects.new_identifier(defpath,instance),n,instance)
-    
-    marker = instance.options['Style']['marker']['style']
-    marker = marker.definition['none']
-    markerSize = 1.0
-    point = instance.options['Style']['point']['style']
-    point = point.definition[point.label]
-    pointSize = instance.options['Style']['marker']['size'].value
-    color=instance.options['Style']['color']
-    delay=0.0
-    nperiod=instance.options['Numerical']['nperiod']   
-    
-    for obj in objlist:
-        objects.move_to(obj,instance)
-        obj['__nVar__']=nVar
-        cppwrapper.guess(obj,showall,instance)
-        obj['__type__']='pt'
-        obj['__graph__']=Curve(instance.glWindow,obj['__id__'],n,
-                               obj['__varwave__'],obj['__constwave__'],
-                               marker,point,markerSize,pointSize,color,0.0,
-                               lambda identifier:instance.select_callback(identifier))
-        objects.show(obj,instance)
-    
-    instance.pendingTasks=instance.pendingTasks+len(objlist)
-    return objlist
-    """
 
 commands['g']=commands['gu']=commands['gue']=commands['gues']=commands['guess']=guess
 
 def guessall(path=None,win=None):
-    return guess(path, win, True)
+    guess(path, win, True)
 
 commands['g*']=commands['gu*']=commands['gue*']=commands['gues*']=commands['guess*']=guessall
 
@@ -142,11 +106,11 @@ def rtime(identifier=None, win=None):
     list does not have a return time
     """
     win = windowlist.fetch(win)
-    g = graphs.get(identifier,win) if identifier else picking.selection(win)
+    g = graphs.get(identifier,win) if identifier else win.selection
 
     try:
         win.glWindow.stall()
-        rt=g['__rtime__']
+        rt=g['rtime']
     except:
         raise Exception('selected object has no return time')
     finally:
@@ -166,13 +130,13 @@ def evals(identifier=None, win=None):
     have eigenvalue information
     """
     win = windowlist.fetch(win)
-    g = graphs.get(identifier,win) if identifier else picking.selection(win)
+    g = graphs.get(identifier,win) if identifier else win.selection
 
     try:
         win.glWindow.stall()
         try:
-            evreal = g['__evreal__']
-            evimag = g['__evimag__']
+            evreal = g['evreal']
+            evimag = g['evimag']
         except:
             raise Exception('selected object has no eigenvalue data')
         for i in range(len(evreal)):
@@ -188,7 +152,7 @@ def evals(identifier=None, win=None):
                 win.console.write_data(sign+str(float("{0:.12f}".format(-evimag[i]))))
             elif sign==" + i*":
                 win.console.write_data(sign+str(float("{0:.12f}".format(evimag[i]))))
-            if g['__mode__']!= 'ode':
+            if g['mode']!= 'ode':
                 modulus = math.sqrt(evreal[i]*evreal[i]+evimag[i]*evimag[i])
                 win.console.write("   (modulus: ")
                 win.console.write_data(str(float("{0:.12f}".format(modulus))))
@@ -210,13 +174,13 @@ def evecs(identifier=None, win=None):
     have eigenvector information
     """
     win = windowlist.fetch(win)
-    g = graphs.get(identifier,win) if identifier else picking.selection(win)
+    g = graphs.get(identifier,win) if identifier else win.selection
 
     try:
         win.glWindow.stall()
         try:
-            evecs = g['__evecs__']
-            evimag = g['__evimag__']
+            evecs = g['evecs']
+            evimag = g['evimag']
             nVar = len(evecs)
         except:
             raise Exception('selected object has no eigenvector data')
@@ -266,7 +230,7 @@ def evecs(identifier=None, win=None):
 commands['eve']=commands['evec']=commands['evecs']=evecs 
 
 
-lib.scigma_num_guess.restype=c_void_p
+lib.scigma_num_guess.restype=c_int
 lib.scigma_num_guess.argtypes=[c_char_p,c_int,c_int,c_int,c_int,c_int,c_bool,c_bool]
 
 def guess_single(path,blob,varying,const,varVals,constVals,win,showall):
@@ -274,8 +238,13 @@ def guess_single(path,blob,varying,const,varVals,constVals,win,showall):
     nperiod = win.equationPanel.get("nperiod")
     nPoints = nperiod if (showall and mode!='ode') else 1
 
-    graph=graphs.new(win,path,nPoints,1,None,varying,const,varVals,constVals,finit=init,fcleanup=cleanup)
-    graph['__mode__']=mode
+    graph=graphs.new(win,nPoints,1,varying,const,varVals,constVals,path)
+    graph['mode']=mode
+    graph['callbacks']= {'success':lambda args:success(graph,win,args),
+                         'fail':lambda args:fail(graph,win,args),
+                         'cleanup':lambda:cleanup(graph),
+                         'minmax':lambda:minmax(graph),
+                         'cursor':lambda point:cursor(graph,point,win)}
     
     nVars=win.eqsys.n_vars()
     eqsysID=win.eqsys.objectID
@@ -283,85 +252,136 @@ def guess_single(path,blob,varying,const,varVals,constVals,win,showall):
     blobID=blob.objectID
 
     identifier=create_string_buffer(bytes(path.encode("ascii")))
-    varWaveID=graph['__varwave__'].objectID
+    varWaveID=graph['varwave'].objectID
 
     if mode=='ode':
-        graph['__evwave__']=dat.Wave(columns=nVars*(nVars+2)+N_EIGEN_TYPES,rows=1)
+        graph['evwave']=dat.Wave(nVars*(nVars+2)+N_EIGEN_TYPES)
     else:
-        graph['__evwave__']=dat.Wave(columns=nVars*(nVars+2)+N_FLOQUET_TYPES,lines=1)
-    evWaveID=graph['__evwave__'].objectID
+        graph['evwave']=dat.Wave(nVars*(nVars+2)+N_FLOQUET_TYPES)
 
-    graph['__thread__']=lib.scigma_num_guess(identifier,eqsysID,logID,varWaveID,evWaveID,blobID,showall,False)
+    evWaveID=graph['evwave'].objectID
 
-def init(identifier, win):
-    g=graphs.get(identifier, win)
+    graph['taskID']=lib.scigma_num_guess(identifier,eqsysID,logID,varWaveID,evWaveID,blobID,showall,True)
     
-    # gather and display some additional information for the fixed/periodic point:   
-    nVar=len(g['__varying__'])-1
-    evreal=g['__evwave__'][:nVar]
-    evimag=g['__evwave__'][nVar:2*nVar]
-    evecs=[g['__evwave__'][2*nVar+j*nVar:2*nVar+(j+1)*nVar] for j in range(nVar)]
-        
-    win.console.write("found steady state:\n")
-    vardata=g['__varwave__'].data()
-    rows=g['__varwave__'].rows()
-    columns=g['__varwave__'].columns()
-    names=g['__varying__']
+def success(g,win,args):
+    # finish the cpp Task
+    lib.scigma_num_finish_task(g['taskID'])
+
+    # gather and display some additional information for the fixed/periodic point:
+    nVar=win.eqsys.n_vars()
+    nVarying=len(g['varying'])
+    evreal=g['evwave'][:nVar]
+    evimag=g['evwave'][nVar:2*nVar]
+    evecs=[g['evwave'][2*nVar+j*nVar:2*nVar+(j+1)*nVar] for j in range(nVar)]
+
+    win.console.write("found steady state ")
+    win.console.write_data(g['identifier'])
+    win.console.write(":\n")
+    vardata=g['varwave'].data()
+    nPeriod=g['varwave'].size()/(nVar+1)
+    names=g['varying']
     for i in range(nVar):
         win.console.write(names[i+1]+' = ')
-        win.console.write_data(str(float("{0:.10f}".format(vardata[i+1+columns*(rows-1)])))+'\n')
+        win.console.write_data(str(float("{0:.10f}".format(vardata[i+1+nVarying*(nPeriod-1)])))+'\n')
         
-    evtypes=[int(t) for t in g['__evwave__'][nVar*(nVar+2):]]
+    evtypes=[int(t) for t in g['evwave'][nVar*(nVar+2):]]
     win.console.write("stability: ")
     info=''
-    if g['__mode__']=='ode':
-        g['__stable__']=True if evreal[-1]<=0 else False
+    if g['mode']=='ode':
+        g['stable']=True if evreal[-1]<=0 else False
         for i in range(N_EIGEN_TYPES):
             if evtypes[i]>0:
                 info+=(str(evtypes[i])+EIGEN_TYPE[i]+' / ')
     else:
-        g['__stable__']=True if evreal[-1]*evreal[-1]+evimag[-1]*evimag[-1]<=1 else False
+        g['stable']=True if evreal[-1]*evreal[-1]+evimag[-1]*evimag[-1]<=1 else False
         for i in range(N_FLOQUET_TYPES):
             if evtypes[i]>0:
                 info+=(str(evtypes[i])+FLOQUET_TYPE[i]+' / ')
     win.console.write_data(info.strip(' / ')+'\n')
-        
-    g['__evreal__']=evreal
-    g['__evimag__']=evimag
-    g['__evecs__']=evecs
-    g['__evtypes__']=evtypes
-        
-    # if we plotted a stroboscopic map/ Poincare map or guessed steady state of one of those, store the return time
-    if g['__mode__']=='strobe' or g['__mode__']=='Poincare':
-        varwave=g['__varwave__']
-        if varwave.rows()==1:
-            g['__rtime__']=varwave[0]
+
+    g['evreal']=evreal
+    g['evimag']=evimag
+    g['evecs']=evecs
+    g['evtypes']=evtypes
+
+    # if we guessed the steady state of a stroboscopic map/ Poincare map, store the return time
+    if g['mode']=='strobe' or g['mode']=='Poincare':
+        if nPeriod==1:
+            g['rtime']=vardata[0]
         else:
-            g['__rtime__']=varwave[-(nVar+1)]-varwave[-2*(nVar+1)]
-
-            
-    # create the visible object        
-    if g['__mode__']=='ode':
-        pointStyle=gui.RDOT if g['__stable__'] else gui.RING
-    else:
-        pointStyle=gui.QDOT if g['__stable__'] else gui.QUAD
-
-    pointSize=win.options['Style']['marker']['size'].value
-    color=win.options['Style']['color']
-    delay=0.0
+            g['rtime']=vardata[nVarying*(nPeriod-1)]
     
-    g['__cgraph__']=gui.Curve(win.glWindow,identifier,g['__npoints__'],g['__nparts__'],
-                              g['__mesh__'],g['__varwave__'],g['__constwave__'],
-                              gui.NONE,pointStyle,1.0,pointSize,color,0.0,
-                              lambda identifier:picking.select(identifier,win))
+    # create the visible object        
+    if g['mode']=='ode':
+        pointStyle=gui.RDOT if g['stable'] else gui.RING
+    else:
+        pointStyle=gui.QDOT if g['stable'] else gui.QUAD
+
+    pointSize=win.options['Drawing']['marker']['size'].value
+    color=win.options['Drawing']['color']
+    
+    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],g['npoints'],g['nparts'],
+                           len(g['varying']),g['varwave'],g['constwave'],
+                           lambda identifier, point: picking.select(identifier,point,win))
+    g['cgraph'].set_point_style(pointStyle)
+    g['cgraph'].set_point_size(pointSize)
+    g['cgraph'].set_color(color)
+    g['cgraph'].finalize()
 
     graphs.show(g,win)
-    picking.select(identifier,win)
+    picking.select(g['identifier'],-1,win,True)
 
-def cleanup(identifier,win):
-    g=graphs.get(identifier, win)
-    g['__evwave__'].destroy()
+def fail(g,win,args):
+    # finish the cpp Task
+    lib.scigma_num_finish_task(g['taskID'])
+
+    g['cgraph']=None
+        
+def cleanup(g):
+    g['evwave'].destroy()
     
+def minmax(g):
+    g['min']={}
+    g['max']={}
+    mi=g['min']
+    ma=g['max']
+    varying=g['varying']
+    varWave=g['varwave']
+    rows=varWave.size()/len(varying)
+    columns=len(varying)
+    minima=[1e300]*columns
+    maxima=[-1e300]*columns
+
+    varWave.lock()
+    d=varWave.data()
+    for i in range(rows):
+        for j in range(columns):
+            value=d[i*columns+j]
+            if value<minima[j]:
+                minima[j]=value
+            if value>maxima[j]:
+                maxima[j]=value
+    varWave.unlock()
+    for i in range(columns):
+        mi[varying[i]]=minima[i]
+        ma[varying[i]]=maxima[i]
+    constWave=g['constwave']
+    const=g['const']
+    for i in range(constWave.size()):
+        mi[const[i]]=constWave[i]
+        ma[const[i]]=constWave[i]
+
+def cursor(g,point,win):
+    nVarying=len(g['varying'])
+
+    if point == -1:
+        varVals=g['varwave'][-nVarying:]
+    else:
+        varVals=g['varwave'][nVarying*point:nVarying*(point+1)]
+    constVals=g['constwave'][:]
+   
+    return g['varying'], g['const'], varVals, constVals
+
 def plug(win=None):
     win = windowlist.fetch(win)
     # make sure that we do not load twice into the same window
