@@ -7,13 +7,13 @@ namespace scigma
   namespace num
   {
 
-    MapStepper::MapStepper(const EquationSystem& eqsys, bool computeJacobian, bool forward):
+    MapStepper::MapStepper(const EquationSystem& eqsys, bool forward):
       nVar_(eqsys.n_variables()), nFunc_(eqsys.n_functions()),
-      t_(eqsys.time()), forward_(forward?1:0),
+      t_(eqsys.is_autonomous()?0:eqsys.time()), forward_(forward?1:0),
       xVals_(2*nVar_),x_(&xVals_[0]), xNew_(&xVals_[nVar_]),f_t_(eqsys.f_t()),
-      jacVals_(dfdx_t_&&computeJacobian?3*nVar_*nVar_:0), jac_(dfdx_t_&&computeJacobian?&jacVals_[0]:NULL),
-      jacNew_(dfdx_t_&&computeJacobian?&jacVals_[nVar_*nVar_]:NULL),
-      jacTemp_(dfdx_t_&&computeJacobian?&jacVals_[2*nVar_*nVar_]:NULL),
+      jacVals_(eqsys.dfdx_t()?3*nVar_*nVar_:0), jac_(eqsys.dfdx_t()?&jacVals_[0]:NULL),
+      jacNew_(eqsys.dfdx_t()?&jacVals_[nVar_*nVar_]:NULL),
+      jacTemp_(eqsys.dfdx_t()?&jacVals_[2*nVar_*nVar_]:NULL),
       dfdx_t_(eqsys.dfdx_t()),
       funcVals_(nFunc_),func_t_(eqsys.func_t())
       {
@@ -34,10 +34,14 @@ namespace scigma
       t_=t;
       for(size_t i(0);i<nVar_;++i)
 	x_[i]=x[i];
-      func_t_(t_,x_,&funcVals_[0]);
+
+      if(nFunc_)
+	func_t_(t_,x_,&funcVals_[0]);
+
       if(dfdx_t_)
 	for(size_t i(0);i!=nVar_*nVar_;++i)
 	  jac_[i]=(i%(nVar_+1))?0:1;
+    
     }
 
     void MapStepper::advance(size_t n)
@@ -63,11 +67,10 @@ namespace scigma
 	      std::swap(jac_,jacNew_);
 	    }
 	  f_t_(t_,x_,xNew_);
-	  std::cerr<<t_<<", "<<x_[0]<<", "<<x_[1]<<std::endl;
-	  std::cerr<<xNew_[0]<<", "<<xNew_[1]<<std::endl;
 	  std::swap(x_,xNew_);
 	  t_+=forward_?1.0:-1.0;
-	  func_t_(t_,x_,&funcVals_[0]);
+	  if(nFunc_)
+	    func_t_(t_,x_,&funcVals_[0]);
 	}
     }
 

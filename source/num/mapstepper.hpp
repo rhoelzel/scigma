@@ -15,7 +15,7 @@ namespace scigma
     class MapStepper:public Stepper
     {
     public:
-      MapStepper(const EquationSystem& eqsys, bool computeJacobian=false, bool forward=true);
+      MapStepper(const EquationSystem& eqsys, bool forward=true);
       
       virtual double t() const;
       virtual const double* x() const;
@@ -57,4 +57,4 @@ namespace scigma
   } /* end namespace num */
 } /* end namespace scigma */
 
-#endif /* __SCIGMA_NUM_MAPSTEPPER_HPP */
+#endif /* SCIGMA_NUM_MAPSTEPPER_HPP */
