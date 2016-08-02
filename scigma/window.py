@@ -74,7 +74,8 @@ class Window(object):
             self.optionPanels[identifier].destroy()
             del self.optionPanels[identifier]
             self.glWindow.request_redraw()
-            
+
+
     def loop_callback(self):
         mtype, message=self.log.pop()
         while message is not "":

@@ -13,6 +13,7 @@ elif sys.platform=='win32':
 else:
     quit()
 
+    
 libpath=inspect.stack()[0][1].rpartition(sep)[0]
 path=os.getcwd()
 try:

@@ -2,34 +2,36 @@
 #include <cmath>
 #include <string>
 #include <algorithm>
-#include "mapmanifoldstepper.h"
+#include <tinythread.h>
+#include "mapmanifoldstepper.hpp"
 
 namespace scigma
 {
   namespace num
   {
     
-    MapManifoldStepper::MapManifoldStepper(Stepper* mapStepper, dat::Wave* initial,double dsmax, double dsmin, double alpha, double dalpha,size_t nPeriod):
-      Stepper(false,mapStepper->nVar,mapStepper->nFunc,0),mapStepper_(mapStepper),
-      ds_(dsmax),dsmax_(dsmax),dsmin_(dsmin),alpha_(alpha),dalpha_(dalpha),nPeriod_(nPeriod),
-      current_(0),nVar_(mapStepper->nVar),xBackup_(mapStepper->nVar)
+    MapManifoldStepper::MapManifoldStepper(Stepper* mapStepper, Wave* initial,double dsmax, double dsmin, double alpha, double dalpha,size_t nPeriod):
+      mapStepper_(mapStepper),t0_(mapStepper_->t()),ds_(dsmax),dsmax_(dsmax),dsmin_(dsmin),alpha_(alpha),dalpha_(dalpha),
+      nPeriod_(nPeriod),current_(0),nVar_(mapStepper->n_variables()),nFunc_(mapStepper->n_functions()),xBackup_(mapStepper->n_variables())
     {
+      initial->lock();
       // insert fixed point
       points_.push_back(std::vector<double>(nVar_+1));
-      for(uint32_t i(0);i<nVar_;++i)
-	points_.back()[i]=(*initial)[1+i];
+      for(size_t i(0);i<nVar_;++i)
+	points_.back()[i]=initial->data()[1+i];
       points_.back()[nVar_]=0;
 
       // insert end point of initial segment
       points_.push_back(std::vector<double>(nVar_+1));
       for(uint32_t i(0);i<nVar_;++i)
-	points_.back()[i]=(*initial)[uint32_t(initial->columns())+1+i];
+	points_.back()[i]=initial->data()[nVar_+nFunc_+1+i];
       points_.back()[nVar_]=1.0;//arc(&(points_.front()[0]),&(points_.back()[0]));
 
       /*      for(size_t i(0);i<nVar;++i)
 	      xBackup_[i]=mapStepper->x(i);*/
 
       preImage_=points_.begin();
+      initial->unlock();
     }
     
     MapManifoldStepper::~MapManifoldStepper()
@@ -38,11 +40,14 @@ namespace scigma
     }
     
     double MapManifoldStepper::t() const {return points_.back()[nVar_];}
-    double MapManifoldStepper::x(size_t index) const {return mapStepper_->x(index);}
-    double MapManifoldStepper::func(size_t index) const {return mapStepper_->func(index);}
-    double MapManifoldStepper::jac(size_t index) const {return 0*index;}
-    void MapManifoldStepper::reset(const double* x){mapStepper_->reset(x);}
+    const double* MapManifoldStepper::x() const {return mapStepper_->x();}
+    const double* MapManifoldStepper::func() const {return mapStepper_->func();}
+    const double* MapManifoldStepper::jac() const {return NULL;}
+    void MapManifoldStepper::reset(double t, const double* x){mapStepper_->reset(t,x);}
 
+    size_t MapManifoldStepper::n_variables() const {return nVar_;}
+    size_t MapManifoldStepper::n_functions() const {return nFunc_;}
+    
     double MapManifoldStepper::arc(double* q0,double* q1)
     {
       double d(0);
@@ -97,11 +102,11 @@ namespace scigma
 	      while(pre!=points_.end())
 		{
 		  //		  std::cerr<<"finding segment, starting at "<<(*pre)[nVar_]<<std::endl;
-		  mapStepper_->reset(&((*pre)[0]));
+		  mapStepper_->reset(t0_,&((*pre)[0]));
 		  mapStepper_->advance(nPeriod_);
 		  for(size_t j(0);j<nVar_;++j)
 		    {
-		      Q[j]=mapStepper_->x(j);
+		      Q[j]=mapStepper_->x()[j];
 		      //  std::cerr<<Q[j]<<", ";
 		    }
 		  if((l=arc(&Q[0],&(points_.back()[0])))>=ds_)
@@ -129,10 +134,10 @@ namespace scigma
 		  while(++count<100)
 		    {
 		      //std::cerr<<"bisecting, starting at "<<q[nVar_]<<std::endl;
-		      mapStepper_->reset(q);
+		      mapStepper_->reset(t0_,q);
 		      mapStepper_->advance(nPeriod_);
 		      for(size_t j(0);j<nVar_;++j)
-			Q[j]=mapStepper_->x(j);
+			Q[j]=mapStepper_->x()[j];
 		      L=(arc(&Q[0],&(points_.back()[0])));
 		      //std::cerr<<"arc: "<<l<<" ds: "<<ds_<<std::endl;
 		      if(L<0.8*ds_)

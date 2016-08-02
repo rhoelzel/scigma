@@ -7,7 +7,6 @@ from .glwindow import GLWindow
 from .atwpanel import ATWPanel, Button, Separator
 from .navigator import Navigator
 from .console import Console
-#from .curve import Curve
 from .bundle import Bundle
 from .picker import Picker
 from .cosy import Cosy
@@ -19,6 +18,7 @@ try:
     elif sys.version_info.major == 3:
         # We are using Python 3.x
         import tkinter as tk
+
 except:
     tk=None
     print("tkinter not found / not using tk")
@@ -66,6 +66,8 @@ def hook():
 
     while not stdin_ready():
         application.loop(KEY_INTERVAL)
+        tkroot.update_idletasks()
+        tkroot.update()
     return 0
 
 """

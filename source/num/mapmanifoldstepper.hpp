@@ -1,10 +1,10 @@
-#ifndef __SCIGMA_NUM_MAPMANIFOLDSTEPPER_H__
-#define __SCIGMA_NUM_MAPMANIFOLDSTEPPER_H__
+#ifndef SCIGMA_NUM_MAPMANIFOLDSTEPPER_HPP
+#define SCIGMA_NUM_MAPMANIFOLDSTEPPER_HPP
 
 #include <list>
 #include <vector>
-#include "stepper.h"
-#include "../dat/wave.h"
+#include "stepper.hpp"
+#include "../dat/wave.hpp"
 
 namespace scigma
 {
@@ -13,24 +13,32 @@ namespace scigma
     
     class MapManifoldStepper:public Stepper
     {
+    private:
+      typedef scigma::dat::AbstractWave<double> Wave;
+      
     public:
-      MapManifoldStepper(Stepper* mapStepper, dat::Wave* initial, double dsmax, double dsmin, double alpha, double dalpha, size_t nPeriod);
+      MapManifoldStepper(Stepper* mapStepper, Wave* initial, double dsmax, double dsmin, double alpha, double dalpha, size_t nPeriod);
       ~MapManifoldStepper();
 
-      double t() const;
-      double x(size_t index) const;
-      double func(size_t index) const;
-      double jac(size_t index) const;
-      void reset(const double* x);
+      virtual double t() const;
+      virtual const double* x() const;
+      virtual const double* func() const;
+      virtual const double* jac() const;
+      virtual void reset(double t, const double* x);
       void advance_once();
-      void advance(size_t n=1);
+      virtual void advance(size_t n=1);
 
+      virtual size_t n_variables() const;
+      virtual size_t n_functions() const;
+
+      
     private:
       double angle(double* q0,double* q1, double* q2);
       double arc(double* q0,double* q1);
 
       Stepper* mapStepper_;
-      
+
+      double t0_;
       double ds_;
       double dsmax_;
       double dsmin_;
@@ -41,6 +49,7 @@ namespace scigma
 
       size_t current_;
       size_t nVar_;
+      size_t nFunc_;
       std::list<std::vector<double> > points_;
       std::vector<double> xBackup_;
 
@@ -51,4 +60,4 @@ namespace scigma
   } /* end namespace num */
 } /* end namespace scigma */
 
-#endif /* __SCIGMA_NUM_MAPMANIFOLDSTEPPER_H__ */
+#endif /* SCIGMA_NUM_MAPMANIFOLDSTEPPER_HPP */

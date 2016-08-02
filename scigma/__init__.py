@@ -7,6 +7,7 @@ from . import view
 from . import style
 from . import iteration
 from . import guessing
+from . import manifolds
 from . import continuation
 from . import window
 from . import windowlist
@@ -29,6 +30,7 @@ def new(win=None):
     picking.plug(w)
     iteration.plug(w)
     guessing.plug(w)
+    manifolds.plug(w)
     continuation.plug(w)
     return w
 

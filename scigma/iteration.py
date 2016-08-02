@@ -1,4 +1,5 @@
 from ctypes import *
+from Tkinter import *
 from . import gui
 from . import common
 from . import lib
@@ -172,6 +173,10 @@ def minmax(g):
         mi[const[i]]=constWave[i]
         ma[const[i]]=constWave[i]
 
+def click(g,x,y,point,win):
+    pass
+
+        
 def cursor(g,point,win):
     
     nVarying=len(g['varying'])

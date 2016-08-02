@@ -11,13 +11,13 @@ commands={}
 
 def circle(d,n=100,win=None):
     """ circle [name]                                                                                                   
-                                                                                                                        
+    
     creates a circle of initial conditions;                                                                             
     d is the diameter measured in units of                                                                              
     the coordinate system                                                                                               
     """
     win = windowlist.fetch(win)
-
+    
     d=float(d)
     n=int(n)
 

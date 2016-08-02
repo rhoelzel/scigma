@@ -133,7 +133,6 @@ extern "C"
     size_t maxIter((size_t(blob->get_int("odessa.mxiter"))));
     double nTol(blob->get_double("Newton.tol"));
 
-    Task* task(NULL);
 
     if(nSteps<0)
       {
@@ -187,7 +186,7 @@ extern "C"
 	    }
 	}
       }
-    task=create_iteration_task(identifier,log,size_t(nSteps), size_t(nRays),stepperList,varyingWave,size_t(nPeriod),showAllIterates?1:0);
+    Task* task(create_iteration_task(identifier,log,size_t(nSteps), size_t(nRays),stepperList,varyingWave,size_t(nPeriod),showAllIterates?1:0));
     task->run(noThread);
     return task->get_python_id();
     
