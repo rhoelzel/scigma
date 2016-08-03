@@ -1,21 +1,66 @@
 import math
 from . import gui
+from . import num
 from . import common
 from . import library
 from . import options
 from . import graphs
 from . import windowlist
 from . import equations
+from . import maxpts
 
 commands={}
 
-def circle(d,n=100,win=None):
-    """ circle [name]                                                                                                   
+def pertu(n,eps=None,g=None,win=None):
+    win = windowlist.fetch(win)
+    g = graphs.get(g)
+
+    mode = g['mode']
+
+    evreal=g['evreal']
+    evimag=g['evimag']
+
+    n=int(n)
     
-    creates a circle of initial conditions;                                                                             
-    d is the diameter measured in units of                                                                              
-    the coordinate system                                                                                               
-    """
+    if not eps:
+        eps=win.options['Algorithms']['manifolds']['eps']
+
+    if mode == 'ode':
+        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]>0.0]
+    else:
+        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]**2+evimag[g['evecs'].index(evec)]**2>1.0]
+
+    evecs=num.gsortho(evecs)
+
+    nDim = len(evecs)-1
+    
+    if n > maxpts.nMax[nDim][0]:
+        win.console.write_warning("n="+str(n)+ " is too large for "+str(nDim)+"-dimensional grid;" +
+                                  " capping to n="+str(maxpts.nMax[nDim][0])+" for "+str(maxpts.nMax[nDim][1])+ " grid points\n")
+        n=maxpts.nMax[nDim][0];
+
+    phi=num.angles(nDim,n)
+        
+
+commands['pertu']=pertu
+
+def perts(n,g=None,win=None):
+    win = windowlist.fetch(win)
+    g = graphs.get(g)
+
+    mode = g['mode']
+
+    evreal=g['evreal']
+    evimag=g['evimag']
+
+    if mode == 'ode':
+        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]<0.0]
+    else:
+        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]**2+evimag[g['evecs'].index(evec)]**2<1.0]
+
+commands['perts']=perts
+
+def circle(d,n=100,win=None):
     win = windowlist.fetch(win)
     
     d=float(d)

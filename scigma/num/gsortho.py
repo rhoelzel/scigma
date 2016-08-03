@@ -28,3 +28,4 @@ def gsortho(X):
         for j in range(len(Y[i])):
             Y[i][j]=Y[i][j]/l
     return Y
+
