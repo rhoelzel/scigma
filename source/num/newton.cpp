@@ -22,8 +22,8 @@ namespace scigma
       const int job(0);
       double rcond,detmin(DBL_EPSILON/FLT_RADIX);
 
-      double* scratch(new double[(2+nVar)*nVar]);
-      int* ipvt(new int[nVar]);
+      double* scratch(new double[size_t((2+nVar)*nVar)]);
+      int* ipvt(new int[size_t(nVar)]);
       double* rhs(scratch); 
       double* dfdx(scratch+nVar);
       double* z(scratch+nVar*(nVar+1));
@@ -97,7 +97,7 @@ namespace scigma
    
     void discrete_jacobian(int nVar,double* x, const Newton::F& f, double* dfdx, double* work)
     {
-      double* rhs(work?work:new double[nVar*2]);
+      double* rhs(work?work:new double[size_t(nVar*2)]);
       double* rhs_delta(work?dfdx+nVar*nVar:rhs+nVar);
       double detmin(DBL_EPSILON/FLT_RADIX);
 

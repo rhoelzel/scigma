@@ -23,7 +23,7 @@ extern "C"
     PYOBJ(Log,ptr,objectID);
     if(ptr)
       {
-	std::pair<scigma::common::Log::Type,std::string> result(ptr->pop());
+	std::pair<scigma::common::LogType,std::string> result(ptr->pop());
 	std::stringstream ss;
 	ss<<result.first;
 	ss<<result.second;

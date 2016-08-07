@@ -23,16 +23,16 @@ namespace scigma
       return file;
     }
 
-    std::pair<Log::Type,std::string> Log::pop()
+    std::pair<LogType,std::string> Log::pop()
     {
       tthread::lock_guard<tthread::mutex> guard(mutex_);
       if(!list_.empty())
 	{
-	  std::pair<Log::Type,std::string>result(list_.front());
+	  std::pair<LogType,std::string>result(list_.front());
 	  list_.pop_front();
 	  return result;
 	}
-      return std::pair<Log::Type,std::string>(DEFAULT,"");
+      return std::pair<LogType,std::string>(LOG_DEFAULT,"");
     }
      
     

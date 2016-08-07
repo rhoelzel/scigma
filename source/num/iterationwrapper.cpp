@@ -70,7 +70,7 @@ namespace scigma
 		     }
 		   catch(std::string error)
 		     {
-		       log->push<Log::ERROR>(error);
+		       log->push<LOG_ERROR>(error);
 		       errorList[j]=true;
 		       ++nErrors;
 		       break;
@@ -90,9 +90,9 @@ namespace scigma
 	     }
 
 	   if(i>0)
-	     log->push<Log::SUCCESS>(identifier);
+	     log->push<LOG_SUCCESS>(identifier);
 	   else
-	     log->push<Log::FAIL>(identifier);
+	     log->push<LOG_FAIL>(identifier);
 
 	   for(i=0;i<nRays;++i)
 	     delete stepperList[i];
@@ -141,7 +141,7 @@ extern "C"
 	period=-period;
       }
 
-    Stepper** stepperList(new Stepper*[nRays]);
+    Stepper** stepperList(new Stepper*[size_t(nRays)]);
     std::vector<std::string> varPars;
     append_tokens(varParsC,varPars,'|');
 

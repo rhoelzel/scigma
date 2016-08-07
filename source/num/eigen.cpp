@@ -33,7 +33,7 @@ namespace scigma
       // query for optimal work length first
       dgeev_(&jobvl,&jobvr,&n,a,&lda,wr,wi,NULL,&ldvl,vr,&ldvr,&workSize,&lwork,&info);
       lwork=int(workSize);
-      double* work(new double[lwork]);
+      double* work(new double[size_t(lwork)]);
       // get eigenvalues and eigenvectors
       dgeev_(&jobvl,&jobvr,&n,a,&lda,wr,wi,NULL,&ldvl,vr,&ldvr,work,&lwork,&info);
       delete[] work;

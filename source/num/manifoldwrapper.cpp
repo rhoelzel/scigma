@@ -72,7 +72,7 @@ extern "C"
 	break;
       case ODE:
 	{
-	  log->push<Log::ERROR>("calling map manifold in ODE mode\n");
+	  log->push<LOG_ERROR>("calling map manifold in ODE mode\n");
 	  return -1;
 	}
       case STROBE:

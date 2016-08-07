@@ -60,11 +60,11 @@ namespace scigma
 	   catch(std::string error)
 	     {
 	       success=false;
-	       log->push<Log::ERROR>(error);
+	       log->push<LOG_ERROR>(error);
 	     }
 	   if(!success)
 	     {
-	       log->push<Log::ERROR>("Newton iteration did not converge\n");
+	       log->push<LOG_ERROR>("Newton iteration did not converge\n");
 	     }
 	   else
 	     {
@@ -93,7 +93,7 @@ namespace scigma
 		     }
 		   catch(std::string error)
 		     {
-		       log->push<Log::ERROR>(error);
+		       log->push<LOG_ERROR>(error);
 		       success=false;
 		       break;
 		     }
@@ -105,9 +105,9 @@ namespace scigma
 	   delete[] x;
 
 	   if(success)
-	     log->push<Log::SUCCESS>(identifier);
+	     log->push<LOG_SUCCESS>(identifier);
 	   else
-	     log->push<Log::FAIL>(identifier);
+	     log->push<LOG_FAIL>(identifier);
 
 	   varyingWave->unlock();
 	   delete stepper;
@@ -160,10 +160,10 @@ namespace scigma
 	  catch(std::string error)
 	    {
 	      success=false;
-	      log->push<Log::ERROR>(error);
+	      log->push<LOG_ERROR>(error);
 	    }
 	  if(!success)
-	    log->push<Log::ERROR>("Newton iteration did not converge\n");
+	    log->push<LOG_ERROR>("Newton iteration did not converge\n");
 	  else
 	    {
 	      // get eigenvalue and eigenvector info
@@ -193,9 +193,9 @@ namespace scigma
 	  delete[] funcs;
 	  
 	  if(success)
-	    log->push<Log::SUCCESS>(identifier);
+	    log->push<LOG_SUCCESS>(identifier);
 	  else
-	    log->push<Log::FAIL>(identifier);
+	    log->push<LOG_FAIL>(identifier);
 	  
 	  varyingWave->unlock();
 	};
@@ -248,7 +248,7 @@ extern "C"
       case ODE:
 	if(!eqsys->is_autonomous())
 	  {
-	    log->push<Log::ERROR>("cannot use Newton on non-autonomous dynamical system\n");
+	    log->push<LOG_ERROR>("cannot use Newton on non-autonomous dynamical system\n");
 	    return -1;
 	  }
 	task=create_guessing_task(identifier,log,eqsys,varyingWave,evWave,nTol);

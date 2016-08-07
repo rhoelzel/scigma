@@ -46,13 +46,13 @@ namespace scigma
 	  else
 	    iopt_[1]=0;
 	  liw_=int(21+nVar_+nPar_);
-	  iwork_=new int[liw_];
+	  iwork_=new int[size_t(liw_)];
 	}
       else
 	{
 	  iopt_[1]=0;
 	  liw_=int(20+nVar_);
-	  iwork_=new int[liw_];
+	  iwork_=new int[size_t(liw_)];
 	}
 
       /* first nVar values of p_ are fake parameters for sensitivity analysis (always zero)
@@ -76,7 +76,7 @@ namespace scigma
 	  else
 	    mf_=22;
 	  lrw_=int(22+8*(nPar_+1)*nVar_+nVar_*nVar_+nVar_);
-	  rwork_=new double[lrw_];
+	  rwork_=new double[size_t(lrw_)];
 	}
       else
 	{
@@ -85,7 +85,7 @@ namespace scigma
 	  else
 	    mf_=12;
 	  lrw_=int(22+15*(nPar_+1)*nVar_+nVar_*nVar_+nVar_);
-	  rwork_=new double[lrw_];
+	  rwork_=new double[size_t(lrw_)];
 	}
       for(size_t i(4);i<9;++i)
 	rwork_[i]=iwork_[i]=0;

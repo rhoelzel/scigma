@@ -61,7 +61,7 @@ extern "C"
 		oldBranch->unlock();
 	      }
 	    /* notify scigma that old branch has been finished */
-	    instance->log_->push<Log::SUCCESS>(ac.c);
+	    instance->log_->push<LOG_SUCCESS>(ac.c);
 	  }
 
 	if(*lab)
@@ -77,7 +77,7 @@ extern "C"
 	    std::stringstream ss1;
 	    ss1<<ac.c<<"|"<<point->get_python_id()<<"|"<<*mtot<<"|"<<
 	      *itp<<"|"<<*lab;
-	    instance->log_->push<Log::SUCCESS>(ss1.str());
+	    instance->log_->push<LOG_SUCCESS>(ss1.str());
 	  }
 	
 	if((*itp**itp!=81)||(*mtot**mtot==1))
@@ -103,7 +103,7 @@ extern "C"
 	    std::stringstream ss2;
 	    ss2<<ac.c<<"|"<<autoBranches[instance]->get_python_id()<<"|"<<constVals->get_python_id()<<"|"<<*mtot<<"|"<<
 	      0<<"|"<<*lab;
-	    instance->log_->push<Log::SUCCESS>(ss2.str());
+	    instance->log_->push<LOG_SUCCESS>(ss2.str());
 	  }
       }
     
@@ -263,7 +263,7 @@ namespace scigma
       // run AUTO in its own thread
       int id((int(id_)));
       auto_entry(&id,autoConstants_.c.c_str());
-      log_->push<Log::SUCCESS>(autoConstants.c);
+      log_->push<LOG_SUCCESS>(autoConstants.c);
     }
 
     

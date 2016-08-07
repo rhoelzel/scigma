@@ -15,24 +15,29 @@ namespace scigma
 {
   namespace common
   {
+
+    enum LogType
+      {
+	LOG_SUCCESS=0,
+	LOG_FAIL=1,
+	LOG_DATA=2,
+	LOG_WARNING=3,
+	LOG_ERROR=4,
+	LOG_DEFAULT=5
+      };
+    
     class Log:public PythonObject<Log>
     {
     public:
-      
-      enum Type
-	{
-	  SUCCESS=0,
-	  FAIL=1,
-	  DATA=2,
-	  WARNING=3,
-	  ERROR=4,
-	  DEFAULT=5
-	};
-
+    
       Log();
       Log(std::string fileName);
-      
-      template <Type T=DEFAULT> void push(const std::string& text, const char* file=NULL, int line=0)
+
+    private:
+      const char* strip_path(const char* file);
+
+    public:
+      template <LogType T=LOG_DEFAULT> void push(const std::string& text, const char* file=NULL, int line=0)
       {
 	if(text=="")
 	  return;
@@ -44,7 +49,7 @@ namespace scigma
 	  combine<<text;
 	
 	tthread::lock_guard<tthread::mutex> guard(mutex_);
-	list_.push_back(std::pair<Type,std::string>(T,combine.str()));
+	list_.push_back(std::pair<LogType,std::string>(T,combine.str()));
 	if(""!=file_)
 	  {
 	    FILE * pFile;
@@ -57,15 +62,14 @@ namespace scigma
 	  }
       }
 
-      std::pair<Type,std::string> pop();
+      std::pair<LogType,std::string> pop();
       
     private:
       
       Log(const Log&);
       Log& operator=(const Log&);
-      const char* strip_path(const char* file);
       
-      std::deque<std::pair<Type,std::string> >list_;
+      std::deque<std::pair<LogType,std::string> >list_;
       tthread::mutex mutex_;
       std::string file_;
     };
