@@ -85,7 +85,7 @@ class Window(object):
                 self.sleeping=False
                 self.console.write(" continuing!\n")
                 print("... continuing!")
-
+       
         while self.queue and not gui.application.is_sleeping():
             line=self.queue[0]            
             self.queue=self.queue[1:]

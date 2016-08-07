@@ -262,6 +262,7 @@ def guess_single(path,blob,varying,const,varVals,constVals,win,showall):
     evWaveID=graph['evwave'].objectID
 
     graph['taskID']=lib.scigma_num_guess(identifier,eqsysID,logID,varWaveID,evWaveID,blobID,showall,True)
+    graph['cgraph']=None
     
 def success(g,win,args):
     # finish the cpp Task

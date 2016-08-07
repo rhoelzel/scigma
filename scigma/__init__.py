@@ -1,4 +1,14 @@
 import os, sys, inspect, ctypes
+try:
+    if sys.version_info.major == 2:
+        # We are using Python 2.x
+        import tkFileDialog as tkfile
+    elif sys.version_info.major == 3:
+        # We are using Python 3.x
+        import tkinter.filedialog as tkfile
+except:
+        print("tkinter not found / not using tk")
+
 from .library import lib
 from . import options
 from . import graphs
@@ -52,8 +62,14 @@ def load(filename=None,win=None):
     if not filename:
         raise Exception("no filename specified")
     if filename[-2:]=='py':
-        execfile(filename)
+        if sys.version_info.major==2:
+            execfile(filename)
+        elif sys.version_info.major==3:
+            with open(filename) as f:
+                code = compile(f.read(), filename, 'exec')
+                exec(code, globals(), locals())
         return
+   
     try:
         with open(filename) as f:
             script = f.readlines()

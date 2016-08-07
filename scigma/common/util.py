@@ -95,6 +95,7 @@ def dict_full_paths(identifier,parent,results,isnode=stdisnode,dir=''):
     parts=identifier.partition('.')
     current=[]
     deeper=[]
+
     for key in parent:
         subdir=dir+'.'+key
         if key == parts[0]:

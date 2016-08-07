@@ -139,10 +139,9 @@ def get(g, win=None, isnode=lambda entry:'cgraph' not in entry):
     return g
 
 def destroy(g, win):
-    if g['visible']:
-        win.glWindow.remove_drawable(g['cgraph'])
-
     if g['cgraph']:
+        if g['visible']:
+            win.glWindow.remove_drawable(g['cgraph'])
         g['cgraph'].destroy()
 
     g['varwave'].destroy()
@@ -315,7 +314,8 @@ def fail(identifier,args,win):
     delete(identifier,win)
     
 def success(identifier,args,win):
-    g=get(identifier,win, lambda entry: 'callbacks' not in entry)
+    g=get(identifier,win, lambda entry: 'cgraph' not in entry)
+
     # get minima and maxima
     if g['callbacks']['minmax']:
         g['callbacks']['minmax']()
