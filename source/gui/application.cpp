@@ -55,6 +55,8 @@ extern "C"
   
   void mouse_button_callback(GLFWwindow* w, int button , int action, int mods)
   {
+    if(scigma::gui::Application::get_instance()->is_sleeping())
+      return;
     scigma::gui::GLWindow* glWindow(static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w))); 
     TwSetCurrentWindow(size_t(glWindow->gl_context()));
     if(TwEventMouseButtonGLFW(button,action))
@@ -69,6 +71,8 @@ extern "C"
   
   void cursor_position_callback(GLFWwindow* w, double x, double y)
   {
+    if(scigma::gui::Application::get_instance()->is_sleeping())
+      return;
     scigma::gui::GLWindow* glWindow = static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w));
     TwSetCurrentWindow(size_t(glWindow->gl_context()));
     if(TwEventMousePosGLFW(int(x),int(y)))
@@ -79,13 +83,16 @@ extern "C"
   
   void scroll_callback(GLFWwindow* w, double xScroll, double yScroll)
   {
+    if(scigma::gui::Application::get_instance()->is_sleeping())
+      return;
     static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w))->forward_scroll_event(GLfloat(xScroll), GLfloat(yScroll));
   }
   
   void char_callback(GLFWwindow* w, unsigned int unicode)
   {
+    if(scigma::gui::Application::get_instance()->is_sleeping())
+      return;
     scigma::gui::GLWindow* glWindow(static_cast<scigma::gui::GLWindow*>(glfwGetWindowUserPointer(w)));
-
  
     TwSetCurrentWindow(size_t(glWindow->gl_context()));
     if(TwEventCharGLFW(int(unicode),GLFW_PRESS))
@@ -99,6 +106,12 @@ extern "C"
 
   void key_callback(GLFWwindow* w, int key, int scancode, int action, int mods)
   {
+    if(scigma::gui::Application::get_instance()->is_sleeping())
+      {
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	  scigma::gui::Application::get_instance()->wake();
+	return;
+      }
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	++ESCAPE_COUNT;
     
@@ -122,7 +135,7 @@ namespace scigma
 
     Application* Application::theInstance_(NULL);
     
-    Application::Application():masterWindow_(NULL),log_(NULL),idleIndex_(0),loopIsRunning_(false)
+    Application::Application():masterWindow_(NULL),log_(NULL),idleIndex_(0),loopIsRunning_(false),sleeping_(false)
     {
       char path[0x1000];
       getcwd(path,0x1000);
@@ -300,8 +313,8 @@ namespace scigma
 		break;
 	    }
 	  
-	  /* if there is still more time, but no EventSinks for IdleEvent any more, insert a waiting period
-	     to avoid busy waits
+	  /* if there is still more time, but no EventSinks for IdleEvent any more, insert a
+	     waiting period to avoid busy waits
 	  */
 	  while(seconds>remainingSecondsAtStart-REFRESH_INTERVAL)
 	    {
@@ -314,6 +327,11 @@ namespace scigma
 	      seconds-=(t-lt);
 	    }
 	}
+    }
+
+    void Application::break_loop()
+    {
+      loopIsRunning_=false;
     }
 
     void Application::idle(double seconds)
@@ -333,18 +351,26 @@ namespace scigma
 	    break;
 	}
       if(seconds>0)
-	sleep(seconds);
+	{
+	  std::chrono::duration<double> d(seconds);
+	  std::this_thread::sleep_for(d);
+	}
     }
-    
-    void Application::sleep(double seconds)
+
+    void Application::sleep()
     {
-      std::chrono::duration<double> d(seconds);
-      std::this_thread::sleep_for(d);
+      sleeping_=true;
     }
-    
-    void Application::break_loop()
+
+    void Application::wake()
     {
-      loopIsRunning_=false;
+
+      sleeping_=false;
+    }
+
+    bool Application::is_sleeping() const
+    {
+      return sleeping_;
     }
 
   } /* end namespace gui */

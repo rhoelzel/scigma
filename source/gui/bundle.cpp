@@ -43,7 +43,7 @@ namespace scigma
       PythonObject<Bundle>(this),
       length_(length), nRays_(nRays),
       nVars_(nVars), nConsts_(GLsizei(constants->size())),
-      varyingBuffer_(varyings,length*nRays),
+      varyingBuffer_(varyings,length*nRays*nVars),
       varyingAttributesInvalid_(true)
     {
       lastTotal_=nVars_>0?length_:1;
@@ -313,9 +313,12 @@ namespace scigma
       /* draw markers if we are currently replaying and
 	 markers are not switched off */
       
-      if(lastDrawn_>=0&&Marker::NONE!=marker_)
+      if((lastDrawn_>=0||Marker::NONE==point_)&&Marker::NONE!=marker_)
 	draw_markers(availablePoints);
 
+      if(Marker::NONE==point_)
+	return;
+      
       switch(style_)
 	{
 	case LINES:

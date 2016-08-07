@@ -351,6 +351,7 @@ namespace scigma
       
       double currentFrameStartTime_;
       double currentFrameRenderingTime_;
+      double lastHoverTime_;
       
       GLFWwindow* glfwWindowPointer_;
       

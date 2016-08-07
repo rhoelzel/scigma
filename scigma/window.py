@@ -30,7 +30,10 @@ class Window(object):
         
         self.options={}
         self.optionPanels={}
-        self.commands={}
+        self.commands={"sleep":gui.sleep}
+
+        self.queue=[]
+        self.sleeping=False
         
     def destroy(self):
         for key in self.unplugFunctions.keys():
@@ -42,6 +45,7 @@ class Window(object):
         self.glWindow.destroy()
         gui.remove_loop_callback(self.looplambda)
         self.log.destroy()
+        self.log=None
         windows.remove(self)
         
     def register_plugin(self, name, funplug, commands=None):
@@ -75,34 +79,44 @@ class Window(object):
             del self.optionPanels[identifier]
             self.glWindow.request_redraw()
 
-
     def loop_callback(self):
-        mtype, message=self.log.pop()
-        while message is not "":
-            if mtype==Log.DATA:
-                self.console.write_data(message)
-            elif mtype==Log.WARNING:
-                self.console.write_warning(message)
-            elif mtype==Log.ERROR:
-                self.console.write_error(message)
-            elif mtype==Log.SUCCESS:
-                args=message.split("|")
-                graphs.success(args[0],args[1:],self)
-            elif mtype==Log.FAIL:
-                args=message.split("|")
-                graphs.fail(args[0],args[1:],self)
-            else:
-                self.console.write(message)
-            mtype,message=self.log.pop()
+        if not gui.application.is_sleeping():
+            if self.sleeping:
+                self.sleeping=False
+                self.console.write(" continuing!\n")
+                print("... continuing!")
 
+        while self.queue and not gui.application.is_sleeping():
+            line=self.queue[0]            
+            self.queue=self.queue[1:]
+            if self.options['Global']['echo'].label=='on':
+                self.console.write(line+'\n')
+            self.process_command(line)
+            if not self in windows: #return if the last command was 'quit'
+                return
+            self.process_messages()
+
+        if gui.application.is_sleeping():  
+            if not self.sleeping:
+                self.sleeping=True
+                self.console.write("Press ESC to continue ...")
+                print("Press ESC in the graphics window to continue ...")
+        
+        self.glWindow.request_redraw()
+                
     def on_console(self,line):
+        self.queue.append(line)
+
+    def process_command(self,line):
         line=line.partition('#')[0]         # remove any comment
-        line=re.sub("\s+=\s+","=",line)     # turn x = y into x=y (avoids interpretation as x('=','y'))
-        list=line.split()                   # separate command and arguments
-        if len(list)==0:
+        line=re.sub("\s*=\s*","=",line)     # turn 'x = y' into 'x=y' (avoids interpretation as x('=','y'))
+        line=re.sub("\s*,\s*",",",line)     # turn 'pert 1, 3, 4' into 'pert 1,3,4' (comma-separated lists are one argument) 
+        clist=line.split()                  # separate command and arguments
+        if len(clist)==0:
             return
-        cmd=list[0]
-        args=list[1:]
+        clist=[item if len(item.split(','))==1 else item.split(',') for item in clist] # turn comma-separated lists into Python lists
+        cmd=clist[0]
+        args=clist[1:]
 
         paths=[]
         common.dict_full_paths(cmd,self.commands,paths) # search for command in dictionary
@@ -110,7 +124,8 @@ class Window(object):
         if len(paths) is 0: # this is possibly an equation or the attempt to set/query an option
             try:
                 equations.parse(line,self)
-                picking.on_parse(self)
+                if line[0]!='$':
+                    picking.on_parse(self)
             except Exception as e: # if parsing fails, check if we are trying to set/query option
                 try:
                     if len(args)==0:
@@ -146,4 +161,21 @@ class Window(object):
                 self.console.write_error(str(e.args[0])+'\n')
                 raise e
 
-            
+    def process_messages(self):
+        mtype, message=self.log.pop()
+        while message is not "":
+            if mtype==Log.DATA:
+                self.console.write_data(message)
+            elif mtype==Log.WARNING:
+                self.console.write_warning(message)
+            elif mtype==Log.ERROR:
+                self.console.write_error(message)
+            elif mtype==Log.SUCCESS:
+                args=message.split("|")
+                graphs.success(args[0],args[1:],self)
+            elif mtype==Log.FAIL:
+                args=message.split("|")
+                graphs.fail(args[0],args[1:],self)
+            else:
+                self.console.write(message)
+            mtype,message=self.log.pop()

@@ -42,7 +42,7 @@ def blob(win):
 lib.scigma_num_plot.restype=c_int
 lib.scigma_num_plot.argtypes=[c_char_p,c_int,c_int,c_int,c_int,c_int,c_char_p,c_int,c_bool,c_bool]
 
-def plot(nSteps=1,path=None,win=None,showall=False,noThread=False):
+def plot(nSteps=1,path=None,win=None,showall=False):
     win = windowlist.fetch(win)
 
     try:
@@ -63,8 +63,6 @@ def plot(nSteps=1,path=None,win=None,showall=False,noThread=False):
     nperiod = win.equationPanel.get("nperiod")
     nPoints = nperiod*abs(nSteps) if (showall and mode!='ode') else abs(nSteps)
 
-    
-    
     varying, const, varVals, constVals = collect_varying_const(win,
                                                                win.cursor['nparts'],
                                                                win.cursor['varying'],
@@ -72,6 +70,7 @@ def plot(nSteps=1,path=None,win=None,showall=False,noThread=False):
                                                                win.cursor['varwave'][:],
                                                                win.cursor['constwave'][:])
 
+    
     varPars='|'.join([name for name in varying if name in win.eqsys.par_names()])
     
     g=graphs.new(win,nPoints+1,win.cursor['nparts'],
@@ -99,6 +98,8 @@ def plot(nSteps=1,path=None,win=None,showall=False,noThread=False):
     logID=win.log.objectID
     blobID=blb.objectID
 
+    noThread = (win.options['Global']['threads'].label =='off')
+    
     g['taskID']=lib.scigma_num_plot(identifier,eqsysID,logID,nSteps,
                                         win.cursor['nparts'],varWaveID,varPars,blobID,showall,noThread)
 
@@ -114,11 +115,12 @@ def plot(nSteps=1,path=None,win=None,showall=False,noThread=False):
     g['cgraph'].set_delay(win.options['Drawing']['delay'].value)
     graphs.show(g,win)
     g['cgraph'].replay()
+    graphs.hide(win.cursor)
     
 commands['p']=commands['pl']=commands['plo']=commands['plot']=plot 
 
-def plotall(nSteps=1,path=None,win=None,noThread=False):
-    plot(nSteps,path,win,True,noThread)
+def plotall(nSteps=1,path=None,win=None):
+    plot(nSteps,path,win,True)
 
 commands['p*']=commands['pl*']=commands['plo*']=commands['plot*']=plotall
     
@@ -138,6 +140,7 @@ def success(g,win,args):
 def fail(g,win,args):
     # finish the cpp Task
     lib.scigma_num_finish_task(g['taskID'])
+    graphs.show(win.cursor)
     
 def cleanup(g):
     pass
@@ -145,7 +148,7 @@ def cleanup(g):
 def minmax(g):
     g['min']={}
     g['max']={}
-    mi=g['min' ]
+    mi=g['min']
     ma=g['max']
     varying=g['varying']
     varWave=g['varwave']
@@ -154,16 +157,16 @@ def minmax(g):
     minima=[1e300]*columns
     maxima=[-1e300]*columns
 
-    varWave.lock()
-    d=varWave.data()
     for i in range(rows):
+        varWave.lock()
+        d=varWave.data()
         for j in range(columns):
             value=d[i*columns+j]
             if value<minima[j]:
                 minima[j]=value
             if value>maxima[j]:
                 maxima[j]=value
-    varWave.unlock()
+        varWave.unlock()
     for i in range(columns):
         mi[varying[i]]=minima[i]
         ma[varying[i]]=maxima[i]
@@ -172,7 +175,7 @@ def minmax(g):
     for i in range(constWave.size()):
         mi[const[i]]=constWave[i]
         ma[const[i]]=constWave[i]
-
+        
 def click(g,x,y,point,win):
     pass
 
@@ -202,10 +205,10 @@ def collect_varying_const(win,nParts,varying,const,varVals,constVals):
     r_const=const
     r_varVals=[]
     r_constVals=constVals
-
+        
     # populate varyings defined by equation system
     # remove them from const, if necessary
-    for i in range(len(r_varying)):
+    """    for i in range(len(r_varying)):
         name=r_varying[i]
         if name in varying:
             idx=varying.index(name)
@@ -217,7 +220,27 @@ def collect_varying_const(win,nParts,varying,const,varVals,constVals):
                 r_varVals.insert(i+j+j*i,constVals[idx])
             del(r_const[idx])
             del(r_constVals[idx])
+    """
+    # add varyings defined by current cursor
+    for i in range (len(varying)):
+        if varying[i] not in r_varying:
+            r_varying.append(varying[i])
 
+    n1=len(varying)
+    n2=len(r_varying)
+    idx=[varying.index(name) if name in varying else -const.index(name)-1 for name in r_varying]
+
+    for j in range(nParts):
+        r_varVals+=[varVals[j*n1+idx[i]] if idx[i] >= 0 else constVals[-(idx[i]+1)] for i in range(n2)]
+
+    names=[varying[i] for i in idx if i>=0]
+    for name in names:
+        if name in r_const:
+            idx = r_const.index(name)
+            del(r_const[idx])
+            del(r_constVals[idx])
+
+    """
     # populate varyings defined by current cursor
     for i in range (len(varying)):
         name = varying[i]
@@ -225,7 +248,7 @@ def collect_varying_const(win,nParts,varying,const,varVals,constVals):
             for j in range(nParts):
                 r_varVals.insert(len(r_varying)+j+len(r_varying)*j,varVals[j*len(varying)+i])
             r_varying.append(name)
-
+    """
     return r_varying, r_const, r_varVals, r_constVals
 
 def plug(win=None):

@@ -34,13 +34,12 @@ def hide(g=None, win=None):
 
 commands['hide']=hide
 
-def replay(g=None, delay=None, win=None):
+def replay(g=None, win=None):
     win=windowlist.fetch(win)
     g=get(g,win)
     win.glWindow.stall()
     show(g,win)
-    delay = float(delay) if delay else win.options['Drawing']['delay'].value
-    g['cgraph'].set_delay(delay)
+    g['cgraph'].set_delay(win.options['Drawing']['delay'].value)
     win.glWindow.flush()
     g['cgraph'].replay()
 
@@ -77,7 +76,8 @@ def clear(win=None):
     keys = win.graphs.keys()
     for key in keys:
         delete(key,win)
-
+    win.selection=None
+        
 commands['cl']=commands['cle']=commands['clea']=commands['clear']=clear
 
 
@@ -187,7 +187,7 @@ def new(win,nPoints,nParts,varying,const,varVals,constVals,path=None):
     g['constwave'].push_back(constVals)
     return g
 
-def move_cursor(win,varying=None,const=None,varVals=None,constVals=None):
+def move_cursor(win,varying=None,const=None,varVals=None,constVals=None,nParts=None):
 
     # use current point if no data given
     if varying is None and const is None and varVals is None and constVals is None:
@@ -198,7 +198,8 @@ def move_cursor(win,varying=None,const=None,varVals=None,constVals=None):
     if win.cursor:
         destroy(win.cursor,win)
 
-    nParts=1 if len(varying)== 0 else len(varVals)/len(varying)
+    if not nParts:
+        nParts=1 if len(varying)== 0 else len(varVals)/len(varying)
     
     win.cursor = new(win,1,nParts,varying,const,varVals,constVals)
     win.cursor['cgraph']=gui.Bundle(win.glWindow,'cursor',1,win.cursor['nparts'],len(win.cursor['varying']),
@@ -207,7 +208,7 @@ def move_cursor(win,varying=None,const=None,varVals=None,constVals=None):
     win.cursor['cgraph'].set_point_size(50 if library.largeFontsFlag else 25)
     win.cursor['cgraph'].set_color([1.0,1.0,1.0,1.0])
     win.cursor['cgraph'].finalize()
-    gui.application.idle(0.05)
+    #gui.application.idle(0.05)
     show(win.cursor,win)
     
 GLSL_BUILT_IN_FUNCTIONS=["sin","cos","tan","asin","acos","atan","abs",

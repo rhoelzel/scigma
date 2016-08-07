@@ -11,25 +11,19 @@ from . import maxpts
 
 commands={}
 
-def pertu(n,eps=None,g=None,win=None):
+def pert(n,idx,g=None,win=None):
     win = windowlist.fetch(win)
     g = graphs.get(g)
 
-    mode = g['mode']
-
-    evreal=g['evreal']
-    evimag=g['evimag']
-
     n=int(n)
-    
-    if not eps:
-        eps=win.options['Algorithms']['manifolds']['eps']
-
-    if mode == 'ode':
-        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]>0.0]
+    if type(idx)!=list:
+        idx=[int(idx)-1]
     else:
-        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]**2+evimag[g['evecs'].index(evec)]**2>1.0]
+        idx=[int(i)-1 for i in idx]
 
+    evecs=[g['evecs'][i] for i in idx]
+        
+    eps=win.options['Algorithms']['manifolds']['eps']
     evecs=num.gsortho(evecs)
 
     nDim = len(evecs)-1
@@ -39,8 +33,44 @@ def pertu(n,eps=None,g=None,win=None):
                                   " capping to n="+str(maxpts.nMax[nDim][0])+" for "+str(maxpts.nMax[nDim][1])+ " grid points\n")
         n=maxpts.nMax[nDim][0];
 
-    phi=num.angles(nDim,n)
-        
+    varying=win.cursor['varying']
+    varVals=win.cursor['varwave'][:]
+    const = win.cursor['const']
+    constVals=win.cursor['constwave'][:]
+
+    nVar=len(varying)-1
+    newVarVals = [] if nDim > 0 else [varVals[0]]+[varVals[i+1]-eps*evecs[0][i] for i in range(nVar)]
+
+    for phiset in num.angles(n,nDim):
+        coeffs=[eps*math.cos(phi) for phi in phiset]+[eps]
+        for i in range(nDim+1):
+            for j in range(i):
+                coeffs[i]*=math.sin(phiset[j])
+
+        newVarVals+=[varVals[0]]+[varVals[i+1]+sum([coeffs[j]*evecs[j][i] for j in range(nDim+1)]) for i in range(nVar)]
+
+    graphs.move_cursor(win,varying,const,newVarVals,constVals)
+    win.selection=None
+    
+commands['pert']=pert
+
+def pertu(n,g=None,win=None):
+    win = windowlist.fetch(win)
+    g = graphs.get(g)
+
+    mode = g['mode']
+
+    evreal=g['evreal']
+    evimag=g['evimag']
+
+    eps=win.options['Algorithms']['manifolds']['eps']
+
+    if mode == 'ode':
+        idx=[i for i in range(len(evreal)) if evreal[i]>0.0]
+    else:
+        idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2>1.0]
+
+    pert(n,idx,g,win)
 
 commands['pertu']=pertu
 
@@ -53,10 +83,14 @@ def perts(n,g=None,win=None):
     evreal=g['evreal']
     evimag=g['evimag']
 
+    eps=win.options['Algorithms']['manifolds']['eps']
+
     if mode == 'ode':
-        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]<0.0]
+        idx=[i for i in range(len(evreal)) if evreal[i]<0.0]
     else:
-        evecs=[evec for evec in g['evecs'] if evreal[g['evecs'].index(evec)]**2+evimag[g['evecs'].index(evec)]**2<1.0]
+        idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2<1.0]
+
+    pert(n,idx,g,win)
 
 commands['perts']=perts
 
@@ -160,7 +194,20 @@ def add(win=None):
 
     win.selection=None
 
-commands['add'] = add    
+def keep(win=None):
+    win = windowlist.fetch(win)
+
+    varying=win.cursor['varying']
+    const=win.cursor['const']
+    
+    varVals=win.cursor['varwave'][:]+win.cursor['varwave'][-len(varying):]
+    constVals=win.cursor['constwave'][:]
+
+    graphs.move_cursor(win,varying,const,varVals,constVals,win.cursor['nparts']+1)
+
+    win.selection=None
+
+commands['keep'] = keep    
 
 def pick(win=None):
     win = windowlist.fetch(win)
@@ -321,6 +368,7 @@ def on_pick(win,ctrl,*args):
             add(win)
         else:
             graphs.move_cursor(win)
+
         win.selection=None
 
 def on_parse(win):

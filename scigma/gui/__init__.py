@@ -1,6 +1,6 @@
 import sys,os,ctypes
 from .constants import *
-from .application import loop, break_loop
+from .application import loop, break_loop, idle, sleep, wake
 from .application import add_loop_callback, add_idle_callback
 from .application import remove_loop_callback, remove_idle_callback
 from .glwindow import GLWindow
@@ -53,6 +53,7 @@ if tk:
 KEY_INTERVAL=0.05 # wait for events for KEY_INTERVAL seconds,
 # between checks whether a key has been hit at the Python interface
 
+
 def hook():       
     """ 
     If the Python interpreter is idle, the scigma.gui event 
@@ -64,7 +65,7 @@ def hook():
     the python console less responsive
     """
 
-    while not stdin_ready():
+    while not stdin_ready() or application.is_sleeping():
         application.loop(KEY_INTERVAL)
         tkroot.update_idletasks()
         tkroot.update()
@@ -75,6 +76,12 @@ This installs hook() as PyOS_InputHook, calling
 the scigma event loop whenever the interpreter
 is idle.
 """
+
 c_hook=ctypes.PYFUNCTYPE(ctypes.c_int)(hook)
 ctypes.c_void_p.in_dll(ctypes.pythonapi,"PyOS_InputHook").value=ctypes.cast(c_hook,ctypes.c_void_p).value
 
+def sleep(seconds=0.0,win=None):
+    if seconds > 0:
+        application.idle(seconds)
+    else:
+        application.sleep()

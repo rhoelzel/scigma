@@ -96,14 +96,13 @@ namespace scigma
 #endif
    
     GLContext::GLContext(GLFWwindow* ptr):PythonObject<GLContext>(this),
-					  currentFrameStartTime_(0.0),
-					  currentFrameRenderingTime_(0.0),
-					  glfwWindowPointer_(ptr),
-					  stalled_(0),
-					  hoverIndex_(0xFFFFFFFF),
-					  redrawRequested_(false),
-					  colorPicking_(false)
-
+      currentFrameStartTime_(0.0),
+      currentFrameRenderingTime_(0.0),lastHoverTime_(0.0),
+      glfwWindowPointer_(ptr),
+      stalled_(0),
+      hoverIndex_(0xFFFFFFFF),
+      redrawRequested_(false),
+      colorPicking_(false)
     {
       glfwMakeContextCurrent(glfwWindowPointer_);
       glfwSwapInterval(2);
@@ -150,6 +149,11 @@ namespace scigma
     
     void GLContext::check_for_hover(GLfloat x, GLfloat y)
     {
+      double now(glfwGetTime());
+      if(now-lastHoverTime_<TARGET_FRAME_RATE)
+	lastHoverTime_=now;
+      else
+	return;
       /* In color picking mode, only a 5x5 pixel rectangle is drawn.
 	 The nearest object in this rectangle (excluding the corner
 	 pixels) is detected, and its on_hover_begin()/on_hover_end

@@ -22,6 +22,13 @@ def new(win=None):
     setattr(w,'source','none')
     w.commands['q']=w.commands['qu']=w.commands['qui']=w.commands['quit']=w.commands['end']=w.commands['bye']=bye
 
+    panel=w.acquire_option_panel('Global')
+    panel.define('','iconified=true')
+    enum = common.Enum({'off':0,'on':1},'off')
+    panel.add('echo',enum)
+    enum = common.Enum({'off':0,'on':1},'on')
+    panel.add('threads',enum)
+    
     #initialize plugins
     equations.plug(w)
     view.plug(w)
@@ -50,13 +57,12 @@ def load(filename=None,win=None):
     try:
         with open(filename) as f:
             script = f.readlines()
-        for line in script:
-            try:
-                win.on_console(line)
-                # process notifications in between commands!
-                win.loop_callback()
-            except:
-                pass # exceptions have already been caught in on_console()
+        q=[line.strip() for line in script]
+        threads=win.options['Global']['threads'].label
+        win.queue=(['threads off']
+                   +q
+                   +['threads on'] if threads=='on' else []
+                   +win.queue)
     except IOError:
         raise Exception(filename+": file not found")
     win.script=filename

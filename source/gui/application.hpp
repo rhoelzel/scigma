@@ -75,7 +75,10 @@ namespace scigma
       */
       void break_loop();
       void idle(double seconds);
-      void sleep(double seconds);
+      void sleep();
+      void wake();
+
+      bool is_sleeping() const;
 
     private:
       Application();
@@ -101,8 +104,9 @@ namespace scigma
       static constexpr double REFRESH_INTERVAL=1/60.;
       size_t idleIndex_;
       bool loopIsRunning_;
+      bool sleeping_;
 
-      char padding_[7];
+      char padding_[6];
     };
     
   } /* end namespace gui */

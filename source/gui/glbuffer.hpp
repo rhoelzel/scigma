@@ -169,7 +169,6 @@ namespace scigma
 	  chunkSize_=chunkSize_>0x400?chunkSize_/2:chunkSize_;
 	}
 
-      
       if(dataMax>capacity_) //create a larger buffer and copy the data, don't add new data for now
 	{
 	  usedFullChunk_=false;
