@@ -67,8 +67,9 @@ def hook():
 
     while not stdin_ready() or application.is_sleeping():
         application.loop(KEY_INTERVAL)
-        tkroot.update_idletasks()
-        tkroot.update()
+        if tk:
+            tkroot.update_idletasks()
+            tkroot.update()
     return 0
 
 """

@@ -29,9 +29,9 @@ target_link_libraries(scigma "-Wl,-all_load"
 			libpng zlib glew glfw
 			anttweakbar ${GLFW_LIBRARIES})
 else()
-target_link_libraries(scigma "-Wl,--whole-archive"
-  			gui num dat common
+target_link_libraries(scigma "-Wl,--whole-archive,--allow-multiple-definition"
+			gui num dat common	
 			lapack odessa tinythread
 			libpng zlib glew glfw
-			anttweakbar ${GLFW_LIBRARIES})
+			anttweakbar ${GLFW_LIBRARIES} "-Wl,--no-whole-archive")
 endif()

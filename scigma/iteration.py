@@ -1,5 +1,4 @@
 from ctypes import *
-from Tkinter import *
 from . import gui
 from . import common
 from . import lib
