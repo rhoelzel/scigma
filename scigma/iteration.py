@@ -151,7 +151,7 @@ def minmax(g):
     ma=g['max']
     varying=g['varying']
     varWave=g['varwave']
-    rows=varWave.size()/len(varying)
+    rows=varWave.size()//len(varying)
     columns=len(varying)
     minima=[1e300]*columns
     maxima=[-1e300]*columns

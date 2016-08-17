@@ -15,6 +15,8 @@ class Console(object):
     lib.scigma_gui_create_console.argtypes=[c_int,c_bool,C_CallbackType]
     lib.scigma_gui_console_write.argtypes=[c_int,c_char_p]
     lib.scigma_gui_console_write_data.argtypes=[c_int,c_char_p]
+    lib.scigma_gui_console_write_warning.argtypes=[c_int,c_char_p]
+    lib.scigma_gui_console_write_comment.argtypes=[c_int,c_char_p]
     lib.scigma_gui_console_write_error.argtypes=[c_int,c_char_p]
     lib.scigma_gui_console_set_theme.argtypes=[c_int,c_int]
     
@@ -50,7 +52,11 @@ class Console(object):
 
     def write_warning(self,text):
         text=bytes(str(text).encode("ascii"))
-        lib.scigma_gui_console_write_error(self.objectID, create_string_buffer(text))
+        lib.scigma_gui_console_write_warning(self.objectID, create_string_buffer(text))
+
+    def write_comment(self,text):
+        text=bytes(str(text).encode("ascii"))
+        lib.scigma_gui_console_write_comment(self.objectID, create_string_buffer(text))
         
     def write_error(self,text):
         text=bytes(str(text).encode("ascii"))

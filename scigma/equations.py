@@ -184,23 +184,26 @@ def parse(line,win=None):
     oldts=win.eqsys.timestamp()
     
     # use invsys if it's an inverse equation
-    result = win.invsys.parse(line.replace(',',"'")) if ',' in line else win.eqsys.parse(line)
+    result = win.invsys.parse(line.replace(',=',"'=")) if ',=' in line else win.eqsys.parse(line)
     
     # if we are redefining a function or parameter, do it in the inverse equation system as well
-    if not ',' in line and not "'" in line:
+    if not ',=' in line and not "'" in line:
         win.invsys.parse(line)
-    
+
     if(result[0:6]== "error:"):
         raise Exception(result[6:])
     else:
         ts=win.eqsys.timestamp()
         if not ts == oldts:
-            win.console.write('structure of equation system has changed\n')
+            win.console.write_warning('structure of equation system has changed\n')
+            
         rebuild_panels(win)
+
         if(result != ''):
             win.console.write_data(result+'\n')
             return float(result)
 
+        
 def point(win=None):
     win=windowlist.fetch(win)
     

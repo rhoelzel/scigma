@@ -1,0 +1,77 @@
+echo on
+writeln_comment "...................................................................."
+writeln_comment "This is a demo that gives a quick overview of scigma's capabilities."
+writeln_comment "The demo introduces some of the most common commands and options" 
+writeln_comment "step by step. Between steps, you will occasionally need to press"
+writeln_comment "ESCAPE to continue. Like now."
+sleep
+writeln_comment "...................................................................."
+writeln_comment "You are currently reading these words on scigma's console, which"
+writeln_comment "is used both for user input and feedback from scigma's commands."
+writeln_comment "It also acts as a calculator:"
+1+1
+2*sin(3.1415)
+27**(1/3)
+sleep
+writeln_comment "...................................................................."
+writeln_comment "If you want to try the commands for yourself while the demo is running,"
+writeln_comment "you might want to open another scigma session to play around."
+sleep
+writeln_comment "...................................................................."
+writeln_comment "Parameters are declared and defined with a simple assignment using '='."
+write_comment "The next line adds the parameter"
+write_data " a "
+write_comment "with value" 
+write_data " 10 "
+writeln_comment "to the equation system."
+a=10
+sleep
+writeln_comment "...................................................................."
+write_data "a"
+writeln_comment " will now appear in the 'Values' panel. Values of existing parameters"
+writeln_comment "can be changed there, instead of setting them on the command line."
+writeln_comment "To retrieve the value of a parameter at the command line, use '$':"
+$a
+sleep
+writeln_comment "...................................................................."
+writeln_comment "You can use mathematical expressions to assign values to parameters:"
+a=cos(3.1415)
+$a
+sleep
+writeln_comment "...................................................................."
+writeln_comment "Values are printed in single precision, but kept in memory as double"
+writeln_comment "precision values:"
+$a+1
+sleep
+writeln_comment "...................................................................."
+writeln_comment "Functions depending on parameters are defined using '=' as well:    "
+b=a**2+1
+$b
+a=4
+$b
+write_comment "Any change in the value of"
+write_data " a "
+write_comment "is reflected in a change of"
+writeln_data " b"
+sleep
+writeln_comment "...................................................................."
+writeln_comment "To delete a function or parameter, use the '!' prefix:"
+!b
+!a
+writeln_comment "...................................................................."
+writeln_comment "Note that you have to delete depending functions first before you"
+writeln_comment "can delete parameters or functions they depend on:"
+x=y+z
+!y     # not ok
+!x
+!y     # now it's ok
+sleep
+writeln_comment "...................................................................."
+writeln_comment "Functions may not (directly or indirectly) depend on themselves:"
+x=a*b
+y=c*b
+a=2+x  # not ok
+a=2+y  # ok
+sleep
+writeln_comment "...................................................................."
+echo off

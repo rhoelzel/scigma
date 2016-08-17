@@ -279,7 +279,7 @@ def success(g,win,args):
     win.console.write_data(g['identifier'])
     win.console.write(":\n")
     vardata=g['varwave'].data()
-    nPeriod=g['varwave'].size()/(nVar+1)
+    nPeriod=g['varwave'].size()//(nVar+1)
     names=g['varying']
     for i in range(nVar):
         win.console.write(names[i+1]+' = ')
@@ -348,7 +348,7 @@ def minmax(g):
     ma=g['max']
     varying=g['varying']
     varWave=g['varwave']
-    rows=varWave.size()/len(varying)
+    rows=varWave.size()//len(varying)
     columns=len(varying)
     minima=[1e300]*columns
     maxima=[-1e300]*columns

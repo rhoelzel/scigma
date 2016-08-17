@@ -70,6 +70,10 @@ extern "C"
   {PYCLL(Console,objectID,write(text))}
   void scigma_gui_console_write_data(PythonID objectID, const char* text)
   {PYCLL(Console,objectID,write_data(text))}  
+  void scigma_gui_console_write_warning(PythonID objectID, const char* text)
+  {PYCLL(Console,objectID,write_warning(text))}  
+  void scigma_gui_console_write_comment(PythonID objectID, const char* text)
+  {PYCLL(Console,objectID,write_comment(text))}  
   void scigma_gui_console_write_error(PythonID objectID, const char* text)
   {PYCLL(Console,objectID,write_error(text))} 
 

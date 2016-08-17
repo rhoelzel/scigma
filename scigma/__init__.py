@@ -27,6 +27,16 @@ def new(win=None):
 
     #initialize global commands
     w.commands['n']=w.commands['ne']=w.commands['new']=new    
+    w.commands['write']=write
+    w.commands['write_data']=write_data
+    w.commands['write_warning']=write_warning
+    w.commands['write_comment']=write_comment
+    w.commands['write_error']=write_error
+    w.commands['writeln']=writeln
+    w.commands['writeln_data']=writeln_data
+    w.commands['writeln_warning']=writeln_warning
+    w.commands['writeln_comment']=writeln_comment
+    w.commands['writeln_error']=writeln_error
     w.commands['l']=w.commands['lo']=w.commands['loa']=w.commands['load']=load
     setattr(w,'script','none')
     setattr(w,'source','none')
@@ -51,6 +61,46 @@ def new(win=None):
     continuation.plug(w)
     return w
 
+def write(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write(string)
+
+def write_data(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_data(string)
+
+def write_warning(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_warning(string)
+
+def write_comment(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_comment(string)
+
+def write_error(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_error(string)
+
+def writeln(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write(string+'\n')
+
+def writeln_data(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_data(string+'\n')
+
+def writeln_warning(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_warning(string+'\n')
+
+def writeln_comment(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_comment(string+'\n')
+
+def writeln_error(string, win=None):
+    win=windowlist.fetch(win)
+    win.console.write_error(string+'\n')
+    
 def load(filename=None,win=None):
     """ load <filename>
 

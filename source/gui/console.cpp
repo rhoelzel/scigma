@@ -33,6 +33,10 @@ namespace scigma
     {
       float fg1[]={1.0f,1.0f,1.0f,1.0f};
       float fg2[]={0.0f,0.0f,0.0f,1.0f};
+      float warn1[]={1.0f,0.5f,0.0f,1.0f};
+      float warn2[]={0.5f,0.25f,0.0f,1.0f};
+      float comm1[]={0.0f,1.0f,1.0f,1.0f};
+      float comm2[]={0.0f,0.5f,0.5f,1.0f};
       float da[]={0.0f,0.6f,0.0f,1.0f};
       float err[]={1.0f,0.0f,0.0f,1.0f};
       float bg[]={0.0f,0.0f,0.0f,0.0f};
@@ -44,11 +48,15 @@ namespace scigma
 	{
 	  set_foreground_color(fg1);
 	  set_background_color(bg);
+	  set_warning_color(warn1);
+	  set_comment_color(comm1);
 	}
       else
 	{
 	  set_foreground_color(fg2);
 	  set_background_color(bg);
+	  set_warning_color(warn2);
+	  set_comment_color(comm2);
 	}
     }
 
@@ -174,6 +182,18 @@ namespace scigma
     {
       for(unsigned int i =0;i<4;++i)
 	eColor[i]=rgba[i];
+    }
+    
+    void Console::set_warning_color(const float* rgba)
+    {
+      for(unsigned int i =0;i<4;++i)
+	wColor[i]=rgba[i];
+    }
+    
+    void Console::set_comment_color(const float* rgba)
+    {
+      for(unsigned int i =0;i<4;++i)
+	cColor[i]=rgba[i];
     }
     
     void Console::set_background_color(const float* rgba)
@@ -303,6 +323,16 @@ namespace scigma
     {
       append_text(data,dColor);
     }
+
+    void Console::write_warning(std::string warning)
+    {
+      append_text(warning,wColor);
+    }
+
+    void Console::write_comment(std::string comment)
+    {
+      append_text(comment,cColor);
+    }
     
     void Console::write_error(std::string error)
     {
@@ -337,6 +367,8 @@ namespace scigma
       
       float fAlpha=fColor[3];
       float dAlpha=dColor[3];
+      float wAlpha=wColor[3];
+      float cAlpha=cColor[3];
       float eAlpha=eColor[3];
       float bAlpha=bColor[3];
 
@@ -347,6 +379,8 @@ namespace scigma
 	      float factor=float(nScreenLines-k)/float(nScreenLines);
 	      fColor[3]=fAlpha*factor;
 	      dColor[3]=dAlpha*factor;
+	      wColor[3]=wAlpha*factor;
+	      cColor[3]=cAlpha*factor;
 	      eColor[3]=eAlpha*factor;
 	      fColor[3]=fAlpha*factor;
 	    }
@@ -364,6 +398,8 @@ namespace scigma
 	}
       fColor[3]=fAlpha;
       dColor[3]=dAlpha;
+      wColor[3]=wAlpha;
+      cColor[3]=cAlpha;
       eColor[3]=eAlpha;
       bColor[3]=bAlpha;
       

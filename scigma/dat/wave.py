@@ -1,3 +1,9 @@
+import sys
+if sys.version_info.major == 2:
+    version=2
+elif sys.version_info.major == 3:
+    version=3
+
 from ctypes import *
 from .. import lib
 
@@ -12,7 +18,7 @@ class Wave(object):
         if objectID != -1:
             self.objectID=objectID
         else:
-            self.objectID = lib.scigma_dat_create_wave(capacity)
+            self.objectID = lib.scigma_dat_create_wave(int(capacity))
 
     def destroy(self):
         lib.scigma_dat_destroy_wave(self.objectID)
@@ -58,16 +64,19 @@ class Wave(object):
         if isinstance(key, slice):
             self.lock()
             data=self.data()
-            result = [data[i] for i in xrange(*key.indices(length))]
+            if(version<3):
+                result = [data[i] for i in xrange(*key.indices(length))]
+            else:
+                result = [data[i] for i in range(*key.indices(length))]
             self.unlock()
         elif isinstance( key, int ) :
             if key < 0 : #Handle negative indices
                 key += length
             if key >= length or key <0:
-                raise IndexError, "The index (%d) is out of range."%key
+                raise IndexError("The index (%d) is out of range."%key)
             self.lock()
             result=self.data()[key]
             self.unlock()
         else:
-            raise TypeError, "Invalid argument type."
+            raise TypeError("Invalid argument type.")
         return result;

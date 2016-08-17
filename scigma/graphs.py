@@ -198,7 +198,7 @@ def move_cursor(win,varying=None,const=None,varVals=None,constVals=None,nParts=N
         destroy(win.cursor,win)
 
     if not nParts:
-        nParts=1 if len(varying)== 0 else len(varVals)/len(varying)
+        nParts=1 if len(varying)== 0 else len(varVals)//len(varying)
     
     win.cursor = new(win,1,nParts,varying,const,varVals,constVals)
     win.cursor['cgraph']=gui.Bundle(win.glWindow,'cursor',1,win.cursor['nparts'],len(win.cursor['varying']),

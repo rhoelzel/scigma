@@ -24,6 +24,12 @@ except:
     os.chdir(path)
     lib=ctypes.CDLL(libpath+sep+libfile)
 
-largeFontsFlag=False
+try:
+    input = raw_input
+except NameError:
+    pass;
+print ("Use large fonts (better on big screens) y/N?")
+reply=input()+'N'
+largeFontsFlag=True if reply.lower()[0] =='y' else False
 ctypes.c_bool.in_dll(lib,"LARGE_FONTS_FLAG").value=largeFontsFlag
 

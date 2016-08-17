@@ -40,11 +40,15 @@ namespace scigma
 	void set_theme(Theme theme);
 	void set_foreground_color(const float* rgba);
 	void set_error_color(const float* rgba);
+	void set_warning_color(const float* rgba);
+	void set_comment_color(const float* rgba);
 	void set_data_color(const float* rgba);
 	void set_background_color(const float* rgba);
       
 	void write(std::string text);
 	void write_data(std::string data);
+	void write_warning(std::string warning);
+	void write_comment(std::string comment);
 	void write_error(std::string error);
 	
       private:
@@ -87,6 +91,8 @@ namespace scigma
 	float fColor[4];
 	float dColor[4];
 	float eColor[4];
+	float wColor[4];
+	float cColor[4];
 	float bColor[4];   
       
 	GLContext* glContext;

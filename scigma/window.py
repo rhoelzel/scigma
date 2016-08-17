@@ -1,5 +1,4 @@
 import re, os
-from common import Log
 from . import num
 from . import gui
 from . import common
@@ -89,7 +88,8 @@ class Window(object):
         while self.queue and not gui.application.is_sleeping():
             line=self.queue[0]            
             self.queue=self.queue[1:]
-            if self.options['Global']['echo'].label=='on':
+            if (self.options['Global']['echo'].label=='on' and
+                line[:5] != 'write' and line[:7]!='writeln') and line[:5]!='sleep':
                 self.console.write(line+'\n')
             self.process_command(line)
             if not self in windows: #return if the last command was 'quit'
@@ -109,17 +109,28 @@ class Window(object):
 
     def process_command(self,line):
         line=line.partition('#')[0]         # remove any comment
-        line=re.sub("\s*=\s*","=",line)     # turn 'x = y' into 'x=y' (avoids interpretation as x('=','y'))
-        line=re.sub("\s*,\s*",",",line)     # turn 'pert 1, 3, 4' into 'pert 1,3,4' (comma-separated lists are one argument) 
-        clist=line.split()                  # separate command and arguments
+        if len(line) and line[-1]=='"':     # string command (write/writeln)
+            clist=line.partition('"')
+            clist=[clist[0].strip(),clist[2].strip('"')]
+        else:
+            line=re.sub("\s*=\s*","=",line)     # turn 'x = y' into 'x=y' (avoids interpretation as x('=','y'))
+            line=re.sub("\s*,\s*",",",line)     # turn 'pert 1, 3, 4' into 'pert 1,3,4' (comma-separated lists are one argument) 
+            clist=line.split()                  # separate command and arguments
+            clist=[item if len(item.split(','))==1 else item.split(',') for item in clist] # turn comma-separated lists into Python lists
+
         if len(clist)==0:
             return
-        clist=[item if len(item.split(','))==1 else item.split(',') for item in clist] # turn comma-separated lists into Python lists
+     
         cmd=clist[0]
+        print clist[0]
+        print line
         args=clist[1:]
 
         paths=[]
-        common.dict_full_paths(cmd,self.commands,paths) # search for command in dictionary
+        try:
+            common.dict_full_paths(cmd,self.commands,paths) # search for command in dictionary
+        except:
+            paths=[]
 
         if len(paths) is 0: # this is possibly an equation or the attempt to set/query an option
             try:
@@ -164,16 +175,16 @@ class Window(object):
     def process_messages(self):
         mtype, message=self.log.pop()
         while message is not "":
-            if mtype==Log.DATA:
+            if mtype==common.Log.DATA:
                 self.console.write_data(message)
-            elif mtype==Log.WARNING:
+            elif mtype==common.Log.WARNING:
                 self.console.write_warning(message)
-            elif mtype==Log.ERROR:
+            elif mtype==common.Log.ERROR:
                 self.console.write_error(message)
-            elif mtype==Log.SUCCESS:
+            elif mtype==common.Log.SUCCESS:
                 args=message.split("|")
                 graphs.success(args[0],args[1:],self)
-            elif mtype==Log.FAIL:
+            elif mtype==common.Log.FAIL:
                 args=message.split("|")
                 graphs.fail(args[0],args[1:],self)
             else:
