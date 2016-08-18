@@ -89,7 +89,12 @@ class Window(object):
             line=self.queue[0]            
             self.queue=self.queue[1:]
             if (self.options['Global']['echo'].label=='on' and
-                line[:5] != 'write' and line[:7]!='writeln') and line[:5]!='sleep':
+                line[:5] != 'write' and line[:7]!='writeln' and
+                line[:4] != 'data' and line[:6]!='dataln' and
+                line[:7] != 'comment' and line[:9]!='commentln' and
+                line[:4] != 'warn' and line[:6]!='warnln' and
+                line[:5] != 'error' and line[:7]!='errorln' and
+                line[:5]!='sleep'):
                 self.console.write(line+'\n')
             self.process_command(line)
             if not self in windows: #return if the last command was 'quit'
@@ -122,8 +127,6 @@ class Window(object):
             return
      
         cmd=clist[0]
-        print clist[0]
-        print line
         args=clist[1:]
 
         paths=[]

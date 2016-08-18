@@ -1,77 +1,106 @@
 echo on
-writeln_comment "...................................................................."
-writeln_comment "This is a demo that gives a quick overview of scigma's capabilities."
-writeln_comment "The demo introduces some of the most common commands and options" 
-writeln_comment "step by step. Between steps, you will occasionally need to press"
-writeln_comment "ESCAPE to continue. Like now."
+commentln "...................................................................."
+commentln "This is a demo that gives a quick overview of scigma's capabilities."
+commentln "The demo introduces some of the most common commands and options" 
+commentln "step by step. Between steps, you will occasionally need to press"
+commentln "ESCAPE to continue. Like now."
 sleep
-writeln_comment "...................................................................."
-writeln_comment "You are currently reading these words on scigma's console, which"
-writeln_comment "is used both for user input and feedback from scigma's commands."
-writeln_comment "It also acts as a calculator:"
+commentln "...................................................................."
+commentln "You are currently reading these words on scigma's console, which"
+commentln "is used both for user input and feedback from scigma's commands."
+commentln "It also acts as a calculator:"
 1+1
 2*sin(3.1415)
 27**(1/3)
 sleep
-writeln_comment "...................................................................."
-writeln_comment "If you want to try the commands for yourself while the demo is running,"
-writeln_comment "you might want to open another scigma session to play around."
+commentln "...................................................................."
+commentln "If you want to try the commands for yourself while the demo is running,"
+commentln "you might want to open another scigma session to play around."
 sleep
-writeln_comment "...................................................................."
-writeln_comment "Parameters are declared and defined with a simple assignment using '='."
-write_comment "The next line adds the parameter"
-write_data " a "
-write_comment "with value" 
-write_data " 10 "
-writeln_comment "to the equation system."
+commentln "...................................................................."
+commentln "Parameters are declared and defined with a simple assignment using '='."
+comment "The next line adds the parameter"
+data " a "
+comment "with value" 
+data " 10 "
+commentln "to the equation system."
 a=10
 sleep
-writeln_comment "...................................................................."
-write_data "a"
-writeln_comment " will now appear in the 'Values' panel. Values of existing parameters"
-writeln_comment "can be changed there, instead of setting them on the command line."
-writeln_comment "To retrieve the value of a parameter at the command line, use '$':"
+commentln "...................................................................."
+data "a"
+commentln " will now appear in the 'Values' panel. Values of existing parameters"
+commentln "can be changed there, instead of setting them on the command line."
+commentln "To retrieve the value of a parameter at the command line, use '$':"
 $a
 sleep
-writeln_comment "...................................................................."
-writeln_comment "You can use mathematical expressions to assign values to parameters:"
+commentln "...................................................................."
+commentln "You can use mathematical expressions to assign values to parameters:"
 a=cos(3.1415)
 $a
 sleep
-writeln_comment "...................................................................."
-writeln_comment "Values are printed in single precision, but kept in memory as double"
-writeln_comment "precision values:"
+commentln "...................................................................."
+commentln "Values are printed in single precision, but kept in memory as double"
+commentln "precision values:"
 $a+1
 sleep
-writeln_comment "...................................................................."
-writeln_comment "Functions depending on parameters are defined using '=' as well:    "
+commentln "...................................................................."
+commentln "Functions depending on parameters are defined using '=' as well:    "
 b=a**2+1
 $b
 a=4
 $b
-write_comment "Any change in the value of"
-write_data " a "
-write_comment "is reflected in a change of"
-writeln_data " b"
+comment "Any change in the value of"
+data " a "
+comment "is reflected in a change of"
+dataln " b"
 sleep
-writeln_comment "...................................................................."
-writeln_comment "To delete a function or parameter, use the '!' prefix:"
+commentln "...................................................................."
+data "b "
+commentln "appears in the 'Equations' panel. You can change the definition of"
+commentln "functions there as well."
+commentln "To delete a function or parameter, use the '!' prefix:"
 !b
 !a
-writeln_comment "...................................................................."
-writeln_comment "Note that you have to delete depending functions first before you"
-writeln_comment "can delete parameters or functions they depend on:"
+sleep
+commentln "...................................................................."
+commentln "Note that you have to delete depending functions first before you"
+commentln "can delete parameters or functions they depend on:"
 x=y+z
 !y     # not ok
 !x
 !y     # now it's ok
 sleep
-writeln_comment "...................................................................."
-writeln_comment "Functions may not (directly or indirectly) depend on themselves:"
-x=a*b
-y=c*b
-a=2+x  # not ok
-a=2+y  # ok
+commentln "...................................................................."
+commentln "Functions may not (directly or indirectly) depend on themselves:"
+c=a*b
+a=2+c  # not ok
 sleep
-writeln_comment "...................................................................."
+commentln "...................................................................."
+commentln "Dynamical Variables are defined with the following syntax:"
+x'=-y-0.1*x
+y'=x-0.1*y
+commentln "The two commands above define a dynamical system with a focus at the"
+commentln "origin."
+sleep
+commentln "...................................................................."
+comment "We did not assign a value to"
+data " x "
+comment "and"
+data " y "
+commentln "yet, so they are initialized to 0:"
+$x
+$y
+sleep
+commentln "...................................................................."
+commentln "Move to other initial conditions either by setting the values in the"
+commentln "'Values' panel or by double clicking somewhere in the window, or at"
+commentln "console. The will be a white cursor at the location of the current"
+commentln "initial condition."
+x=0.5
+y=0.2
+sleep
+commentln "...................................................................."
+commentln "Finally, let's plot a number of time steps:"
+plot 10000
+
 echo off
