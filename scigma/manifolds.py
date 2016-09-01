@@ -10,7 +10,7 @@ from . import equations
 from . import iteration
 
 commands={}
-"""
+
 def manifold(stable,nSteps,g=None,path=None,win=None,showall=False):
     win = windowlist.fetch(win)
 
@@ -32,87 +32,48 @@ def manifold(stable,nSteps,g=None,path=None,win=None,showall=False):
     except:
         raise Exception(g['identifier']+': point has no eigenvalue and/or eigenvector data')
 
-    picking.select(g['identifier'],-1,win,True)
-
-    blob=iteration.blob(win)
-    if not path:
-        path=graphs.gen_ID("mf",win)
-    
-    evindex=instance.options['Numerical']['manifolds']['evec1']
-
-    # print information about selected epsilon, eigenvalue and eigenvector
-    instance.glWindow.stall()
-    instance.console.write("eps: ")
-    instance.console.write_data(str(instance.options['Numerical']['manifolds']['eps'])+'\n')
-    instance.console.write("eigenvalue: ")
+    # check whether we have one or two stable/unstable directions
+    mode = g['mode']
     if stable:
-        instance.console.write_data(str(evreal[evindex-1])+'\n')
+        if mode == 'ode':
+            idx=[i for i in range(len(evreal)) if evreal[i]<0.0]
+        else:
+            idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2<1.0]
     else:
-        instance.console.write_data(str(evreal[-evindex])+'\n')
-        instance.console.write("eigenvector: ")
-        line ='('
-        for j in range(len(evreal)):
-            if stable:
-                line+=str(float("{0:.12f}".format(evecs[evindex-1][j])))+","
-            else:
-                line+=str(float("{0:.12f}".format(evecs[-evindex][j])))+","
-                line=line.strip(',')+')\n'
-                
-    instance.console.write_data(line)
-    instance.glWindow.flush()
+        if mode == 'ode':
+            idx=[i for i in range(len(evreal)) if evreal[i]>0.0]
+        else:
+            idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2>1.0]
 
-                fp = origobj['__varwave__'].data()
-                        rows = origobj['__varwave__'].rows()
-                                columns = origobj['__varwave__'].columns()
-                                        init=[]
-                                        for i in range(columns):
-                                                        init.append(fp[i+columns*(rows-1)])
-                                                                init.append(fp[columns*(rows-1)])
-                                                                if stable:
-                                                                    for i in range(len(evreal)):
-                                                                                        init.append(fp[i+1+columns*(rows-1)]+eps*evecs[evindex-1][i])
-                                                                    else:
-                                                                        for i in range(len(evreal)):
-                                                                                            init.append(fp[i+1+columns*(rows-1)]+eps*evecs[-evindex][i])
+    if len(idx)!=1:
+        win.console.write_warning(g['identifier']+' has not exactly 1 '+ ('stable' if stable else 'unstable')+ ' eigenvalue ('+str(len(idx))+'), doing nothing\n')
+        return
 
-                                                                                                    # for the next bit, we are cheating, because we do not
-                                                                                                            # actually evaluate the values of dependent functions
-                                                                                                                    # for the initial segment - instead, we copy the values
-                                                                                                                            # for the fixed point
-                                                                                                                            for i in range(1+len(evreal),columns):
-                                                                                                                                            init.append(fp[i+columns*(rows-1)])
+    if mode != win.equationPanel.get("mode"):
+        win.console.write_warning('switching mode to '+mode)
+        equations.mode(mode)
 
-                                                                                                                                                    obj['__varwave__'].destroy()
-                                                                                                                                                            obj['__varwave__']=Wave(init,columns,lines=nPoints)
+    if not path:
+        path=graphs.gen_ID("ms",win) if stable else graphs.gen_ID("mu",win)
+         
+    picking.select(g['identifier'],-1,win,True)
+        
+    if stable:
+        picking.perts(1,g,win)
+        if mode == 'ode':
+            iteration.plot(-nSteps,path,win,showall)
+        elif nSteps>1:
+            map_manifold(-nSteps+1,path,g,win,showall)
+    else:
+        picking.pertu(1,g,win)
+        if mode == 'ode':
+            iteration.plot(nSteps,path,win,showall)
+        elif nSteps>1:
+            map_manifold(nSteps-1,path,g,win,showall)
+    
 
-
-                                                                                                                                                                    objects.move_to(obj,instance)
-
-                                                                                                                                                                    if n>1:
-                                                                                                                                                                        if origobjlist[0]['__mode__']=='ode':
-                                                                                                                                                                                        nSteps= 1-n if stable else n-1
-                                                                                                                                                                                                    cppwrapper.plot(nSteps,objlist,showall,noThread,instance)
-                                                                                                                                                                        else:
-                                                                                                                                                                            for obj in objlist:
-                                                                                                                                                                                                eival = 1/evreal[evindex-1] if stable else evreal[-evindex]
-                                                                                                                                                                                                                nSteps = 1-n if stable else n-1
-                                                                                                                                                                                                                                cppwrapper.map_manifold(nSteps,eival,obj,showall,noThread,instance)
-
-                                                                                                                                                                                                                                    # create the curves
-                                                                                                                                                                                                                                    for obj in objlist:
-                                                                                                                                                                                                                                                obj['__type__']='mf' if stable else 'mu'
-                                                                                                                                                                                                                                                        obj['__graph__']=Curve(instance.glWindow,obj['__id__'],nPoints,
-                                                                                                                                                                                                                                                                                                              obj['__varwave__'],obj['__constwave__'],
-                                                                                                                                                                                                                                                                                                              marker,point,markerSize,pointSize,color,delay,
-                                                                                                                                                                                                                                                                               lambda identifier,point,ctrl:instance.select_callback(identifier,point,ctrl))
-                                                                                                                                                                                                                                                                objects.show(obj,instance)
-
-                                                                                                                                                                                                                                                                    instance.pendingTasks=instance.pendingTasks+len(objlist)
-                                                                                                                                                                                                                                                                        return objlist
-
-def munstable(n=1,origin=None,name=None,instance=None,noThread=False):
-"""
-""" munstable [n] [origin] [name]                                                                              
+def munstable(nSteps=1,g=None,path=None,win=None):
+    """munstable [nSteps] [origin] [name]                                                                              
                                                                                                                    
     Starting at the fixed point or periodic point with the                                                         
     identifier origin, create the 1-dimensional unstable manifold along                                            
@@ -124,20 +85,84 @@ def munstable(n=1,origin=None,name=None,instance=None,noThread=False):
     name of the form 'mfN', if no name is given.                                                                   
     The behavior is analog for mstable.                                                                            
     """
-"""            return manifold(False,n,origin,name,instance,False,noThread)
-        commands['mu']=commands['mun']=commands['muns']=commands['munst']=commands['munsta']=commands['munstab']=commands['munstabl']=commands['mu\
-nstable']=munstable
-        def mstable(n=1,origin=None,name=None,instance=None,noThread=False):
-                return manifold(True,n,origin,name,instance,False,noThread)
-            commands['ms']=commands['mst']=commands['msta']=commands['mstab']=commands['mstabl']=commands['mstable']=mstable
-            def munstableall(n=1,origin=None,name=None,instance=None,noThread=False):
-                    return manifold(False,n,origin,name,instance,True,noThread)
-                commands['mu*']=commands['mun*']=commands['muns*']=commands['munst*']=commands['munsta*']=commands['munstab*']=commands['munstabl*']=al\
-                              ias['munstable*']=munstableall
-                def mstableall(n=1,origin=None,name=None,instance=None,noThread=False):
-                        return manifold(True,n,origin,name,instance,True,noThread)
-                    commands['ms*']=commands['mst*']=commands['msta*']=commands['mstab*']=commands['mstabl*']=commands['mstable*']=mstableall
-"""
+    manifold(False,nSteps,g,path,win,False)
+
+commands['mu']=commands['mun']=commands['muns']=commands['munst']=commands['munsta']=commands['munstab']=commands['munstabl']=commands['munstable']=munstable
+
+def mstable(nSteps=1,g=None,path=None,win=None):
+    manifold(True,nSteps,g,path,win,False)
+
+commands['ms']=commands['mst']=commands['msta']=commands['mstab']=commands['mstabl']=commands['mstable']=mstable
+
+def munstableall(nSteps=1,g=None,path=None,win=None,):
+    manifold(False,nSteps,g,path,win,True)
+
+commands['mu*']=commands['mun*']=commands['muns*']=commands['munst*']=commands['munsta*']=commands['munstab*']=commands['munstabl*']=commands['munstable*']=munstableall
+
+def mstableall(nSteps=1,g=None,path=None,win=None):
+    manifold(True,nSteps,g,path,win,True)
+
+commands['ms*']=commands['mst*']=commands['msta*']=commands['mstab*']=commands['mstabl*']=commands['mstable*']=mstableall
+
+
+lib.scigma_num_map_manifold.restype=c_int
+lib.scigma_num_map_manifold.argtypes=[c_char_p,c_int,c_int,c_int,c_int,c_int,c_bool,c_bool]
+
+def map_manifold(nSteps,path,g,win,showall):
+
+    varying=win.cursor['varying']
+    varVals=win.cursor['varwave'][:]
+    const = win.cursor['const']
+    constVals=win.cursor['constwave'][:]
+
+    # add periodic point itself to the initial segment of the cursor
+    varVals = g['varwave'][:]+varVals
+
+    mode = win.equationPanel.get("mode")
+    nperiod = win.equationPanel.get("nperiod")
+    nPoints = nperiod*abs(nSteps) if (showall and mode!='ode') else abs(nSteps)
+
+    blob = iteration.blob(win)
+    
+    eqsysID=win.eqsys.objectID
+    if mode == 'map' and nSteps<0:
+        eqsysID=win.invsys.objectID
+        if win.invsys.var_names() != win.eqsys.var_names():
+            raise Exception("map and inverse map have different variables")
+
+    g=graphs.new(win,abs(nSteps)+1,1,varying,const,varVals,constVals,path)
+                     
+    g['mode']=mode
+    g['callbacks']= {'success':lambda args:iteration.success(g,win,args),
+                     'fail':lambda args:iteration.fail(g,win,args),
+                     'cleanup':lambda:iteration.cleanup(g),
+                     'minmax':lambda:iteration.minmax(g),
+                     'cursor':lambda point:iteration.cursor(g,point,win)}
+
+    identifier=create_string_buffer(bytes(path.encode("ascii")))
+    
+    varWaveID=g['varwave'].objectID
+    logID=win.log.objectID
+    blobID=blob.objectID
+
+    noThread = (win.options['Global']['threads'].label =='off')
+    
+    g['taskID']=lib.scigma_num_map_manifold(identifier,eqsysID,logID,nSteps,
+                                            varWaveID,blobID,showall,noThread)
+
+    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],g['npoints'],g['nparts'],
+                           len(g['varying']),g['varwave'],g['constwave'],
+                           lambda identifier, point: picking.select(identifier,point,win))
+    g['cgraph'].set_marker_style(gui.POINT_TYPE[win.options['Drawing']['marker']['style'].label])
+    g['cgraph'].set_marker_size(win.options['Drawing']['marker']['size'].value)
+    g['cgraph'].set_point_style(gui.POINT_TYPE[win.options['Drawing']['point']['style'].label])
+    g['cgraph'].set_point_size(win.options['Drawing']['point']['size'].value)
+    g['cgraph'].set_style(gui.DRAWING_TYPE[win.options['Drawing']['style'].label])
+    g['cgraph'].set_color(win.options['Drawing']['color'])
+    g['cgraph'].set_delay(win.options['Drawing']['delay'].value)
+    graphs.show(g,win)
+    g['cgraph'].replay()
+    graphs.hide(win.cursor)
 
 def plug(win=None):
     win = windowlist.fetch(win)
@@ -147,10 +172,10 @@ def plug(win=None):
     
     # fill option panels
     win.glWindow.stall()
-    panel=win.acquire_option_panel('Algorithms')
-    panel.add('manifolds.eps',1e-5)
-    panel.add('manifolds.ds',0.1)
-    panel.add('manifolds.alpha',0.3)
+    panel=win.acquire_option_panel('Numerical')
+    panel.add('eps',1e-5)
+    panel.add('ds',0.1)
+    panel.add('alpha',0.3)
     win.glWindow.flush()
     
 def unplug(win=None):
@@ -161,9 +186,9 @@ def unplug(win=None):
     
     # remove options from panels
     win.glWindow.stall()
-    panel=win.acquire_option_panel('Algorithms')
-    panel.remove('manifolds.eps')
-    panel.remove('manifolds.ds')
-    panel.remove('manifolds.alpha')
-    win.release_option_panel('Algorithms')
+    panel=win.acquire_option_panel('Numerical')
+    panel.remove('eps')
+    panel.remove('ds')
+    panel.remove('alpha')
+    win.release_option_panel('Numerical')
     win.glWindow.flush()

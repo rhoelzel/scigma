@@ -22,8 +22,8 @@ def pert(n,idx,g=None,win=None):
         idx=[int(i)-1 for i in idx]
 
     evecs=[g['evecs'][i] for i in idx]
-        
-    eps=win.options['Algorithms']['manifolds']['eps']
+
+    eps=win.options['Numerical']['eps']
     evecs=num.gsortho(evecs)
 
     nDim = len(evecs)-1
@@ -38,16 +38,26 @@ def pert(n,idx,g=None,win=None):
     const = win.cursor['const']
     constVals=win.cursor['constwave'][:]
 
-    nVar=len(varying)-1
-    newVarVals = [] if nDim > 0 else [varVals[0]]+[varVals[i+1]-eps*evecs[0][i] for i in range(nVar)]
+    nVar=len(evecs[0])
+    # this is slightly inaccurate: we assign the values at the selected point to
+    # all varying values that are not variables ...
 
+    newVarVals = [] if (nDim > 0 or n==1 ) else [varVals[0]]+[varVals[i+1]-eps*evecs[0][i] for i in range(nVar)]+varVals[1+nVar:]
+    
+    # build up a regular grid on the surface of the n-sphere with radius eps in
+    # the selected subspace; use n points for the largest circle on this surface
+    # example:
+    # for a 3-sphere with n=100, we use 100 points around the equator
+    # and 51 layers from pole to pole, for a total of 3144 points
     for phiset in num.angles(n,nDim):
         coeffs=[eps*math.cos(phi) for phi in phiset]+[eps]
         for i in range(nDim+1):
             for j in range(i):
                 coeffs[i]*=math.sin(phiset[j])
 
-        newVarVals+=[varVals[0]]+[varVals[i+1]+sum([coeffs[j]*evecs[j][i] for j in range(nDim+1)]) for i in range(nVar)]
+        # this is slightly inaccurate: we assign the values at the selected point to
+        # all varying values that are not variables ... 
+        newVarVals+=[varVals[0]]+[varVals[i+1]+sum([coeffs[j]*evecs[j][i] for j in range(nDim+1)]) for i in range(nVar)]+varVals[1+nVar:]
 
     graphs.move_cursor(win,varying,const,newVarVals,constVals)
     win.selection=None
@@ -63,12 +73,12 @@ def pertu(n,g=None,win=None):
     evreal=g['evreal']
     evimag=g['evimag']
 
-    eps=win.options['Algorithms']['manifolds']['eps']
+    eps=win.options['Numerical']['eps']
 
     if mode == 'ode':
-        idx=[i for i in range(len(evreal)) if evreal[i]>0.0]
+        idx=[i+1 for i in range(len(evreal)) if evreal[i]>0.0]
     else:
-        idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2>1.0]
+        idx=[i+1 for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2>1.0]
 
     pert(n,idx,g,win)
 
@@ -83,12 +93,12 @@ def perts(n,g=None,win=None):
     evreal=g['evreal']
     evimag=g['evimag']
 
-    eps=win.options['Algorithms']['manifolds']['eps']
+    eps=win.options['Numerical']['eps']
 
     if mode == 'ode':
-        idx=[i for i in range(len(evreal)) if evreal[i]<0.0]
+        idx=[i+1 for i in range(len(evreal)) if evreal[i]<0.0]
     else:
-        idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2<1.0]
+        idx=[i+1 for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2<1.0]
 
     pert(n,idx,g,win)
 

@@ -80,6 +80,7 @@ class Window(object):
 
     def loop_callback(self):
         if not gui.application.is_sleeping():
+            self.process_messages()
             if self.sleeping:
                 self.sleeping=False
                 self.console.write(" continuing!\n")

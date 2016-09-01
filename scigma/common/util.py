@@ -109,6 +109,8 @@ def dict_full_paths(identifier,parent,results,isnode=stdisnode,dir=''):
     if len(current)!=0:
         results.extend(current)
     else:
+        deeper=sorted(deeper,key=lambda item:item.count('.'))
+        deeper=[item for item in deeper if item.count('.')==deeper[0].count('.')]
         results.extend(deeper)
 
 def dict_single_path(identifier,parent,typeid='path', isnode=stdisnode):

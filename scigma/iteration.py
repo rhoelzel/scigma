@@ -14,7 +14,7 @@ def blob(win):
     mode = win.equationPanel.get("mode")
     nperiod = win.equationPanel.get("nperiod")
 
-    blob=common.Blob(win.options['Algorithms'])
+    blob=common.Blob(win.options['Numerical'])
     blob.set("nperiod",nperiod)
     blob.set("period",0.0)
     blob.set("mode", equations.MODE[mode])
@@ -53,14 +53,22 @@ def plot(nSteps=1,path=None,win=None,showall=False):
     
     if nVars == 0:
         raise Exception ("error: no variables defined")
-
-    blb=blob(win)
-    if not path:
-        path=graphs.gen_ID("tr",win)
-
+    
     mode = win.equationPanel.get("mode")
     nperiod = win.equationPanel.get("nperiod")
     nPoints = nperiod*abs(nSteps) if (showall and mode!='ode') else abs(nSteps)
+
+    blb=blob(win)
+    
+    eqsysID=win.eqsys.objectID
+    if mode == 'map' and nSteps<0:
+        eqsysID=win.invsys.objectID
+        if win.invsys.var_names() != win.eqsys.var_names():
+            raise Exception("map and inverse map have different variables")
+
+    
+    if not path:
+        path=graphs.gen_ID("tr",win)
 
     varying, const, varVals, constVals = collect_varying_const(win,
                                                                win.cursor['nparts'],
@@ -86,13 +94,7 @@ def plot(nSteps=1,path=None,win=None,showall=False):
     
     identifier=create_string_buffer(bytes(path.encode("ascii")))
     varPars=create_string_buffer(bytes(varPars.encode("ascii")))
-    
-    eqsysID=win.eqsys.objectID
-    if mode == 'map' and nSteps<0:
-        eqsysID=win.invsys.objectID
-        if win.invsys.var_names() != win.eqsys.var_names():
-            raise Exception("map and inverse map have different variables")
-        
+            
     varWaveID=g['varwave'].objectID
     logID=win.log.objectID
     blobID=blb.objectID
@@ -258,7 +260,7 @@ def plug(win=None):
     
     # fill option panels
     win.glWindow.stall()
-    panel=win.acquire_option_panel('Algorithms')
+    panel=win.acquire_option_panel('Numerical')
     enum = common.Enum({'non-stiff':0,'stiff':1},'stiff')
     panel.add('dt',1e-2)
     panel.add('odessa.type',enum)
@@ -280,12 +282,12 @@ def unplug(win=None):
     
     # remove options from panels
     win.glWindow.stall()
-    panel=win.acquire_option_panel('Algorithms')
+    panel=win.acquire_option_panel('Numerical')
     panel.remove('dt')
     panel.remove('odessa.type')
     panel.remove('odessa.atol')
     panel.remove('odessa.rtol')
     panel.remove('odessa.mxiter')
     panel.remove('odessa.Jacobian')
-    win.release_option_panel('Algorithms')
+    win.release_option_panel('Numerical')
     win.glWindow.flush()

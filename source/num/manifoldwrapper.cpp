@@ -22,14 +22,15 @@ namespace scigma
   namespace num
   {
     Task* create_iteration_task(std::string identifier, Log* log,
-				size_t nSteps, size_t nRays,Stepper** stepperList, Wave* varyingWave,
+				size_t nSteps, size_t nRays, size_t nConst,
+				Stepper** stepperList, Wave* varyingWave,
 				size_t nPeriod, size_t showAllIterates);
   }
 }
 
 extern "C"
 {
-
+  
   PythonID scigma_num_map_manifold(const char* identifier, PythonID equationSystemID,PythonID logID,
 				   int nSteps, PythonID varyingWaveID, PythonID blobID, bool showAllIterates, bool noThread)
   {
@@ -56,8 +57,7 @@ extern "C"
     double rTol(blob->get_double("odessa.rtol"));
     size_t maxIter((size_t(blob->get_int("odessa.mxiter"))));
     double nTol(blob->get_double("Newton.tol"));
-
-    
+        
     if(nSteps<0)
       {
 	nSteps=-nSteps;
@@ -85,7 +85,7 @@ extern "C"
     
     stepperList[0]=new MapManifoldStepper(stepper,varyingWave,ds,1e-12,alpha,1e-4,size_t(nPeriod));
     
-    Task* task(create_iteration_task(identifier,log,size_t(nSteps), 1, stepperList ,varyingWave,size_t(nPeriod),showAllIterates?1:0));
+    Task* task(create_iteration_task(identifier,log,size_t(nSteps), 1,0,stepperList ,varyingWave,size_t(nPeriod),showAllIterates?1:0));
     task->run(noThread);
     return task->get_python_id();
   }

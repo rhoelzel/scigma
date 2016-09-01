@@ -127,7 +127,7 @@ def load(filename=None,win=None):
         threads=win.options['Global']['threads'].label
         win.queue=(['threads off']
                    +q
-                   +['threads on'] if threads=='on' else []
+                   +(['threads on'] if threads=='on' else [])
                    +win.queue)
     except IOError:
         raise Exception(filename+": file not found")

@@ -150,10 +150,11 @@ namespace scigma
     void GLContext::check_for_hover(GLfloat x, GLfloat y)
     {
       double now(glfwGetTime());
-      if(now-lastHoverTime_<TARGET_FRAME_RATE)
-	lastHoverTime_=now;
-      else
+      if(now-lastHoverTime_<TARGET_FRAME_TIME)
 	return;
+      else
+	lastHoverTime_=now;
+	
       /* In color picking mode, only a 5x5 pixel rectangle is drawn.
 	 The nearest object in this rectangle (excluding the corner
 	 pixels) is detected, and its on_hover_begin()/on_hover_end
@@ -206,11 +207,11 @@ namespace scigma
       GLubyte minDepth(color[i*3+2]);
 
       //DEBUG OUTPUT
-      /*  for(int l=0;l<5;++l)
+      /*for(int l=0;l<5;++l)
 	{
 	  for(int n=0;n<5;++n)
 	    {
-	      std::cerr<<(size_t)(color[(l*5+n)*3])<<",";
+	      std::cerr<<size_t(color[(l*5+n)*3])<<",";
 	    }
 	  std::cerr<<std::endl;
 	}
@@ -219,7 +220,7 @@ namespace scigma
 	{
 	  for(int n=0;n<5;++n)
 	    {
-	      std::cerr<<(size_t)(color[(l*5+n)*3+2])<<",";
+	      std::cerr<<size_t(color[(l*5+n)*3+2])<<",";
 	    }
 	  std::cerr<<std::endl;
 	  }*/

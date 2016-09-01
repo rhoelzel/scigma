@@ -24,7 +24,7 @@ namespace scigma
   {
 
     Task* create_iteration_task(std::string identifier, Log* log,
-				size_t nSteps, size_t nRays,Stepper** stepperList, Wave* varyingWave,
+				size_t nSteps, size_t nRays, size_t nConst, Stepper** stepperList, Wave* varyingWave,
 			        size_t nPeriod, size_t showAllIterates)
     {
       auto runFunction = 
@@ -37,7 +37,6 @@ namespace scigma
 	   
 	   varyingWave->lock();
 	   size_t nVarying=varyingWave->size()/nRays;
-	   size_t nConst=nVarying-1-nVar-nFunc;
 
 	   // set initial conditions
 	   const double* data = varyingWave->data(); 
@@ -82,7 +81,7 @@ namespace scigma
 		   for(size_t k(0);k<nFunc;++k)
 		     varyingWave->push_back(stepperList[j]->func()[k]);
 		   for(size_t k(0);k<nConst;++k)
-		     varyingWave->push_back(constData[j*nConst+k]);
+		       varyingWave->push_back(constData[j*nConst+k]);
 		   varyingWave->unlock();
 		 }
 	       if((escapeCount!=ESCAPE_COUNT)||(nErrors==nRays))
@@ -149,6 +148,7 @@ extern "C"
     size_t nFunc(eqsys->n_functions());
     size_t nVarPar(varPars.size());
     size_t nVarying(varyingWave->size()/size_t(nRays));
+    size_t nConst(nVarying-nVar-nFunc-1);
     
     switch(m)
       {
@@ -186,7 +186,8 @@ extern "C"
 	    }
 	}
       }
-    Task* task(create_iteration_task(identifier,log,size_t(nSteps), size_t(nRays),stepperList,varyingWave,size_t(nPeriod),showAllIterates?1:0));
+    Task* task(create_iteration_task(identifier,log,size_t(nSteps), size_t(nRays),nConst,
+				     stepperList,varyingWave,size_t(nPeriod),showAllIterates?1:0));
     task->run(noThread);
     return task->get_python_id();
     

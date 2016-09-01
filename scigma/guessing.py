@@ -218,9 +218,9 @@ def evecs(identifier=None, win=None):
                             sign = None
                         line+=str(float("{0:.12f}".format(evecs[i-1][j])))
                         if sign==" - i*":
-                            line+=(sign+str(float("{0:.12f}".format(-evecs[i][j]))))
-                        elif sign==" + i*":
                             line+=(sign+str(float("{0:.12f}".format(evecs[i][j]))))
+                        elif sign==" + i*":
+                            line+=(sign+str(float("{0:.12f}".format(-evecs[i][j]))))
                         line+=' , '
             win.console.write_data(line.strip(' , ')+')\n')
     finally:
@@ -391,7 +391,7 @@ def plug(win=None):
     
     # fill option panels
     win.glWindow.stall()
-    panel=win.acquire_option_panel('Algorithms')
+    panel=win.acquire_option_panel('Numerical')
     panel.add('Newton.tol',1e-9)
     panel.define('Newton.tol',"min=0.0")
     enum = common.Enum({'numeric':0,'symbolic':1},'symbolic')
@@ -406,8 +406,8 @@ def unplug(win=None):
     
     # remove options from panels
     win.glWindow.stall()
-    panel=win.acquire_option_panel('Algorithms')
+    panel=win.acquire_option_panel('Numerical')
     panel.remove('Newton.tol')
     panel.remove('Newton.Jacobian')
-    win.release_option_panel('Algorithms')
+    win.release_option_panel('Numerical')
     win.glWindow.flush()

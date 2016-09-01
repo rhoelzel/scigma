@@ -182,5 +182,5 @@ def unplug(win=None):
     panel.remove('HOMCONT.ITWIST')
     panel.remove('HOMCONT.ISTART')
 
-    win.release_option_panel('Algorithms')
+    win.release_option_panel('AUTO')
     win.glWindow.flush()
