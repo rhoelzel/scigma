@@ -46,8 +46,8 @@ extern "C"
     double period(blob->get_double("period"));
     size_t nPeriod((size_t(blob->get_int("nperiod"))));
     double dt(blob->get_double("dt"));
-    double ds(blob->get_double("ds"));
-    double alpha(blob->get_double("alpha"));
+    double ds(blob->get_double("Manifolds.arc"));
+    double alpha(blob->get_double("Manifolds.alpha"));
     double maxtime(blob->get_double("maxtime"));
     int secvar(blob->get_int("secvar"));
     int secdir(blob->get_int("secdir"));

@@ -23,7 +23,7 @@ def pert(n,idx,g=None,win=None):
 
     evecs=[g['evecs'][i] for i in idx]
 
-    eps=win.options['Numerical']['eps']
+    eps=win.options['Numerical']['Manifolds']['eps']
     evecs=num.gsortho(evecs)
 
     nDim = len(evecs)-1
@@ -73,7 +73,7 @@ def pertu(n,g=None,win=None):
     evreal=g['evreal']
     evimag=g['evimag']
 
-    eps=win.options['Numerical']['eps']
+    eps=win.options['Numerical']['Manifolds']['eps']
 
     if mode == 'ode':
         idx=[i+1 for i in range(len(evreal)) if evreal[i]>0.0]
@@ -93,7 +93,7 @@ def perts(n,g=None,win=None):
     evreal=g['evreal']
     evimag=g['evimag']
 
-    eps=win.options['Numerical']['eps']
+    eps=win.options['Numerical']['Manifolds']['eps']
 
     if mode == 'ode':
         idx=[i+1 for i in range(len(evreal)) if evreal[i]<0.0]

@@ -8,6 +8,7 @@ from .atwpanel import ATWPanel, Button, Separator
 from .navigator import Navigator
 from .console import Console
 from .bundle import Bundle
+from .sheet import Sheet
 from .picker import Picker
 from .cosy import Cosy
 

@@ -79,7 +79,7 @@ def plot(nSteps=1,path=None,win=None,showall=False):
 
     
     varPars='|'.join([name for name in varying if name in win.eqsys.par_names()])
-    
+
     g=graphs.new(win,nPoints+1,win.cursor['nparts'],
                  varying,const,varVals,constVals,path)
 
@@ -100,7 +100,7 @@ def plot(nSteps=1,path=None,win=None,showall=False):
     blobID=blb.objectID
 
     noThread = (win.options['Global']['threads'].label =='off')
-    
+
     g['taskID']=lib.scigma_num_plot(identifier,eqsysID,logID,nSteps,
                                         win.cursor['nparts'],varWaveID,varPars,blobID,showall,noThread)
 
@@ -124,7 +124,7 @@ def plotall(nSteps=1,path=None,win=None):
     plot(nSteps,path,win,True)
 
 commands['p*']=commands['pl*']=commands['plo*']=commands['plot*']=plotall
-    
+
 def success(g,win,args):
     # finish the cpp Task
     lib.scigma_num_finish_task(g['taskID'])
@@ -151,6 +151,7 @@ def minmax(g):
     g['max']={}
     mi=g['min']
     ma=g['max']
+
     varying=g['varying']
     varWave=g['varwave']
     rows=varWave.size()//len(varying)
@@ -171,12 +172,14 @@ def minmax(g):
     for i in range(columns):
         mi[varying[i]]=minima[i]
         ma[varying[i]]=maxima[i]
+
+    
     constWave=g['constwave']
     const=g['const']
     for i in range(constWave.size()):
         mi[const[i]]=constWave[i]
         ma[const[i]]=constWave[i]
-        
+
 def click(g,x,y,point,win):
     pass
 
@@ -234,8 +237,9 @@ def collect_varying_const(win,nParts,varying,const,varVals,constVals):
     for j in range(nParts):
         r_varVals+=[varVals[j*n1+idx[i]] if idx[i] >= 0 else constVals[-(idx[i]+1)] for i in range(n2)]
 
-    names=[varying[i] for i in idx if i>=0]
-    for name in names:
+    #names=[varying[i] for i in idx if i>=0]
+    #for name in names:
+    for name in r_varying:
         if name in r_const:
             idx = r_const.index(name)
             del(r_const[idx])

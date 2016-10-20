@@ -34,7 +34,6 @@ namespace scigma
 
 	   size_t nVar(stepperList[0]->n_variables());
 	   size_t nFunc(stepperList[0]->n_functions());	   
-	   
 	   varyingWave->lock();
 	   size_t nVarying=varyingWave->size()/nRays;
 
@@ -99,7 +98,7 @@ namespace scigma
 	   delete[] errorList;
 	   delete[] constData;
 	 });
-      
+
       return new Task(runFunction);
     }  
 					      
@@ -132,7 +131,7 @@ extern "C"
     size_t maxIter((size_t(blob->get_int("odessa.mxiter"))));
     double nTol(blob->get_double("Newton.tol"));
 
-
+    
     if(nSteps<0)
       {
 	nSteps=-nSteps;
@@ -149,7 +148,7 @@ extern "C"
     size_t nVarPar(varPars.size());
     size_t nVarying(varyingWave->size()/size_t(nRays));
     size_t nConst(nVarying-nVar-nFunc-1);
-    
+
     switch(m)
       {
       case MAP:

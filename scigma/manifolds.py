@@ -1,5 +1,7 @@
+import math
 from ctypes import *
 from . import gui
+from . import dat
 from . import common
 from . import lib
 from . import library
@@ -8,6 +10,7 @@ from . import graphs
 from . import picking
 from . import equations
 from . import iteration
+from . import sweeping
 
 commands={}
 
@@ -45,32 +48,52 @@ def manifold(stable,nSteps,g=None,path=None,win=None,showall=False):
         else:
             idx=[i for i in range(len(evreal)) if evreal[i]**2+evimag[i]**2>1.0]
 
-    if len(idx)!=1:
-        win.console.write_warning(g['identifier']+' has not exactly 1 '+ ('stable' if stable else 'unstable')+ ' eigenvalue ('+str(len(idx))+'), doing nothing\n')
-        return
+    if mode != 'ode':
+        if len(idx)!=1:
+            win.console.write_warning(g['identifier']+' has not exactly 1 '+ ('stable' if stable else 'unstable')+ ' eigenvalue ('+str(len(idx))+'), doing nothing\n')
+            return
+    else:
+        if len(idx)!=1 and len(idx)!=2:
+            win.console.write_warning(g['identifier']+' has not exactly 1 or 2 '+ ('stable' if stable else 'unstable')+ ' eigenvalues ('+str(len(idx))+'), doing nothing\n')
+            return
 
     if mode != win.equationPanel.get("mode"):
         win.console.write_warning('switching mode to '+mode)
         equations.mode(mode)
 
     if not path:
-        path=graphs.gen_ID("ms",win) if stable else graphs.gen_ID("mu",win)
+        path=graphs.gen_ID("mf",win)
          
     picking.select(g['identifier'],-1,win,True)
-        
-    if stable:
-        picking.perts(1,g,win)
-        if mode == 'ode':
-            iteration.plot(-nSteps,path,win,showall)
-        elif nSteps>1:
-            map_manifold(-nSteps+1,path,g,win,showall)
+
+    if len(idx)==1:
+        if stable:
+            picking.perts(1,g,win)
+            if mode == 'ode':
+                iteration.plot(-nSteps,path,win,showall)
+            elif nSteps>1:
+                map_manifold(-nSteps+1,g,path,win,showall)
+        else:
+            picking.pertu(1,g,win)
+            if mode == 'ode':
+                iteration.plot(nSteps,path,win,showall)
+            elif nSteps>1:
+                map_manifold(nSteps-1,g,path,win,showall)
     else:
-        picking.pertu(1,g,win)
-        if mode == 'ode':
-            iteration.plot(nSteps,path,win,showall)
-        elif nSteps>1:
-            map_manifold(nSteps-1,path,g,win,showall)
-    
+        # pick points on a ring with radius eps around the fixed point
+        # use the circumference divided by ds as number of initial points
+        # but use at least three if ds is too large (otherwise the
+        # algorithm for mesh building would fail)
+        eps=win.options['Numerical']['Manifolds']['eps']
+        arc=win.options['Numerical']['Manifolds']['arc']
+        nInitial = win.options['Numerical']['Manifolds']['ninit']
+
+        if stable:
+            picking.perts(nInitial,g,win)
+            two_d_manifold(-nSteps,g,path,win)
+        else:
+            picking.pertu(nInitial,g,win)
+            two_d_manifold(nSteps,g,path,win)
 
 def munstable(nSteps=1,g=None,path=None,win=None):
     """munstable [nSteps] [origin] [name]                                                                              
@@ -105,10 +128,23 @@ def mstableall(nSteps=1,g=None,path=None,win=None):
 commands['ms*']=commands['mst*']=commands['msta*']=commands['mstab*']=commands['mstabl*']=commands['mstable*']=mstableall
 
 
+def two_d_manifold(nSteps,g,path,win):
+    varying=win.cursor['varying']
+    varVals=win.cursor['varwave'][:]
+    const = win.cursor['const']
+    constVals=win.cursor['constwave'][:]
+
+    # add fixed point itself to the initial mesh of the cursor
+    varVals = g['varwave'][:]+varVals
+
+    mesh = dat.Mesh(len(varying),varVals)
+
+    sweeping.sweep(nSteps,g,path,win,mesh)
+    
 lib.scigma_num_map_manifold.restype=c_int
 lib.scigma_num_map_manifold.argtypes=[c_char_p,c_int,c_int,c_int,c_int,c_int,c_bool,c_bool]
 
-def map_manifold(nSteps,path,g,win,showall):
+def map_manifold(nSteps,g,path,win,showall):
 
     varying=win.cursor['varying']
     varVals=win.cursor['varwave'][:]
@@ -173,9 +209,11 @@ def plug(win=None):
     # fill option panels
     win.glWindow.stall()
     panel=win.acquire_option_panel('Numerical')
-    panel.add('eps',1e-5)
-    panel.add('ds',0.1)
-    panel.add('alpha',0.3)
+    panel.add('Manifolds.eps',1e-5)
+    panel.add('Manifolds.arc',0.1)
+    panel.add('Manifolds.alpha',0.3)
+    panel.add('Manifolds.ninit',20)
+    panel.add('Manifolds.fudge',1.05)
     win.glWindow.flush()
     
 def unplug(win=None):
@@ -187,8 +225,10 @@ def unplug(win=None):
     # remove options from panels
     win.glWindow.stall()
     panel=win.acquire_option_panel('Numerical')
-    panel.remove('eps')
-    panel.remove('ds')
-    panel.remove('alpha')
+    panel.remove('Manifolds.eps')
+    panel.remove('Manifolds.arc')
+    panel.remove('Manifolds.alpha')
+    panel.remove('Manifolds.ninit')
+    panel.remove('Manifolds.fudge')
     win.release_option_panel('Numerical')
     win.glWindow.flush()

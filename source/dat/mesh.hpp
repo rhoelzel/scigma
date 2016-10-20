@@ -25,6 +25,7 @@ namespace scigma
 	static const size_t NVALS_PER_DIM = 4;
 
 	Mesh(size_t nDim, const std::vector<double>& initial);
+	Mesh(const Mesh& initial);
 
 	void add_strip(const std::vector<double>& positions);
 
@@ -42,7 +43,6 @@ namespace scigma
 	size_t max_for_triangle_layer(size_t layer) const;
 
       private:
-	Mesh(const Mesh&);
 	Mesh& operator=(const Mesh&);
 
 	IWave triangleIndices_, isoIndices_;

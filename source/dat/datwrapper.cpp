@@ -88,10 +88,37 @@ extern "C"
     Mesh* ptr=new Mesh(size_t(nDim),vInitial);
     return ptr->get_python_id();
   }
+
+  PythonID scigma_dat_extend_mesh(PythonID objectID)
+  {
+    PYOBJ(Mesh,mesh,objectID);
+    if(mesh)
+      {
+	Mesh* ptr=new Mesh(*mesh);
+	return ptr->get_python_id();
+      }
+    return -1;
+  }
+  
   void scigma_dat_destroy_mesh(PythonID objectID)
   {PYOBJ(Mesh,ptr,objectID);if(ptr){delete ptr;}}
 
+  int scigma_dat_mesh_n_layers(PythonID objectID)
+  {
+    PYOBJ(Mesh,ptr,objectID);if(!ptr){return -1;}
+    size_t MAX(std::numeric_limits<size_t>::max());
+    return(int(ptr->available_iso_layer(MAX,MAX,MAX)+1));
+  }
 
+  int scigma_dat_mesh_n_points(PythonID objectID)
+  {
+    PYOBJ(Mesh,ptr,objectID);if(!ptr){return -1;}
+    size_t MAX(std::numeric_limits<size_t>::max());
+    int nLayers(int(ptr->available_iso_layer(MAX,MAX,MAX)+1));
+    int nIsoPoints(int(ptr->iso_indices().size()));
+    return nIsoPoints-nLayers+1;
+  }
+  
 } /* end extern "C" block */
 
 #pragma clang diagnostic pop

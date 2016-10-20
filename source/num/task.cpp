@@ -15,7 +15,8 @@ namespace scigma
     Task::Task(std::function<void(void)> runFunction):
       PythonObject<Task>(this),
       threadPtr_(NULL),runFunction_(runFunction)
-    {}
+    {
+    }
 
     Task::~Task()
     {

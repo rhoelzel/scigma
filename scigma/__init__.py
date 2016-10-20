@@ -58,6 +58,7 @@ def new(win=None):
     iteration.plug(w)
     guessing.plug(w)
     manifolds.plug(w)
+    sweeping.plug(w)
     continuation.plug(w)
     return w
 
