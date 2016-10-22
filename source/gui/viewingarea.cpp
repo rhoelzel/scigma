@@ -12,7 +12,7 @@ namespace scigma
   namespace gui
   {
     
-    ViewingArea::ViewingArea(GLFWwindow* ptr, GLContext* context):PythonObject<ViewingArea>(this),zScaleOrtho_(0.01f),glfwWindowPointer_(ptr),glContext_(context)
+    ViewingArea::ViewingArea(GLFWwindow* ptr, GLContext* context):PythonObject<ViewingArea>(this),zCamera_(-1),angle_(0),zScaleOrtho_(0.01f),glfwWindowPointer_(ptr),glContext_(context)
     {
       for(unsigned int i = 0;i<N_4X4_ELEMENTS;i++)   
 	projectionMatrix_[i]=inverseProjectionMatrix_[i]=screenToDeviceMatrix_[i]=deviceToScreenMatrix_[i]=i%5?0:1;

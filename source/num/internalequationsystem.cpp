@@ -210,12 +210,13 @@ namespace scigma
 	    {
 	      rhsSet.push_back(*i);
 	      std::string varname=i->name;size_t l(varname.length());varname[l-1]=0;
-	      source.erase(i);
+	      i=source.erase(i);
 	      FunctionSet::iterator fInfo=get_function_from_set(varname.c_str(),source);
 	      if(fInfo!=source.end())
 		{
 		  varSet.push_back(*fInfo);
 		  source.erase(fInfo);
+		  i=source.begin();
 		}
 	    }
 	  else if(i->f.is_constant())  // variable or parameter 
