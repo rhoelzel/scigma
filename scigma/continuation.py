@@ -6,6 +6,7 @@ from . import common
 from . import lib
 from . import windowlist
 from . import graphs
+from . import view
 from . import picking
 from . import equations
 
@@ -21,7 +22,7 @@ def prepare_auto_folder(path):
 lib.scigma_num_auto.restype=c_int
 lib.scigma_num_auto.argtypes=[c_char_p,c_int,c_int,c_int,POINTER(c_int),c_int,c_int,c_bool]
 
-def cont(nSteps=1, parameter=None, path=None,win=None,noThread=False):
+def cont(nSteps=1, parameters=None, path=None,win=None,noThread=False):
     win = windowlist.fetch(win)
 
     try:
@@ -32,8 +33,13 @@ def cont(nSteps=1, parameter=None, path=None,win=None,noThread=False):
     nVars=win.eqsys.n_vars()
     if nVars == 0:
         raise Exception ("error: no variables defined")
-    if parameter not in win.eqsys.par_names():
-        raise Exception("error: "+parameter+" is not a parameter")
+
+    if type(parameters)!= list:
+        parameters = [parameters]
+
+    for p in parameters:
+        if p not in win.eqsys.par_names():
+            raise Exception("error: "+p+" is not a parameter")
     
     blob=common.Blob(win.options['AUTO'])
     set_auto_constants(blob);
@@ -42,58 +48,124 @@ def cont(nSteps=1, parameter=None, path=None,win=None,noThread=False):
         path=graphs.gen_ID("cont",win)
     prepare_auto_folder(path)
 
-    cont={'identifier': 'path', 'npoints':nSteps,
-          'br':0,'fp':0, 'bp':0, 'hb':0}
-    cont['varying']=win.eqsys.var_names()+[parameter]
-    cont['const']=win.eqsys.par_names().remove(parameter)
+    cont={'identifier': path, 'npoints':nSteps,
+          'br':0,'fp':0, 'bp':0, 'hb':0, 'timestamp':win.eqsys.timestamp()}
+    cont['varying']=win.eqsys.var_names()+parameters
+    cont['const']=win.eqsys.par_names()
+    for p in parameters:
+        cont['const'].remove(p)
     cont['callbacks']={'success':lambda args:success(cont,win,args),
-                       'fail':None,
-                       'cleanup':None,
-                       'minmax':None,
-                       'cursor':None}
+                       'minmax': lambda :minmax(cont),
+                       'fail':None}
     
     common.dict_enter(path,win.graphs,cont)
 
     identifier=create_string_buffer(bytes(path.encode("ascii")))
-    C_IntArrayType=c_int*1
-    indexArray=C_IntArrayType(win.eqsys.par_names().index(parameter))
+    C_IntArrayType=c_int*len(parameters)
+    indices=[win.eqsys.par_names().index(p) for p in parameters]
+    indexArray=C_IntArrayType(*indices)
 
     cwd = os.getcwd()
     os.chdir("."+path)
     taskID=lib.scigma_num_auto(identifier,win.eqsys.objectID,win.log.objectID,
-                               nSteps,indexArray,1,blob.objectID,True)
+                               nSteps,indexArray,len(parameters),blob.objectID,True)
     os.chdir(cwd)
 
 commands['c']=commands['co']=commands['con']=commands['cont']=cont
 
 def success(cont,win,args):
-    # finish the cpp Task
-    #lib.scigma_num_finish_task(g['taskID'])
+    if len(args)<5:
+        finalize_branch(cont,win)
+        if len(args)==2:
+            lib.scigma_num_finish_task(g['taskID'])   
+    else:
+        varWave=dat.Wave(objectID=int(args[0]))
+        constWave=dat.Wave(objectID=int(args[1]))
+        stab=int(args[2])
+        typ=int(args[3])
+        lab=int(args[4])
 
-    if len(args)<0:
+        print "stab,typ,lab"
+        print stab,typ,lab
+        
+        if typ==0:
+            add_branch(cont,varWave,constWave,stab,win)
+        else:
+            add_point(cont,varWave,constWave,stab,typ,lab,win)
+
+def minmax(cont):
+    glist=[]
+    common.dict_leaves(cont,glist,isleaf=lambda entry:isinstance(entry,dict) and 'cgraph' in entry)
+    for g in glist:
+        if 'min' not in g:
+            graphs.stdminmax(g)
+            
+def add_branch(cont,varWave,constWave,stab,win):
     # create the visible object        
-        pointStyle= gui.RING
-        pointSize = win.options['Drawing']['marker']['size'].value
-        color = win.options['Drawing']['color']
+    drawingStyle= gui.POINTS if stab <0 else gui.LINES
+    pointStyle= gui.DOT
+    pointSize = 4
+    color = win.options['Drawing']['color']
+    
+    cont['br']=cont['br']+1
+    g={'identifier':cont['identifier']+'.br'+str(cont['br']).zfill(2),'visible':False,
+       'varying':cont['varying'],'const':cont['const'],'timestamp':cont['timestamp'],
+       'varwave':varWave,'constwave':constWave}
+    
+    g['callbacks']={'cleanup':None,'cursor':None}
         
-        cont['br']=cont['br']+1
-        g={'identifier':cont['identifier']+'.'+str(cont['br'])}
-        g['cgraph']=gui.Bundle(win.glWindow,cont['identifier']+'.'+str(cont['br']),
-                               cont['npoints'],1,len(cont['varying']),
-                               dat.Wave(objectID=int(args[0])),dat.Wave(objectID=int(args[0])),
-                               lambda identifier, point: picking.select(identifier,point,win))
-        g['cgraph'].set_point_style(pointStyle)
-        g['cgraph'].set_point_size(pointSize)
-        g['cgraph'].set_color(color)
-        g['cgraph'].finalize()
+    g['cgraph']=gui.Bundle(win.glWindow,cont['identifier']+'.'+str(cont['br']),
+                           cont['npoints'],1,len(g['varying']),
+                           g['varwave'],g['constwave'],lambda identifier, point: picking.select(identifier,point,win))
+    g['cgraph'].set_point_style(pointStyle)
+    g['cgraph'].set_point_size(pointSize)
+    g['cgraph'].set_style(drawingStyle)
+    g['cgraph'].set_color(color)
 
-        common.dict_enter(cont['identifier']+'.'+str(cont['br']),win.graphs,g)
-        
-        graphs.show(g,win)
+    common.dict_enter(g['identifier'],win.graphs,g)
+    
+    graphs.show(g,win)
 
     #picking.select(g['identifier'],-1,win)
     #g['cgraph'].finalize()
 
+def finalize_branch(cont,win):
+    pass
+
+def add_point(cont,varWave,constWave,stab,typ,lab,win):
+    if typ==1: # branch point
+        typ = "bp"
+        pointStyle=gui.PLUS
+    elif typ==3: # Hopf point
+        typ = "hb"
+        pointStyle=gui.CROSS
+    elif typ==9: # end point
+        typ = "fp"
+        pointStyle = gui.DOT if stab < 0 else gui.RING
+    
+    pointSize=win.options['Drawing']['marker']['size'].value
+    color=win.options['Drawing']['color']
+
+
+    cont[typ]=cont[typ]+1
+    g={'identifier':cont['identifier']+'.'+typ+str(cont[typ]).zfill(2),'visible':False,
+       'varying':cont['varying'],'const':cont['const'],'timestamp':cont['timestamp'],
+       'varwave':varWave,'constwave':constWave}
+    
+    g['callbacks']={'cleanup':None,'cursor':None}
+
+    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],1,1,
+                           len(g['varying']),g['varwave'],g['constwave'],
+                           lambda identifier, point: picking.select(identifier,point,win))
+    g['cgraph'].set_point_style(pointStyle)
+    g['cgraph'].set_point_size(pointSize)
+    g['cgraph'].set_color(color)
+    g['cgraph'].finalize()
+
+    common.dict_enter(g['identifier'],win.graphs,g)
+    
+    graphs.show(g,win)
+    
 def plug(win=None):
     win = windowlist.fetch(win)
     # make sure that we do not load twice into the same window

@@ -54,10 +54,11 @@ def delete(identifier=None, win=None):
 
     path=None
     # this deletes named graph, or a node with all graphs below that node
-    path=common.dict_single_path(identifier,win.graphs,'graph',lambda entry: 'cgraph' not in entry)
+    path=common.dict_single_path(identifier,win.graphs,'graph',lambda entry: isinstance(entry,dict) and 'cgraph' not in entry)
     entry=common.dict_entry(path,win.graphs)
     glist=[]
-    common.dict_leaves(entry,glist,lambda entry: 'cgraph' not in entry)
+    common.dict_leaves(entry,glist,lambda entry: isinstance(entry,dict) and 'cgraph' not in entry,
+                       lambda entry: isinstance(entry,dict) and 'cgraph' in entry)
 
     for g in glist:
         if win.selection is g:
@@ -128,7 +129,7 @@ def save(g=None,filename='',win=None):
 
 commands['sav']=commands['save']=save
             
-def get(g, win=None, isnode=lambda entry:'cgraph' not in entry):
+def get(g, win=None, isnode=lambda entry: isinstance(entry,dict) and 'cgraph' not in entry):
     win=windowlist.fetch(win)
     if isinstance(g,str):
         return common.dict_single_entry(g,win.graphs,'graph',isnode)
@@ -288,8 +289,10 @@ def on_view_change(win):
     arg2=bytes(arg2.strip('|').encode("ascii"))
     
     glist=[]
-    common.dict_leaves(win.graphs,glist,lambda entry: 'cgraph' not in entry)
 
+    common.dict_leaves(win.graphs,glist,lambda entry: isinstance(entry,dict) and 'cgraph' not in entry,
+                       lambda entry: isinstance(entry,dict) and 'cgraph' in entry)
+    
     timeStamp[win]=time()
     expBuffer[win]=create_string_buffer(arg1)
     indBuffer[win]=create_string_buffer(arg2)
@@ -303,7 +306,7 @@ def on_view_change(win):
     win.glWindow.request_redraw()
 
 def fail(identifier,args,win):
-    g=get(identifier,win, lambda entry: 'callbacks' not in entry)
+    g=get(identifier,win, lambda entry: isinstance(entry,dict) and 'callbacks' not in entry)
     # the next two lines are needed to stop drawing if
     # delay is set and the computation ended prematurely
     # g['cgraph'].set_n_points(0)
@@ -315,7 +318,7 @@ def fail(identifier,args,win):
     delete(identifier,win)
     
 def success(identifier,args,win):
-    g=get(identifier,win, lambda entry: 'cgraph' not in entry)
+    g=get(identifier,win, lambda entry: isinstance(entry,dict) and 'cgraph' not in entry)
 
     # get minima and maxima
     if g['callbacks']['minmax']:
@@ -325,6 +328,40 @@ def success(identifier,args,win):
     if g['callbacks']['success']:
         g['callbacks']['success'](args)
 
+def stdminmax(g):
+    g['min']={}
+    g['max']={}
+    mi=g['min']
+    ma=g['max']
+
+    varying=g['varying']
+    varWave=g['varwave']
+    rows=varWave.size()//len(varying)
+    columns=len(varying)
+    minima=[1e300]*columns
+    maxima=[-1e300]*columns
+
+    for i in range(rows):
+        varWave.lock()
+        d=varWave.data()
+        for j in range(columns):
+            value=d[i*columns+j]
+            if value<minima[j]:
+                minima[j]=value
+            if value>maxima[j]:
+                maxima[j]=value
+        varWave.unlock()
+    for i in range(columns):
+        mi[varying[i]]=minima[i]
+        ma[varying[i]]=maxima[i]
+
+    constWave=g['constwave']
+    const=g['const']
+    for i in range(constWave.size()):
+        mi[const[i]]=constWave[i]
+        ma[const[i]]=constWave[i]
+
+        
 def plug(win):
     if not win.register_plugin('graphs', lambda:unplug(win),commands):
         return

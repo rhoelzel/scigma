@@ -88,7 +88,7 @@ def plot(nSteps=1,path=None,win=None,showall=False):
     g['callbacks']= {'success':lambda args:success(g,win,args),
                      'fail':lambda args:fail(g,win,args),
                      'cleanup':lambda:cleanup(g),
-                     'minmax':lambda:minmax(g),
+                     'minmax':lambda:graphs.stdminmax(g),
                      'cursor':lambda point:cursor(g,point,win)}
 
     
@@ -146,44 +146,6 @@ def fail(g,win,args):
 def cleanup(g):
     pass
 
-def minmax(g):
-    g['min']={}
-    g['max']={}
-    mi=g['min']
-    ma=g['max']
-
-    varying=g['varying']
-    varWave=g['varwave']
-    rows=varWave.size()//len(varying)
-    columns=len(varying)
-    minima=[1e300]*columns
-    maxima=[-1e300]*columns
-
-    for i in range(rows):
-        varWave.lock()
-        d=varWave.data()
-        for j in range(columns):
-            value=d[i*columns+j]
-            if value<minima[j]:
-                minima[j]=value
-            if value>maxima[j]:
-                maxima[j]=value
-        varWave.unlock()
-    for i in range(columns):
-        mi[varying[i]]=minima[i]
-        ma[varying[i]]=maxima[i]
-
-    
-    constWave=g['constwave']
-    const=g['const']
-    for i in range(constWave.size()):
-        mi[const[i]]=constWave[i]
-        ma[const[i]]=constWave[i]
-
-def click(g,x,y,point,win):
-    pass
-
-        
 def cursor(g,point,win):
     
     nVarying=len(g['varying'])

@@ -29,6 +29,8 @@ class Float(object):
 def stdisnode(entry):
     return isinstance(entry,dict)
 
+def stdisleaf(entry):
+    return not isinstance(entry,dict)
     
 def dict_enter(path, dictionary, element):
     if not path:
@@ -39,7 +41,8 @@ def dict_enter(path, dictionary, element):
     path=path.split('.')
     parent = dictionary
     for child in path:
-        parent[child]={}
+        if child not in parent:
+            parent[child]={}
         d = parent   
         parent = parent[child]
     key = child
@@ -115,6 +118,7 @@ def dict_full_paths(identifier,parent,results,isnode=stdisnode,dir=''):
 
 def dict_single_path(identifier,parent,typeid='path', isnode=stdisnode):
     paths=[]
+
     dict_full_paths(identifier,parent,paths,isnode)
     if len(paths) is 0:
         raise Exception(identifier+": "+ typeid+" not found")
@@ -126,15 +130,13 @@ def dict_single_path(identifier,parent,typeid='path', isnode=stdisnode):
 def dict_single_entry(identifier,parent,typeid='entry',isnode=stdisnode):
     return dict_entry(dict_single_path(identifier,parent,typeid,isnode),parent)
         
-def dict_leaves(parent,results,isnode=stdisnode):
-    if not isnode(parent):
+def dict_leaves(parent,results,isnode=stdisnode, isleaf=stdisleaf):
+    if isleaf(parent):
         results.append(parent)
         return
-    for key in parent:
-        if isnode(parent[key]):
-            dict_leaves(parent[key],results,isnode)
-        else:
-            results.append(parent[key])
-    
+    if isnode(parent):
+        for key in parent:
+            dict_leaves(parent[key],results,isnode,isleaf)
+            
 
             

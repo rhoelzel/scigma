@@ -62,12 +62,12 @@ namespace scigma
 
 extern "C"
 {
-  void scigma_num_auto(const char* identifier, PythonID equationSystemID, PythonID logID,
-		       int nSteps, const int* ICP, int nICP, PythonID blobID, bool noThread)
+  PythonID scigma_num_auto(const char* identifier, PythonID equationSystemID, PythonID logID,
+			   int nSteps, const int* ICP, int nICP, PythonID blobID, bool noThread)
   {
-    PYOBJ(EquationSystem,eqsys,equationSystemID);if(!eqsys)return;
-    PYOBJ(Log,log,logID);if(!log)return;
-    PYOBJ(Blob,blob,blobID);if(!blob)return;
+    PYOBJ(EquationSystem,eqsys,equationSystemID);if(!eqsys)return -1;
+    PYOBJ(Log,log,logID);if(!log)return -1;
+    PYOBJ(Blob,blob,blobID);if(!blob)return -1;
 
     AutoConstants AC(auto_constants_from_blob(blob));
     for(size_t i(0), nVar(eqsys->n_variables());i<nVar;++i)
@@ -85,6 +85,8 @@ extern "C"
       {
 	Auto aUto(*eqsys,log,AC);
       }
+
+    return -1;
   }
 }
   

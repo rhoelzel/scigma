@@ -243,7 +243,7 @@ def guess_single(path,blob,varying,const,varVals,constVals,win,showall):
     graph['callbacks']= {'success':lambda args:success(graph,win,args),
                          'fail':lambda args:fail(graph,win,args),
                          'cleanup':lambda:cleanup(graph),
-                         'minmax':lambda:minmax(graph),
+                         'minmax':lambda:graphs.stdminmax(graph),
                          'cursor':lambda point:cursor(graph,point,win)}
     
     nVars=win.eqsys.n_vars()
@@ -341,37 +341,6 @@ def fail(g,win,args):
 def cleanup(g):
     g['evwave'].destroy()
     
-def minmax(g):
-    g['min']={}
-    g['max']={}
-    mi=g['min']
-    ma=g['max']
-    varying=g['varying']
-    varWave=g['varwave']
-    rows=varWave.size()//len(varying)
-    columns=len(varying)
-    minima=[1e300]*columns
-    maxima=[-1e300]*columns
-
-    varWave.lock()
-    d=varWave.data()
-    for i in range(rows):
-        for j in range(columns):
-            value=d[i*columns+j]
-            if value<minima[j]:
-                minima[j]=value
-            if value>maxima[j]:
-                maxima[j]=value
-    varWave.unlock()
-    for i in range(columns):
-        mi[varying[i]]=minima[i]
-        ma[varying[i]]=maxima[i]
-    constWave=g['constwave']
-    const=g['const']
-    for i in range(constWave.size()):
-        mi[const[i]]=constWave[i]
-        ma[const[i]]=constWave[i]
-
 def cursor(g,point,win):
     nVarying=len(g['varying'])
 

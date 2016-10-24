@@ -226,7 +226,7 @@ extern "C"
     size_t nPeriod((size_t(blob->get_int("nperiod"))));
     double dt(blob->get_double("dt"));
     double maxtime(blob->get_double("maxtime"));
-    int secvar(blob->get_int("secvar"));
+    int secidx(blob->get_int("secidx"));
     int secdir(blob->get_int("secdir"));
     double secval(blob->get_double("secval"));
     bool stiff(blob->get_string("odessa.type")=="stiff"?true:false);
@@ -261,8 +261,8 @@ extern "C"
 	break;
       case POINCARE:
 	{
-	  PoincareStepper* poincareStepper(new PoincareStepper(*eqsys,dt,maxtime,secvar,secdir,secval,nTol,stiff,aTol,rTol, size_t(maxIter),true));
-	  task=create_guessing_task(identifier,log,poincareStepper,varyingWave,evWave,nTol,size_t(nPeriod),showAllIterates?1:0,long(secvar));
+	  PoincareStepper* poincareStepper(new PoincareStepper(*eqsys,dt,maxtime,secidx,secdir,secval,nTol,stiff,aTol,rTol, size_t(maxIter),true));
+	  task=create_guessing_task(identifier,log,poincareStepper,varyingWave,evWave,nTol,size_t(nPeriod),showAllIterates?1:0,long(secidx));
 	}
       }
 

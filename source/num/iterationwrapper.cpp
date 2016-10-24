@@ -122,7 +122,7 @@ extern "C"
     size_t nPeriod((size_t(blob->get_int("nperiod"))));
     double dt(blob->get_double("dt"));
     double maxtime(blob->get_double("maxtime"));
-    int secvar(blob->get_int("secvar"));
+    int secidx(blob->get_int("secidx"));
     int secdir(blob->get_int("secdir"));
     double secval(blob->get_double("secval"));
     bool stiff(blob->get_string("odessa.type")=="stiff"?true:false);
@@ -181,7 +181,7 @@ extern "C"
 	    {
 	      for(size_t j(0);j<nVarPar;++j)
 		eqsys->set(varPars[j],varyingWave->data()[size_t(i)*nVarying+1+nVar+nFunc+j]);
-	      stepperList[i]=new PoincareStepper(*eqsys,dt,maxtime,secvar,secdir,secval,nTol,stiff,aTol,rTol, size_t(maxIter));
+	      stepperList[i]=new PoincareStepper(*eqsys,dt,maxtime,secidx,secdir,secval,nTol,stiff,aTol,rTol, size_t(maxIter));
 	    }
 	}
       }

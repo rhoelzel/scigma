@@ -66,16 +66,32 @@ extern "C"
 
 	if(*lab)
 	  {
-	    /* create Wave for the point itself */
-	    Wave* point=new Wave(nVar+ac.ICP.size());
-	    point->lock();
-	    point->push_back(u,nVar);
+	    /* create Waves for the point itself (constant) */
+	    Wave* varVals=new Wave(nVar+ac.ICP.size());
+	    
+	    varVals->lock();
+	    varVals->push_back(u,nVar);
+	    for(size_t i(0);i<ac.ICP.size();++i)
+	      varVals->push_back(par[ac.ICP[i]-1]);
+	    varVals->unlock();
+
+	    Wave* constVals= new Wave(ac.parnames.size()-ac.ICP.size());
+	    constVals->lock();
+	    size_t index(0);
 	    for(size_t i(0);i<ac.parnames.size();++i)
-	      point->push_back(par[i]);
-	    point->unlock();
+	      {
+		bool varies(false);
+		for(size_t j(0);j<ac.ICP.size();++j)
+		  if(ac.ICP[j]==int(i+1))
+		    varies=true;
+		if(!varies)
+		  constVals->push_back(par[i]);
+	      }
+	    constVals->unlock();
 	  
+	    
 	    std::stringstream ss1;
-	    ss1<<ac.c<<"|"<<point->get_python_id()<<"|"<<*mtot<<"|"<<
+	    ss1<<ac.c<<"|"<<varVals->get_python_id()<<"|"<<constVals->get_python_id()<<"|"<<*mtot<<"|"<<
 	      *itp<<"|"<<*lab;
 	    instance->log_->push<LOG_SUCCESS>(ss1.str());
 	  }
@@ -260,10 +276,9 @@ namespace scigma
 	  instances_[id_]=this;
 	}
 
-      // run AUTO in its own thread
+      // run AUTO in its own thread (threading not yet implemented)
       int id((int(id_)));
       auto_entry(&id,autoConstants_.c.c_str());
-      log_->push<LOG_SUCCESS>(autoConstants.c);
     }
 
     

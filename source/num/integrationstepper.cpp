@@ -7,7 +7,7 @@ namespace scigma
     IntegrationStepper::IntegrationStepper(const EquationSystem& eqsys, double dt, bool stiff,
 					   double aTol, double rTol, size_t maxIter, bool computeJacobian):
       nVar_(eqsys.n_variables()),nFunc_(eqsys.n_functions()),t0_(eqsys.is_autonomous()?0:eqsys.time()),
-      odessa_(nVar_,eqsys.f_pt(),eqsys.dfdx_pt(),eqsys.dfdx_t()?nVar_:0,NULL,stiff,aTol,rTol,maxIter,computeJacobian),
+      odessa_(nVar_,eqsys.f_pt(),eqsys.dfdx_pt(),eqsys.dfdx_t()?nVar_+eqsys.n_parameters():eqsys.n_parameters(),NULL,stiff,aTol,rTol,maxIter,computeJacobian),
       x_(odessa_.x()),p_(odessa_.p()),jac_(odessa_.sensitivity()),dt_(dt),func_t_(eqsys.func_t()),funcVals_(nFunc_)
     {
       odessa_.t()=t0_;

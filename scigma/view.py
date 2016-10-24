@@ -140,7 +140,8 @@ def fit(win=None):
         mi=1e300
         ma=-1e300
         glist=[]
-        common.dict_leaves(win.graphs,glist,lambda entry: 'callbacks' not in entry)
+        common.dict_leaves(win.graphs,glist,lambda entry: isinstance(entry, dict) and 'cgraph' not in entry,
+                           lambda entry:isinstance(entry,dict) and 'cgraph' in entry)
         for g in glist:
             if g['visible']:
                 value = g['min'][symbol] if (('min' in g) and (symbol in g['min'])) else 1e300

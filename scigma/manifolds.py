@@ -172,7 +172,7 @@ def map_manifold(nSteps,g,path,win,showall):
     g['callbacks']= {'success':lambda args:iteration.success(g,win,args),
                      'fail':lambda args:iteration.fail(g,win,args),
                      'cleanup':lambda:iteration.cleanup(g),
-                     'minmax':lambda:iteration.minmax(g),
+                     'minmax':lambda:graphs.stdminmax(g),
                      'cursor':lambda point:iteration.cursor(g,point,win)}
 
     identifier=create_string_buffer(bytes(path.encode("ascii")))
