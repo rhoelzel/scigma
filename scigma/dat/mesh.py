@@ -10,9 +10,7 @@ class Mesh(object):
 
     def __init__(self, nDim, initial):
         if nDim==0:
-            print "dq!2"
             self.objectID = lib.scigma_dat_extend_mesh(initial.objectID)
-            print "hier bin ich noch"
         else:
             C_DoubleArrayType=c_double*len(initial)
             cValuesArray=C_DoubleArrayType(*initial)

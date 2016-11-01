@@ -85,14 +85,10 @@ def cont(nSteps=1, parameters=None, g=None, path=None,win=None,noThread=False):
         prepare_continuation(win.selection,parameters,blob,win)
         oldPath=win.selection['identifier'].rpartition('.')[0]
 
-    print "da"
-        
     if not path:
         path=graphs.gen_ID("cont",win)
     prepare_auto_folder(oldPath,path)
 
-    print "dort"
-    
     cont={'identifier': path, 'npoints':nSteps,
           'points':{'fp':0,'bp':0,'lp':0,'hb':0},
           'branches':{'fp':0,'bp':0,'lp':0,'hb':0},

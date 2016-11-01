@@ -27,16 +27,11 @@ def sweep(nSteps,g=None,path=None,win=None,mesh=None):
     
     if not mesh:
         g=graphs.get(g,win)
-        print g
         try:
-            print "hier bin ich noch"
             mesh=g['mesh'].extend()
         except:
             raise Exception(g['identifier']+': has no mesh, cannot sweep from here')
 
-    print nSteps
-    print "^nsteps^"
-        
     g=graphs.new(win,1,1,g['varying'],g['const'],[],g['constwave'][:],path)
         
     g['mesh']=mesh

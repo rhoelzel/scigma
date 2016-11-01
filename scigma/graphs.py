@@ -76,7 +76,6 @@ def clear(win=None):
     win=windowlist.fetch(win)
     keys = win.graphs.keys()
     for key in keys:
-        print "attempting to delete "+key
         delete(key,win)
     win.selection=None
         
