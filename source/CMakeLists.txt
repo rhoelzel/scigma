@@ -7,7 +7,7 @@ add_subdirectory(external)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 set(CMAKE_MACOSX_RPATH OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 \
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 \
 -Werror \
 -Weverything \
 -Wno-c++98-compat-pedantic \
@@ -16,7 +16,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 \
 -Wno-unknown-pragmas \
 -Wno-unknown-warning-option")
 else()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread \
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread \
 -Wall \
 -Wpedantic \
 -Wextra \
