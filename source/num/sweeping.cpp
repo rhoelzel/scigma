@@ -10,7 +10,7 @@ typedef scigma::dat::AbstractWave<GLint> IWave;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpadded"
 #pragma GCC diagnostic push
-#pramge GCC diagnostic ignored "-Wunused-but-set-parameter"
+#pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
 
 namespace scigma
 {
