@@ -1,0 +1,29 @@
+mxiter 10000
+x'=s*(y-x)
+y'=x*(r-z)-y
+z'=x*y-b*z
+r=28.0
+s=10.0
+b=2.66666667
+3d
+x x
+y y
+z z
+delay 0.001
+mode ode
+point.style dot
+point.size 1
+color 0
+dt 0.01
+xrange -20 20
+yrange -20 20
+zrange -5 40
+point.size 2
+marker.style none
+style wireframe
+g
+ds -0.01
+cont 300 r
+fit
+arc 1.5
+
