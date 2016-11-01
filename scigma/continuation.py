@@ -1,4 +1,4 @@
-import os
+import os, shutil
 from ctypes import *
 from . import gui
 from . import dat
@@ -10,19 +10,53 @@ from . import view
 from . import picking
 from . import equations
 
+AUTO_TYPES={1:'bp', 2:'lp',3:'hb', 0:'fp',10:'fp'}
+POINT_STYLES={1:gui.STAR,2:gui.PLUS,3:gui.CROSS,0:gui.RDOT,10:gui.RING}
+
 commands={}
 
-def set_auto_constants(blob):
-    pass
+def prepare_continuation(g,parameters,blob,win):
+    if win.eqsys.timestamp()!=g['timestamp']:
+        raise Exception("structure of equation system has changed: cannot use "+g['identifier']+"for continuation")
 
-def prepare_auto_folder(path):
-    if not os.path.exists("."+path):
-        os.makedirs("."+path)
+    typ = 'fp' if 'autotype' not in g else g['autotype']
+    lab = 0 if 'autolabel' not in g else g['autolabel']
 
+    blob.set("IRS",lab)
+
+    if typ == 'fp':
+        if len(parameters) != 1:
+            raise Exception("need exactly one parameter for steady state continuation")
+        blob.set("advanced AUTO.ISW",1)
+        blob.set("advanced AUTO.ILP",1)
+        
+    elif typ in ['bp','lp','hb']:
+        if len(parameters) != 2:
+            raise Exception("need exactly two parameters for " + "Hopf" if typ =='hb' else "branch point" + " continuation")
+        blob.set("advanced AUTO.ISW",2)
+        blob.set("advanced AUTO.ILP",0)
+
+def prepare_auto_folder(oldPath, path):
+    # guard against removing '/' or "../../usr/lib" and so on by some freak accident
+    oldPath=oldPath.replace('/','')
+    oldPath=oldPath.replace('\\','')
+    path=path.replace('/','')
+    path=path.replace('\\','')
+
+    shutil.rmtree("./."+path,True)
+    os.makedirs("."+path)
+    
+    if oldPath:
+        shutil.copyfile("./."+oldPath+"/b."+oldPath,"./."+path+"/b."+path)
+        shutil.copyfile("./."+oldPath+"/c."+oldPath,"./."+path+"/c."+path)
+        shutil.copyfile("./."+oldPath+"/d."+oldPath,"./."+path+"/d."+path)
+        shutil.copyfile("./."+oldPath+"/s."+oldPath,"./."+path+"/s."+path)
+
+    
 lib.scigma_num_auto.restype=c_int
 lib.scigma_num_auto.argtypes=[c_char_p,c_int,c_int,c_int,POINTER(c_int),c_int,c_int,c_bool]
 
-def cont(nSteps=1, parameters=None, path=None,win=None,noThread=False):
+def cont(nSteps=1, parameters=None, g=None, path=None,win=None,noThread=False):
     win = windowlist.fetch(win)
 
     try:
@@ -40,16 +74,29 @@ def cont(nSteps=1, parameters=None, path=None,win=None,noThread=False):
     for p in parameters:
         if p not in win.eqsys.par_names():
             raise Exception("error: "+p+" is not a parameter")
-    
+
     blob=common.Blob(win.options['AUTO'])
-    set_auto_constants(blob);
-    
+    oldPath=None
+
+    if g:
+        prepare_continuation(g,parameters,blob,win)
+        oldPath=g['identifier'].rpartition('.')[0]
+    elif win.selection:
+        prepare_continuation(win.selection,parameters,blob,win)
+        oldPath=win.selection['identifier'].rpartition('.')[0]
+
+    print "da"
+        
     if not path:
         path=graphs.gen_ID("cont",win)
-    prepare_auto_folder(path)
+    prepare_auto_folder(oldPath,path)
 
+    print "dort"
+    
     cont={'identifier': path, 'npoints':nSteps,
-          'br':0,'fp':0, 'bp':0, 'hb':0, 'timestamp':win.eqsys.timestamp()}
+          'points':{'fp':0,'bp':0,'lp':0,'hb':0},
+          'branches':{'fp':0,'bp':0,'lp':0,'hb':0},
+          'timestamp':win.eqsys.timestamp()}
     cont['varying']=win.eqsys.var_names()+parameters
     cont['const']=win.eqsys.par_names()
     for p in parameters:
@@ -57,7 +104,7 @@ def cont(nSteps=1, parameters=None, path=None,win=None,noThread=False):
     cont['callbacks']={'success':lambda args:success(cont,win,args),
                        'minmax': lambda :minmax(cont),
                        'fail':None}
-    
+
     common.dict_enter(path,win.graphs,cont)
 
     identifier=create_string_buffer(bytes(path.encode("ascii")))
@@ -85,13 +132,10 @@ def success(cont,win,args):
         typ=int(args[3])
         lab=int(args[4])
 
-        print "stab,typ,lab"
-        print stab,typ,lab
-        
         if typ==0:
-            add_branch(cont,varWave,constWave,stab,win)
+            add_branch(cont,varWave,constWave,stab,typ//10,win)
         else:
-            add_point(cont,varWave,constWave,stab,typ,lab,win)
+            add_point(cont,varWave,constWave,stab,typ//10 if typ%10==9 else typ,lab,win)
 
 def minmax(cont):
     glist=[]
@@ -100,22 +144,30 @@ def minmax(cont):
         if 'min' not in g:
             graphs.stdminmax(g)
             
-def add_branch(cont,varWave,constWave,stab,win):
+def add_branch(cont,varWave,constWave,stab,typ,win):
     # create the visible object        
-    drawingStyle= gui.POINTS if stab <0 else gui.LINES
-    pointStyle= gui.DOT
-    pointSize = 4
+    if typ == 0: # 1-parameter continuation
+        typ = 0 if stab <0 else 10
+        drawingStyle= gui.POINTS if stab <0 else gui.LINES
+        pointStyle= gui.DOT
+        pointSize = 4
+    else: # two parameter continuation of special points
+        drawingStyle = gui.DRAWING_TYPE[win.options['Drawing']['style'].label]
+        pointStyle = gui.POINT_TYPE[win.options['Drawing']['style'].label]
+        pointSize = win.options['Drawing']['point'['size']].value
+
     color = win.options['Drawing']['color']
-    
-    cont['br']=cont['br']+1
-    g={'identifier':cont['identifier']+'.br'+str(cont['br']).zfill(2),'visible':False,
+
+    typeName=AUTO_TYPES[typ]
+    cont['branches'][typeName]=cont['branches'][typeName]+1
+    suffix = str(cont['branches'][typeName]).zfill(2)
+    g={'identifier':cont['identifier']+'.'+typeName+'b'+suffix,'visible':False,
        'varying':cont['varying'],'const':cont['const'],'timestamp':cont['timestamp'],
-       'varwave':varWave,'constwave':constWave}
+       'varwave':varWave,'constwave':constWave, 'autotype':typeName}
     
     g['callbacks']={'cleanup':None,'cursor':None}
         
-    g['cgraph']=gui.Bundle(win.glWindow,cont['identifier']+'.'+str(cont['br']),
-                           cont['npoints'],1,len(g['varying']),
+    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],cont['npoints'],1,len(g['varying']),
                            g['varwave'],g['constwave'],lambda identifier, point: picking.select(identifier,point,win))
     g['cgraph'].set_point_style(pointStyle)
     g['cgraph'].set_point_size(pointSize)
@@ -133,24 +185,28 @@ def finalize_branch(cont,win):
     pass
 
 def add_point(cont,varWave,constWave,stab,typ,lab,win):
-    if typ==1: # branch point
-        typ = "bp"
-        pointStyle=gui.PLUS
-    elif typ==3: # Hopf point
-        typ = "hb"
-        pointStyle=gui.CROSS
-    elif typ==9: # end point
-        typ = "fp"
-        pointStyle = gui.DOT if stab < 0 else gui.RING
-    
+    if typ==0: # end point
+        typ = 0 if stab <0 else 10
+        
+    pointStyle = POINT_STYLES[typ]
     pointSize=win.options['Drawing']['marker']['size'].value
     color=win.options['Drawing']['color']
 
+    typeName=AUTO_TYPES[typ]
+    
+    cont['points'][typeName]=cont['points'][typeName]+1
+    suffix = str(cont['points'][typeName]).zfill(2)
 
-    cont[typ]=cont[typ]+1
-    g={'identifier':cont['identifier']+'.'+typ+str(cont[typ]).zfill(2),'visible':False,
+    cont['points'][typeName]=cont['points'][typeName]+1
+    g={'identifier':cont['identifier']+'.'+typeName+suffix,'visible':False,
+       'npoints':1,'nparts':1,
        'varying':cont['varying'],'const':cont['const'],'timestamp':cont['timestamp'],
-       'varwave':varWave,'constwave':constWave}
+       'varwave':varWave,'constwave':constWave, 'autolabel':lab, 'autotype':typeName}
+
+    if typ == 9:
+        g['stable']=True
+    elif typ == 10:
+        g['stable']=False
     
     g['callbacks']={'cleanup':None,'cursor':None}
 

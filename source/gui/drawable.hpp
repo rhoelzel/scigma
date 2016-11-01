@@ -16,11 +16,8 @@ namespace scigma
     /*!@ingroup gui
       This is the interface that any drawable object used with the
       GLContext class must implement. Note that this class is NOT intended to be instantiated
-      directly. Instead, inherit the interface directly (like for example the Line class), or derive
-      from its child classes DrawableFirst and DrawableLast.
-      DrawableFirst and DrawableLast are intended for dynamically polymorphic use, so that their 
-      child classes can be added without recompiling the Scigma gui module.
-      Classes inheriting directly from Drawable must be registered in the DrawableTypes type list
+      directly. Instead, inherit the interface directly (like for example the Bundle class).
+      Classes inheriting from Drawable must be registered in the DrawableTypes type list
       below, before they will work with GLContext. This forces a recompile of the Scigma gui module.
       Under OpenGL 3.2, this class provides a member vertexArray_, since basically all Drawables objects
       will use a VertexArrayObject.
@@ -195,86 +192,6 @@ namespace scigma
       {
 	return;
       }
-    
-    //!Base class for dynamically polymorphic drawable objects.
-    /*!@ingroup gui
-      This is one of the two interfaces that any dynamically polymorphic drawable object used with the
-      GLContext class must inherit from (the other being DrawableLast). The advantage of dynamically
-      polymorphic drawables is that they can be added to the codebase without changing DrawableTypes and
-      recompiling all its dependencies (i.e. you do not have to rebuild the library). The drawback of 
-      dynamically polymorphic drawables is that they are not sorted according to their actual type before
-      drawing. As a consequence, the implementation of Drawable::set_up_batch_draw() is just an empty stub.
-      Also, there is no common initialization and termination point for several instances of the same 
-      DrawableFirst child class in one window. These drawbacks lead to redundant function calls when more
-      than one object of the same DrawableFirst child class is added to a GLContext. Objects that inherit
-      from DrawableFirst are drawn before all other objects in the scene. 
-     */
-    class DrawableFirst:public Drawable
-    {
-    public:
-      //!called whenever an instance of the class is added to a GLContext
-      /*!
-	Child classes must implement this function - it is called whenever the object
-	is added to a GLContext.
-	Use this function to apply any per-object termination code that depends on the GLContext.
-	In particular, this function should call GLContext::request_redraw() on the context.
-	@param context is a pointer to the GLContext the object was removed from.
-      */
-      virtual void on_addition(GLContext* glContext)=0;
-
-      //!called whenever an instance of the class is added to a GLContext
-      /*!
-	  Child classes must implement this function - it is called whenever the object
-	  is removed from a GLContext.
-	  Use this function to apply any per-object termination code that depends on the GLContext. 
-	  In particular, this function should call the GLContext::request_redraw() on the context.
-	  @param context is a pointer to the GLContext the object was removed from.
-      */
-      virtual void on_removal(GLContext* glContext)=0;
-      virtual void draw(GLContext* glContext)=0;
-
-      virtual ~DrawableFirst(){}
-    };
-
-    //!Base class for dynamically polymorphic drawable objects.
-    /*!@ingroup gui
-      This is one of the two interfaces that any dynamically polymorphic drawable object used with the
-      GLContext class must inherit from (the other being DrawableFirst). The advantage of dynamically
-      polymorphic drawables is that they can be added to the codebase without changing DrawableTypes and
-      recompiling all its dependencies (i.e. you do not have to rebuild the library). The drawback of 
-      dynamically polymorphic drawables is that they are not sorted according to their actual type before
-      drawing. As a consequence, the implementation of Drawable::set_up_batch_draw() is just an empty stub.
-      Also, there is no common initialization and termination point for several instances of the same 
-      DrawableFirst child class in one window. These drawbacks lead to redundant function calls when more
-      than one object of the same DrawableLast child class is added to a GLContext. Objects that inherit
-      from DrawableLast are drawn after all other objects in the scene.
-     */
-    class DrawableLast:public Drawable
-    {
-    public:
-      //!called whenever an instance of the class is added to a GLContext
-      /*!
-	Child classes must implement this function - it is called whenever the object
-	is added to a GLContext.
-	Use this function to apply any per-object termination code that depends on the GLContext.
-	In particular, this function should call GLContext::request_redraw() on the context.
-	@param context is a pointer to the GLContext the object was removed from.
-      */
-      virtual void on_addition(GLContext* glContext)=0;
-
-      //!called whenever an instance of the class is added to a GLContext
-      /*!
-	  Child classes must implement this function - it is called whenever the object
-	  is removed from a GLContext.
-	  Use this function to apply any per-object termination code that depends on the GLContext. 
-	  In particular, this function should call the GLContext::request_redraw() on the context.
-	  @param context is a pointer to the GLContext the object was removed from.
-      */
-      virtual void on_removal(GLContext* glContext)=0;
-      virtual void draw(GLContext* glContext)=0;
-
-      virtual ~DrawableLast(){}
-    };
     
   } /* end namespace gui */
 } /* end namespace scigma */

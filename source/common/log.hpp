@@ -5,10 +5,7 @@
 #include <sstream>
 #include <deque>
 #include <utility>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
 #include <tinythread.h>
-#pragma clang diagnostic pop
 #include "pythonobject.hpp"
 
 namespace scigma

@@ -21,6 +21,7 @@ namespace scigma
      AutoConstants auto_constants_from_blob(Blob* blob)
      {
        AutoConstants AC;
+       AC.IRS = blob->get_int("IRS");
        AC.NPR = blob->get_int("NPR");
        AC.DS = blob->get_double("stepsize.ds");
        AC.DSMIN = blob->get_double("stepsize.dsmin");

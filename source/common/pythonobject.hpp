@@ -3,10 +3,7 @@
 
 #include <vector>
 #include <stddef.h>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
 #include <tinythread.h>
-#pragma clang diagnostic pop
 
 /* Macros to retrieve object pointers from PythonIDs
    and call member functions of these objects.

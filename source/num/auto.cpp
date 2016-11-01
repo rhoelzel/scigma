@@ -1,10 +1,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
 #include <tinythread.h>
-#pragma clang diagnostic pop
 #include "../dat/wave.hpp"
 #include "auto.hpp"
 
@@ -64,9 +61,12 @@ extern "C"
 	    instance->log_->push<LOG_SUCCESS>(ac.c);
 	  }
 
-	if(*lab)
+	if(*lab&&oldBranch) 
 	  {
-	    /* create Waves for the point itself (constant) */
+	    /* create Waves for the point itself (constant) 
+	       but not, if it is the very first point 
+	       (we already got this one), either as a 
+	       fixed point or from a previous continuation */
 	    Wave* varVals=new Wave(nVar+ac.ICP.size());
 	    
 	    varVals->lock();

@@ -7,6 +7,11 @@
 typedef scigma::dat::AbstractWave<double> Wave;
 typedef scigma::dat::AbstractWave<GLint> IWave;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpadded"
+#pragma GCC diagnostic push
+#pramge GCC diagnostic ignored "-Wunused-but-set-parameter"
+
 namespace scigma
 {
   namespace num
@@ -19,13 +24,9 @@ namespace scigma
 				     F_t f_t
 				     )
     {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
       auto f_extended([nVar,&g,&grad_g,&f_grad_g,f,fabs,f_t]
-#pragma clang diagnostic pop
 		      (double t, const double* x, const double* p, double* rhs) mutable
 		      {
-			/* get rid of warnings about unused parameters */
 			p=NULL;
 			
 			/* determine value of constraint */
@@ -85,16 +86,10 @@ namespace scigma
 					  std::vector<double>& grad_g_jac,
 					  F_t dfdx_t)
     {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
       auto jac_extended([nVar, &g, &grad_g, &f_grad_g, f, fabs, &dfdx1, &dfdx2, &grad_g_jac, dfdx_t]
-#pragma clang diagnostic pop
 			(double t, const double* x, const double* p, double* dfdx) mutable
 			{
-			  /* get rid of warnings about unused parameters */
 			  p=NULL;
-			  
-			  /* values of g, grad_g, f_grad_g and f are carried over from f_extended! */
 			  
 			  /* evaluate Jacobian for first and second point */ 
 			  dfdx_t(t,x,&dfdx1[0]);
@@ -617,35 +612,29 @@ namespace scigma
 
 	   auto f_t(eqsys->f_t());
 	   auto dfdx_t(eqsys->dfdx_t());
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
 	   auto f_extended([nVar,ff,&f,f_t]
-#pragma clang diagnostic pop
 			   (double t, const double* x, const double* p, double* rhs) mutable
 			   {
 			     /* get rid of warnings about unused parameters */
-			p=NULL;
-			
-			/* determine value of constraint */
-			f_t(t,x,rhs);
-
+			     p=NULL;
+			     
+			     /* determine value of constraint */
+			     f_t(t,x,rhs);
+			     
 			/* scaling factor for arclength integration */
-			ff[0]=0;
-			for(size_t i(0);i<nVar/*2*nVar*/;++i)
-			    ff[0]+=rhs[i]*rhs[i];
-			*ff=std::sqrt(ff[0]);
-			
-			for(size_t i(0);i<nVar;++i)
-			  {
-			    rhs[i]/=ff[0];
-			  }
-			f=rhs;
-		      }
-		      );
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wpadded"
+			     ff[0]=0;
+			     for(size_t i(0);i<nVar/*2*nVar*/;++i)
+			       ff[0]+=rhs[i]*rhs[i];
+			     *ff=std::sqrt(ff[0]);
+			     
+			     for(size_t i(0);i<nVar;++i)
+			       {
+				 rhs[i]/=ff[0];
+			       }
+			     f=rhs;
+			   }
+			   );
 	   auto jac_extended([nVar, &f, ff,&dfdx1, dfdx_t]
-#pragma clang diagnostic pop 
 			     (double t, const double* x, const double* p, double* dfdx) mutable
 			     {
 			       /* get rid of warnings about unused parameters */
@@ -675,6 +664,9 @@ namespace scigma
       
       return new Task(runFunction);
     }
+
+#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
     
   } /* end namespace num */
 } /* end namespace scigma */

@@ -198,6 +198,14 @@ namespace scigma
       currentStripTriangleDataBegin_=triangleData_.size();
       currentStripTriangleIndicesBegin_=triangleIndices_.size();
 
+      std::cerr<<"triangleIndices"<<std::endl;
+      for(size_t i(0);i<triangleIndices_.size();++i)
+	std::cerr<<triangleIndices_.data()[i]<<", ";
+      std::cerr<<std::endl;
+      std::cerr<<"triangleData"<<std::endl;
+      for(size_t i(0);i<triangleData_.size();++i)
+	std::cerr<<triangleData_.data()[i]<<", ";
+      std::cerr<<std::endl;
     }
     
     void Mesh::add_strip(const std::vector<double>& positions)

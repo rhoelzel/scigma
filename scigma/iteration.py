@@ -66,7 +66,6 @@ def plot(nSteps=1,path=None,win=None,showall=False):
         if win.invsys.var_names() != win.eqsys.var_names():
             raise Exception("map and inverse map have different variables")
 
-    
     if not path:
         path=graphs.gen_ID("tr",win)
 

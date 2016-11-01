@@ -22,7 +22,7 @@ namespace scigma
       when extending this. The order in which the classes appear here is the order in which
       they are drawn.
     */
-    typedef LOKI_TYPELIST_8(DrawableFirst,Bundle,Sheet,Ruler,Picker,SpaceText,ScreenText,DrawableLast) DrawableTypes;
+    typedef LOKI_TYPELIST_6(Bundle,Sheet,Ruler,Picker,SpaceText,ScreenText) DrawableTypes;
 
   } /* end namespace gui */
 } /* end namespace scigma */
