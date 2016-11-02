@@ -212,7 +212,7 @@ def plug(win=None):
     panel.add('Manifolds.eps',1e-5)
     panel.add('Manifolds.arc',0.1)
     panel.add('Manifolds.alpha',0.3)
-    panel.add('Manifolds.ninit',20)
+    panel.add('Manifolds.ninit',int(20))
     panel.add('Manifolds.fudge',1.05)
     win.glWindow.flush()
     

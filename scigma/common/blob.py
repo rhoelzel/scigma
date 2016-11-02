@@ -37,25 +37,25 @@ class Blob(object):
                 b=1
             else:
                 b=0
-            lib.scigma_common_blob_set_bool(self.objectID,create_string_buffer(identifier),b)
+            lib.scigma_common_blob_set_bool(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),b)
         elif isinstance(value,int):
-            lib.scigma_common_blob_set_int(self.objectID,create_string_buffer(identifier),value)
+            lib.scigma_common_blob_set_int(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),value)
         elif isinstance(value,Float):
-            lib.scigma_common_blob_set_float(self.objectID,create_string_buffer(identifier),
+            lib.scigma_common_blob_set_float(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),
                                                   c_float(value.value))
         elif isinstance(value,float):
-            lib.scigma_common_blob_set_double(self.objectID,create_string_buffer(identifier),c_double(value))
+            lib.scigma_common_blob_set_double(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),c_double(value))
         elif isinstance(value,str):
-            lib.scigma_common_blob_set_string(self.objectID,create_string_buffer(identifier),
+            lib.scigma_common_blob_set_string(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),
                                                    create_string_buffer(bytes(value.encode("ascii"))))
         elif isinstance(value,Enum):
-            lib.scigma_common_blob_set_int(self.objectID,create_string_buffer(identifier),value.definition[value.label])
+            lib.scigma_common_blob_set_int(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),value.definition[value.label])
         elif isinstance(value,list):
             if len(value)==3:
                 d=C_Direction(value[0],value[1],value[2])
-                lib.scigma_common_blob_set_direction(self.objectID,create_string_buffer(identifier),
+                lib.scigma_common_blob_set_direction(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),
                                                           cast(d,POINTER(c_float)))
             elif len(value)==4:
                 c=C_Color(value[0],value[1],value[2],value[3])
-                lib.scigma_common_blob_set_color(self.objectID,create_string_buffer(identifier),
+                lib.scigma_common_blob_set_color(self.objectID,create_string_buffer(bytes(identifier.encode("ascii"))),
                                                       cast(c,POINTER(c_float)))
