@@ -1,5 +1,5 @@
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#   add_definitions(-DSCIGMA_USE_OPENGL_3_2)
+   add_definitions(-DSCIGMA_USE_OPENGL_3_2)
 endif()
 include_directories(../external/tinythread)
 include_directories(../external/glew)

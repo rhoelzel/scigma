@@ -35,8 +35,8 @@ extern "C"
   public:
     ScigmaGuiGraphEventMonitor(void (*python_callback)(const char*,int)):python_callback_(python_callback){}
     virtual ~ScigmaGuiGraphEventMonitor();
-    virtual bool process(GraphClickEvent event, const char* id)
-    {python_callback_(id,-1);return true;}
+    virtual bool process(GraphClickEvent event, const char* id, int button)
+    {python_callback_(id,-button);return true;}
     virtual bool process(PointClickEvent event, const char* id, int point)
     {python_callback_(id,point);return true;}
   };

@@ -15,7 +15,7 @@ class Mesh(object):
             C_DoubleArrayType=c_double*len(initial)
             cValuesArray=C_DoubleArrayType(*initial)
             cValues=cast(cValuesArray,POINTER(c_double))
-            nInitial=len(initial)/nDim
+            nInitial=len(initial)//nDim
             self.objectID = lib.scigma_dat_create_mesh(nDim,nInitial,cValues)
 
     def destroy(self):

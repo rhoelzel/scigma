@@ -112,4 +112,4 @@ namespace scigma
   } /* end namespace gui */
 } /* end namespace scigma */
 
-#endif /* __SCIGMA_GUI_APPLICATION_H__ */
+#endif /* SCIGMA_GUI_APPLICATION_HPP */

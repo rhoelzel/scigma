@@ -47,7 +47,7 @@ def gsortho(X):
         temp_vec = X[i]
         for inY in Y :
             proj_vec = proj(inY, X[i])
-            temp_vec = map(lambda x, y : x - y, temp_vec, proj_vec)
+            temp_vec = list(map(lambda x, y : x - y, temp_vec, proj_vec))
         Y.append(temp_vec)
     for i in range(len(X)):
         l = math.sqrt(dot(Y[i],Y[i]))
