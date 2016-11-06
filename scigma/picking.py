@@ -351,7 +351,7 @@ def points(win,*allnames):
                     try:
                         values.append(constVals[const.index(name)])
                     except:
-                        raise Exception(name+": function not found in equation system; cannot determine coordinates")
+                        values.append(0)
             result = result + (values,)
         yield result
 

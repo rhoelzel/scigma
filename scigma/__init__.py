@@ -8,7 +8,7 @@ try:
         import tkinter.filedialog as tkfile
 except:
         print("tkinter not found / not using tk")
-
+        
 from .library import lib
 from . import options
 from . import graphs

@@ -7,6 +7,7 @@ from . import windowlist
 from . import graphs
 from . import picking
 from . import equations
+from . import view
 
 commands={}
 
@@ -103,9 +104,10 @@ def plot(nSteps=1,path=None,win=None,showall=False):
     g['taskID']=lib.scigma_num_plot(identifier,eqsysID,logID,nSteps,
                                         win.cursor['nparts'],varWaveID,varPars,blobID,showall,noThread)
 
-    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],g['npoints'],g['nparts'],
+    g['cgraph']=gui.Bundle(win.glWindow,g['npoints'],g['nparts'],
                            len(g['varying']),g['varwave'],g['constwave'],
-                           lambda identifier, point: picking.select(identifier,point,win))
+                           lambda double, button, point,x ,y:
+                           mouse_callback(g,double,button,point,x,y,win))
     g['cgraph'].set_marker_style(gui.POINT_TYPE[win.options['Drawing']['marker']['style'].label])
     g['cgraph'].set_marker_size(win.options['Drawing']['marker']['size'].value)
     g['cgraph'].set_point_style(gui.POINT_TYPE[win.options['Drawing']['point']['style'].label])
@@ -144,6 +146,18 @@ def fail(g,win,args):
     
 def cleanup(g):
     pass
+
+def mouse_callback(g,double,button,point,x,y,win):
+    identifier = g['identifier']
+    if(double):
+        picking.select(identifier,point,win)
+    elif button==1 and gui.tk:
+        x=gui.tkroot.winfo_pointerx()#-gui.tkroot.winfo_rootx()
+        y=gui.tkroot.winfo_pointery()#-gui.tkroot.winfo_rooty()
+        menu=gui.tk.Menu(gui.tkroot, tearoff=0)
+        menu.add_command(label='fit', command=lambda:view.fit(identifier,win))
+        menu.add_command(label='delete', command=lambda:graphs.delete(identifier,win))
+        menu.tk_popup(x,y)
 
 def cursor(g,point,win):
     

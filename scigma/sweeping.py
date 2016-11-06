@@ -41,7 +41,7 @@ def sweep(nSteps,g=None,path=None,win=None,mesh=None):
                      'cleanup':None,
                      'minmax':None,
                      'cursor':None}
-    g['cgraph'] = gui.Sheet(win.glWindow,path,mesh,len(g['varying']),g['constwave'])
+    g['cgraph'] = gui.Sheet(win.glWindow,mesh,len(g['varying']),g['constwave'])
         
     blob = iteration.blob(win)
 

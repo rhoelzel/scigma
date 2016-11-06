@@ -45,8 +45,8 @@ namespace scigma
  #pragma clang diagnostic pop
 
     
-    Graph::Graph(GLWindow* glWindow, std::string identifier):
-      glWindow_(glWindow),identifier_(identifier),
+    Graph::Graph(GLWindow* glWindow):
+      glWindow_(glWindow),
       doubleClickTime_(0.25),lastClickTime_(-1.0),
       startTime_(-1),
       marker_(Marker::STAR),point_(Marker::DOT),
@@ -148,20 +148,33 @@ namespace scigma
 
     bool Graph::process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods)
     {
-      if(GLFW_MOUSE_BUTTON_LEFT==button&&GLFW_PRESS==action)
+      if(GLFW_PRESS==action)
 	{
 	  double time(glfwGetTime());
 	  double dt(time-lastClickTime_);
 	  lastClickTime_=time;
-	  if(dt>doubleClickTime_)
-	    return true;
-	  if(pickPoint_>=0)
+	  if(dt<=doubleClickTime_&&GLFW_MOUSE_BUTTON_LEFT==button)
 	    {
-	      EventSource<PointClickEvent>::Type::emit(identifier_.c_str(),int(pickPoint_));
+	      if(pickPoint_>=0)
+		{
+		  EventSource<GraphDoubleClickEvent>::Type::emit(int(pickPoint_));
+		}
+	      else
+		{
+		  EventSource<GraphDoubleClickEvent>::Type::emit(-1);
+		}
 	    }
 	  else
 	    {
-	      EventSource<GraphClickEvent>::Type::emit(identifier_.c_str());
+	      const GLfloat* cursor(w->cursor_position());
+	      if(pickPoint_>=0)
+		{
+		  EventSource<GraphClickEvent>::Type::emit(button==GLFW_MOUSE_BUTTON_LEFT?0:1,int(pickPoint_),int(cursor[0]),int(cursor[1]));
+		}
+	      else
+		{
+		  EventSource<GraphClickEvent>::Type::emit(button==GLFW_MOUSE_BUTTON_LEFT?0:1,-1,int(cursor[0]),int(cursor[1]));
+		}
 	    }
 	  return true;
 	}

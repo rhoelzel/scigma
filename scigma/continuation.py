@@ -112,15 +112,16 @@ def cont(nSteps=1, parameters=None, g=None, path=None,win=None,noThread=False):
     os.chdir("."+path)
     taskID=lib.scigma_num_auto(identifier,win.eqsys.objectID,win.log.objectID,
                                nSteps,indexArray,len(parameters),blob.objectID,True)
+    cont['taskID']=taskID
     os.chdir(cwd)
 
 commands['c']=commands['co']=commands['con']=commands['cont']=cont
 
 def success(cont,win,args):
-    if len(args)<5:
-        finalize_branch(cont,win)
-        if len(args)==2:
-            lib.scigma_num_finish_task(g['taskID'])   
+    if len(args)==0:
+        finalize_branch(cont)
+    elif len(args)==1:
+        lib.scigma_num_finish_task(cont['taskID'])   
     else:
         varWave=dat.Wave(objectID=int(args[0]))
         constWave=dat.Wave(objectID=int(args[1]))
@@ -161,10 +162,12 @@ def add_branch(cont,varWave,constWave,stab,typ,win):
        'varying':cont['varying'],'const':cont['const'],'timestamp':cont['timestamp'],
        'varwave':varWave,'constwave':constWave, 'autotype':typeName}
     
-    g['callbacks']={'cleanup':None,'cursor':None}
+    g['callbacks']={'cleanup':None,'cursor':lambda point:graphs.stdcursor(g,point,win)}
         
-    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],cont['npoints'],1,len(g['varying']),
-                           g['varwave'],g['constwave'],lambda identifier, point: picking.select(identifier,point,win))
+    g['cgraph']=gui.Bundle(win.glWindow,cont['npoints'],1,len(g['varying']),
+                           g['varwave'],g['constwave'],
+                           lambda double,button,point,x,y:
+                           mouse_callback(g,double,button,point,x,y,win))
     g['cgraph'].set_point_style(pointStyle)
     g['cgraph'].set_point_size(pointSize)
     g['cgraph'].set_style(drawingStyle)
@@ -174,11 +177,15 @@ def add_branch(cont,varWave,constWave,stab,typ,win):
     
     graphs.show(g,win)
 
-    #picking.select(g['identifier'],-1,win)
-    #g['cgraph'].finalize()
-
-def finalize_branch(cont,win):
-    pass
+    cont['lastbranch']=g
+    
+def finalize_branch(cont):
+    cont['lastbranch']['cgraph'].finalize()
+    nVarying=len(cont['lastbranch']['varying'])
+    nPoints=cont['lastbranch']['varwave'].size()//nVarying
+    cont['lastbranch']['npoints']=nPoints
+    cont['lastbranch']['nparts']=1
+    del cont['lastbranch']
 
 def add_point(cont,varWave,constWave,stab,typ,lab,win):
     if typ==0: # end point
@@ -193,7 +200,6 @@ def add_point(cont,varWave,constWave,stab,typ,lab,win):
     cont['points'][typeName]=cont['points'][typeName]+1
     suffix = str(cont['points'][typeName]).zfill(2)
 
-    cont['points'][typeName]=cont['points'][typeName]+1
     g={'identifier':cont['identifier']+'.'+typeName+suffix,'visible':False,
        'npoints':1,'nparts':1,
        'varying':cont['varying'],'const':cont['const'],'timestamp':cont['timestamp'],
@@ -204,11 +210,12 @@ def add_point(cont,varWave,constWave,stab,typ,lab,win):
     elif typ == 10:
         g['stable']=False
     
-    g['callbacks']={'cleanup':None,'cursor':None}
+    g['callbacks']={'cleanup':None,'cursor':lambda point:graphs.stdcursor(g,point,win)}
 
-    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],1,1,
+    g['cgraph']=gui.Bundle(win.glWindow,1,1,
                            len(g['varying']),g['varwave'],g['constwave'],
-                           lambda identifier, point: picking.select(identifier,point,win))
+                           lambda double,button,point,x,y:
+                           mouse_callback(g,double,button,point,x,y,win))
     g['cgraph'].set_point_style(pointStyle)
     g['cgraph'].set_point_size(pointSize)
     g['cgraph'].set_color(color)
@@ -217,6 +224,23 @@ def add_point(cont,varWave,constWave,stab,typ,lab,win):
     common.dict_enter(g['identifier'],win.graphs,g)
     
     graphs.show(g,win)
+
+def mouse_callback(g,double,button,point,x,y,win):
+    identifier = g['identifier']
+    if(double):
+        picking.select(identifier,point,win)
+    elif button==1 and gui.tk:
+        x=gui.tkroot.winfo_pointerx()#-gui.tkroot.winfo_rootx()
+        y=gui.tkroot.winfo_pointery()#-gui.tkroot.winfo_rooty()
+        menu=gui.tk.Menu(gui.tkroot, tearoff=0)
+        menu.add_command(label='fit', command=lambda:view.fit(identifier,win))
+        menu.add_command(label='fit all',
+                         command=lambda:view.fit(identifier.rpartition('.')[0],win))
+        menu.add_command(label='delete', command=lambda:graphs.delete(identifier,win))
+        menu.add_command(label='delete all',
+                         command=lambda:graphs.delete(identifier.rpartition('.')[0],win))
+        menu.tk_popup(x,y)
+
     
 def plug(win=None):
     win = windowlist.fetch(win)

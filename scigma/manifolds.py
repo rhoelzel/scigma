@@ -186,9 +186,10 @@ def map_manifold(nSteps,g,path,win,showall):
     g['taskID']=lib.scigma_num_map_manifold(identifier,eqsysID,logID,nSteps,
                                             varWaveID,blobID,showall,noThread)
 
-    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],g['npoints'],g['nparts'],
+    g['cgraph']=gui.Bundle(win.glWindow,g['npoints'],g['nparts'],
                            len(g['varying']),g['varwave'],g['constwave'],
-                           lambda identifier, point: picking.select(identifier,point,win))
+                           lambda double,button,point,x,y:
+                           mouse_callback(g,double,button,point,x,y,win))
     g['cgraph'].set_marker_style(gui.POINT_TYPE[win.options['Drawing']['marker']['style'].label])
     g['cgraph'].set_marker_size(win.options['Drawing']['marker']['size'].value)
     g['cgraph'].set_point_style(gui.POINT_TYPE[win.options['Drawing']['point']['style'].label])
@@ -200,6 +201,13 @@ def map_manifold(nSteps,g,path,win,showall):
     g['cgraph'].replay()
     graphs.hide(win.cursor)
 
+def mouse_callback(g,double,button,point,x,y,win):
+    identifier = g['identifier']
+    if(double):
+        picking.select(identifier,point,win)
+    else:
+        pass
+    
 def plug(win=None):
     win = windowlist.fetch(win)
     # make sure that we do not load twice into the same window

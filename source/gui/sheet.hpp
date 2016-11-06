@@ -31,7 +31,7 @@ namespace scigma
       typedef AbstractGLBuffer<GLbyte,GLbyte> GLbyteBuffer;
       
     public:
-      Sheet(GLWindow* glWindow, std::string identifier,
+      Sheet(GLWindow* glWindow, 
 	    const Mesh* mesh, GLsizei nVars, const Wave* constants);
       ~Sheet();
 

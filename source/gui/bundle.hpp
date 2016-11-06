@@ -28,7 +28,7 @@ namespace scigma
       typedef AbstractGLBuffer<GLfloat,double> GLfloatBuffer;
       
     public:
-      Bundle(GLWindow* glWindow, std::string identifier,
+      Bundle(GLWindow* glWindow,
 	     GLsizei length, GLsizei nRays, GLsizei nVars,
 	     const Wave* varyings, const Wave* constants);
       ~Bundle();

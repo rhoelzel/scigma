@@ -3,11 +3,11 @@ from .. import lib
 from .constants import *
 from . import color
 
-C_CallbackType=CFUNCTYPE(None, c_char_p, c_int)
+C_CallbackType=CFUNCTYPE(None, c_int,c_int,c_int,c_int,c_int)
 
 class Sheet(object):
     """ Wrapper for Sheet objects """
-    lib.scigma_gui_create_sheet.argtypes=[c_int,c_char_p,
+    lib.scigma_gui_create_sheet.argtypes=[c_int,
                                           c_int,c_int,c_int,
                                           C_CallbackType]
     lib.scigma_gui_sheet_set_marker_size.argtypes=[c_int,c_float]
@@ -17,13 +17,13 @@ class Sheet(object):
     lib.scigma_gui_sheet_set_view.argtypes=[c_int,c_int, POINTER(c_int), c_char_p,c_char_p,c_double]
     lib.scigma_gui_sheet_set_view.restype=c_char_p
     
-    def __init__(self, glWindow,identifier,
+    def __init__(self, glWindow,
                  mesh, nVars, constWave,
                  cbfun=None):
-        identifier=bytes(str(identifier).encode("ascii"))
-        self.c_callback=C_CallbackType(lambda id_ptr, point: self.callback(id_ptr,point)) 
+        self.c_callback=C_CallbackType(lambda double, button, point,x,y:
+                                       self.callback(double,button,point,x,y)) 
         self.py_callback=cbfun
-        self.objectID = lib.scigma_gui_create_sheet(glWindow.objectID,identifier,
+        self.objectID = lib.scigma_gui_create_sheet(glWindow.objectID,
                                                     mesh.objectID, nVars, constWave.objectID,
                                                     self.c_callback)
     def destroy(self):
@@ -36,10 +36,9 @@ class Sheet(object):
     def __repr__(self):
         return 'Sheet(id='+str(self.objectID)+')'
     
-    def callback(self,id_ptr,point):
+    def callback(self,double,button,point,x,y):
         if self.py_callback:
-            identifier=str(string_at(id_ptr).decode())
-            self.py_callback(identifier,point)
+            self.py_callback(double,button,point,x,y)
 
     def set_style(self,style):
         lib.scigma_gui_sheet_set_style(self.objectID,style)

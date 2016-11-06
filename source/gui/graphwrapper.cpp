@@ -28,17 +28,17 @@ extern "C"
   
   class ScigmaGuiGraphEventMonitor:
     public EventSink<GraphClickEvent>::Type,
-    public EventSink<PointClickEvent>::Type
+    public EventSink<GraphDoubleClickEvent>::Type
   {
   private:
-    void (*python_callback_)(const char*,int);
+    void (*python_callback_)(const int,int,int,int,int);
   public:
-    ScigmaGuiGraphEventMonitor(void (*python_callback)(const char*,int)):python_callback_(python_callback){}
+    ScigmaGuiGraphEventMonitor(void (*python_callback)(const int,int,int,int,int)):python_callback_(python_callback){}
     virtual ~ScigmaGuiGraphEventMonitor();
-    virtual bool process(GraphClickEvent event, const char* id)
-    {python_callback_(id,-1);return true;}
-    virtual bool process(PointClickEvent event, const char* id, int point)
-    {python_callback_(id,point);return true;}
+    virtual bool process(GraphDoubleClickEvent event, int point)
+    {python_callback_(1,0,point,0,0);return true;}
+    virtual bool process(GraphClickEvent event, int button, int point,int x, int y)
+    {python_callback_(0,button,point,x,y);return true;}
   };
   ScigmaGuiGraphEventMonitor::~ScigmaGuiGraphEventMonitor()
   {}
@@ -50,10 +50,10 @@ extern "C"
 
   /* Wrappers for the Bundle class */
   
-  PythonID scigma_gui_create_bundle(PythonID glWindowID, const char* id,
+  PythonID scigma_gui_create_bundle(PythonID glWindowID,
 				    int length, int nRays, int nVars, 
 				    PythonID varWaveID, PythonID constWaveID,
-				    void(*python_callback)(const char*,int))
+				    void(*python_callback)(const int,int,int,int,int))
   {
     PYOBJ(GLWindow,glWindow,glWindowID);
     PYOBJ(Wave,varWave,varWaveID);
@@ -61,13 +61,13 @@ extern "C"
     
     if(glWindow&&varWave&&constWave)
       {
-	Bundle* ptr1=new Bundle(glWindow,std::string(id),
+	Bundle* ptr1=new Bundle(glWindow,
 				GLsizei(length),GLsizei(nRays), GLsizei(nVars),
 				varWave,constWave);
 
 	ScigmaGuiGraphEventMonitor* ptr2(new ScigmaGuiGraphEventMonitor(python_callback));
 	connect<GraphClickEvent>(ptr1,ptr2);
-	connect<PointClickEvent>(ptr1,ptr2);
+	connect<GraphDoubleClickEvent>(ptr1,ptr2);
 	scigmaGuiGraphEventMonitorMap.insert(std::pair<Graph*,ScigmaGuiGraphEventMonitor*>(static_cast<Graph*>(ptr1),ptr2));
 	return ptr1->get_python_id();
       }
@@ -191,9 +191,9 @@ extern "C"
 
   /* Wrappers for the Sheet class */
   
-  PythonID scigma_gui_create_sheet(PythonID glWindowID, const char* id,
+  PythonID scigma_gui_create_sheet(PythonID glWindowID,
 				   PythonID meshID, int nVars, PythonID constWaveID,
-				    void(*python_callback)(const char*,int))
+				   void(*python_callback)(const int,int,int,int,int))
   {
     PYOBJ(GLWindow,glWindow,glWindowID);
     PYOBJ(Mesh,mesh,meshID);
@@ -201,11 +201,11 @@ extern "C"
     
     if(glWindow&&mesh&&constWave)
       {
-	Sheet* ptr1=new Sheet(glWindow,std::string(id),
+	Sheet* ptr1=new Sheet(glWindow,
 			      mesh,GLsizei(nVars),constWave);
 	ScigmaGuiGraphEventMonitor* ptr2(new ScigmaGuiGraphEventMonitor(python_callback));
 	connect<GraphClickEvent>(ptr1,ptr2);
-	connect<PointClickEvent>(ptr1,ptr2);
+	connect<GraphDoubleClickEvent>(ptr1,ptr2);
 	scigmaGuiGraphEventMonitorMap.insert(std::pair<Graph*,ScigmaGuiGraphEventMonitor*>(static_cast<Graph*>(ptr1),ptr2));
 	return ptr1->get_python_id();
       }

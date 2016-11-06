@@ -3,11 +3,11 @@ from .. import lib
 from .constants import *
 from . import color
 
-C_CallbackType=CFUNCTYPE(None, c_char_p, c_int)
+C_CallbackType=CFUNCTYPE(None, c_int, c_int, c_int, c_int,c_int)
 
 class Bundle(object):
     """ Wrapper for Bundle objects """
-    lib.scigma_gui_create_bundle.argtypes=[c_int,c_char_p,
+    lib.scigma_gui_create_bundle.argtypes=[c_int,
                                            c_int,c_int,c_int,
                                            c_int,c_int, 
                                            C_CallbackType]
@@ -19,12 +19,12 @@ class Bundle(object):
     lib.scigma_gui_bundle_set_view.restype=c_char_p
 
     
-    def __init__(self, glWindow,identifier, length, nRays, nVars,
+    def __init__(self, glWindow, length, nRays, nVars,
                  varWave, constWave, cbfun=None):
-        identifier=bytes(str(identifier).encode("ascii"))
-        self.c_callback=C_CallbackType(lambda id_ptr, point: self.callback(id_ptr,point)) 
+        self.c_callback=C_CallbackType(lambda double, button, point, x, y:
+                                       self.callback(double,button,point,x ,y)) 
         self.py_callback=cbfun
-        self.objectID = lib.scigma_gui_create_bundle(glWindow.objectID,identifier,length,
+        self.objectID = lib.scigma_gui_create_bundle(glWindow.objectID,length,
                                                      nRays,nVars,varWave.objectID,constWave.objectID,
                                                      self.c_callback)
     def destroy(self):
@@ -37,10 +37,9 @@ class Bundle(object):
     def __repr__(self):
         return 'Bundle(id='+str(self.objectID)+')'
     
-    def callback(self,id_ptr,point):
+    def callback(self,double,button,point,x,y):
         if self.py_callback:
-            identifier=str(string_at(id_ptr).decode())
-            self.py_callback(identifier,point)
+            self.py_callback(double,button,point,x,y)
 
     def set_style(self,style):
         lib.scigma_gui_bundle_set_style(self.objectID,style)

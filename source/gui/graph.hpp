@@ -18,16 +18,17 @@ namespace scigma
   namespace gui
   {
     struct GraphClickEvent{  
-      typedef LOKI_TYPELIST_1(const char*) Arguments;};
-    struct PointClickEvent{  
-      typedef LOKI_TYPELIST_2(const char*,int) Arguments;};
+      typedef LOKI_TYPELIST_4(int,int,int,int) Arguments;};
+
+    struct GraphDoubleClickEvent{  
+      typedef LOKI_TYPELIST_1(int) Arguments;};
 
     class GLContext;
     class GLWindow;
 
     class Graph:
       public EventSource<GraphClickEvent>::Type,
-      public EventSource<PointClickEvent>::Type,
+      public EventSource<GraphDoubleClickEvent>::Type,
       public EventSink<LoopEvent>::Type,
       public EventSink<MouseButtonEvent>::Type
     {
@@ -84,11 +85,10 @@ namespace scigma
       bool process(MouseButtonEvent event, GLWindow* w, int button , int action, int mods);
       
     protected:
-      Graph(GLWindow* glWindow, std::string identifier); 
+      Graph(GLWindow* glWindow); 
       virtual ~Graph();
       
       GLWindow* glWindow_;
-      std::string identifier_;
       
       double doubleClickTime_;
       double lastClickTime_;

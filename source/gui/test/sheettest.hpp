@@ -23,7 +23,7 @@ for(double theta(0.2);theta <3.1415;theta+=0.05)
 Wave constWave(1);
 constWave.push_back(3.1415);
 
-Sheet s(&w,"sheet1",&m,3,&constWave);
+Sheet s(&w,&m,3,&constWave);
 
 std::vector<int> indices;
 indices.push_back(1);

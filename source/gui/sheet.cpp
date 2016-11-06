@@ -35,9 +35,9 @@ namespace scigma
 
     GLuint Sheet::program_(0);
 
-    Sheet::Sheet(GLWindow* glWindow, std::string identifier,
+    Sheet::Sheet(GLWindow* glWindow, 
 		 const Mesh* mesh, GLsizei nVars, const Wave* constants):
-      Graph(glWindow,identifier),
+      Graph(glWindow),
       PythonObject<Sheet>(this),
       nVars_(nVars), nConsts_(GLsizei(constants->size())),
       mesh_(mesh),

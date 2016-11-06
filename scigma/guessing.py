@@ -244,7 +244,7 @@ def guess_single(path,blob,varying,const,varVals,constVals,win,showall):
                          'fail':lambda args:fail(graph,win,args),
                          'cleanup':lambda:cleanup(graph),
                          'minmax':lambda:graphs.stdminmax(graph),
-                         'cursor':lambda point:cursor(graph,point,win)}
+                         'cursor':lambda point:graphs.stdcursor(graph,point,win)}
     
     nVars=win.eqsys.n_vars()
     eqsysID=win.eqsys.objectID
@@ -321,9 +321,10 @@ def success(g,win,args):
     pointSize=win.options['Drawing']['marker']['size'].value
     color=win.options['Drawing']['color']
     
-    g['cgraph']=gui.Bundle(win.glWindow,g['identifier'],g['npoints'],g['nparts'],
+    g['cgraph']=gui.Bundle(win.glWindow,g['npoints'],g['nparts'],
                            len(g['varying']),g['varwave'],g['constwave'],
-                           lambda identifier, point: picking.select(identifier,point,win))
+                           lambda double, button, point,x, y:
+                           mouse_callback(g,double,button,point,x,y,win))
     g['cgraph'].set_point_style(pointStyle)
     g['cgraph'].set_point_size(pointSize)
     g['cgraph'].set_color(color)
@@ -340,17 +341,20 @@ def fail(g,win,args):
         
 def cleanup(g):
     g['evwave'].destroy()
-    
-def cursor(g,point,win):
-    nVarying=len(g['varying'])
 
-    if point == -1:
-        varVals=g['varwave'][-nVarying:]
-    else:
-        varVals=g['varwave'][nVarying*point:nVarying*(point+1)]
-    constVals=g['constwave'][:]
-   
-    return g['varying'], g['const'], varVals, constVals
+def mouse_callback(g,double,button,point,x,y,win):
+    identifier = g['identifier']
+    if(double):
+        picking.select(identifier,point,win)
+    elif button==1 and gui.tk:
+        x=gui.tkroot.winfo_pointerx()#-gui.tkroot.winfo_rootx()
+        y=gui.tkroot.winfo_pointery()#-gui.tkroot.winfo_rooty()
+        menu=gui.tk.Menu(gui.tkroot, tearoff=0)
+        menu.add_command(label='fit', command=lambda:view.fit(identifier,win))
+        menu.add_command(label='delete', command=lambda:graphs.delete(identifier,win))
+        menu.add_command(label='evals', command=lambda:evals(identifier,win))
+        menu.add_command(label='evecs', command=lambda:evecs(identifier,win))
+        menu.tk_popup(x,y)
 
 def plug(win=None):
     win = windowlist.fetch(win)

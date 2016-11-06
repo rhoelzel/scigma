@@ -128,7 +128,7 @@ namespace scigma
 	}
       wave_->lock();
       GLsizei dataMax(GLsizei(wave_->size()));
-      
+
       if(dataMax<=size_)
 	{
 	  wave_->unlock();
@@ -150,11 +150,11 @@ namespace scigma
 	  usedFullChunk_=false;
 	}
       
-      if(timeSinceLastTransfer<0.05)  // do not try to upload too often
+      /*      if(timeSinceLastTransfer<0.05)  // do not try to upload too often
 	{
 	  wave_->unlock();
 	  return false;
-	}
+	  }*/
       
       timeOfLastTransfer_=time;
 
@@ -169,6 +169,7 @@ namespace scigma
 	  chunkSize_=chunkSize_>0x400?chunkSize_/2:chunkSize_;
 	}
 
+      
       if(dataMax>capacity_) //create a larger buffer and copy the data, don't add new data for now
 	{
 	  usedFullChunk_=false;
@@ -204,6 +205,7 @@ namespace scigma
 	}
       else
 	{
+	  
 	  glBindBuffer(GL_ARRAY_BUFFER,bufferID_);
 	  GLsizei newSize(size_+chunkSize_);
 	  if(dataMax<newSize)
@@ -213,14 +215,16 @@ namespace scigma
 	    }
 	  else
 	    usedFullChunk_=true;
-#ifdef SCIGMA_USE_OPENGL_3_2
+
+	  
+	  /*#ifdef SCIGMA_USE_OPENGL_3_2
 	  void* ptr=glMapBufferRange(GL_ARRAY_BUFFER,GLsizeiptr(sizeof(T))*size_,GLsizeiptr(sizeof(T))*newSize,GL_MAP_WRITE_BIT);
 	  T* TPtr=reinterpret_cast<T*>(ptr);
-#else
+	  #else*/
 	  void* ptr=glMapBuffer(GL_ARRAY_BUFFER,GL_WRITE_ONLY);
 	  T* TPtr=reinterpret_cast<T*>(ptr);
 	  TPtr+=size_;
-#endif
+	  //#endif
 	  if(!ptr)
 	    {
 	      wave_->unlock();

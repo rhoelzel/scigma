@@ -117,7 +117,7 @@ def threeD(win=None):
 commands['2d']=commands['2D']=twoD
 commands['3d']=commands['3D']=threeD
 
-def fit(win=None):
+def fit(identifier=None,win=None):
     """ fit      
                                                                                             
     Adjusts the axes that are currently shown such that                                                      
@@ -139,8 +139,12 @@ def fit(win=None):
     for symbol in visvar:
         mi=1e300
         ma=-1e300
+        dictionary = win.graphs
+        if identifier:
+            dictionary={'entry':common.dict_entry(identifier,win.graphs)}
+
         glist=[]
-        common.dict_leaves(win.graphs,glist,lambda entry: isinstance(entry, dict) and 'cgraph' not in entry,
+        common.dict_leaves(dictionary,glist,lambda entry: isinstance(entry, dict) and 'cgraph' not in entry,
                            lambda entry:isinstance(entry,dict) and 'cgraph' in entry)
         for g in glist:
             if g['visible']:

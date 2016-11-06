@@ -43,7 +43,7 @@ extern "C"
     size_t nPar(ac.parnames.size());
 
     /* special point */
-    if(((*mtot**mtot)==1)||*lab)
+    if(*lab)
       {
 	Wave* oldBranch(autoBranches[instance]);
 	if(oldBranch)
@@ -59,12 +59,9 @@ extern "C"
 	      }
 	    /* notify scigma that old branch has been finished */
 	    instance->log_->push<LOG_SUCCESS>(ac.c);
-	  }
 
-	if(*lab&&oldBranch) 
-	  {
 	    /* create Waves for the point itself (constant) 
-	       but not, if it is the very first point 
+	       but not, if it is the very first point (no oldBranch)
 	       (we already got this one), either as a 
 	       fixed point or from a previous continuation */
 	    Wave* varVals=new Wave(nVar+ac.ICP.size());
@@ -95,34 +92,37 @@ extern "C"
 	      *itp<<"|"<<*lab;
 	    instance->log_->push<LOG_SUCCESS>(ss1.str());
 	  }
-	
-	if((*itp**itp!=81)||(*mtot**mtot==1))
-	  {
-	    /* create new branch */
-	    autoBranches[instance]=new Wave(size_t(ac.NMX)*(nVar+ac.ICP.size()));
-
-	    /* create constant values for the new branch */
-	    Wave* constVals= new Wave(ac.parnames.size()-ac.ICP.size());
-	    constVals->lock();
-	    size_t index(0);
-	    for(size_t i(0);i<ac.parnames.size();++i)
-	      {
-		bool varies(false);
-		for(size_t j(0);j<ac.ICP.size();++j)
-		  if(ac.ICP[j]==int(i+1))
-		    varies=true;
-		if(!varies)
-		  constVals->push_back(par[i]);
-	      }
-	    constVals->unlock();
-	    
-	    std::stringstream ss2;
-	    ss2<<ac.c<<"|"<<autoBranches[instance]->get_python_id()<<"|"<<constVals->get_python_id()<<"|"<<*mtot<<"|"<<
-	      0<<"|"<<*lab;
-	    instance->log_->push<LOG_SUCCESS>(ss2.str());
-	  }
       }
-    
+
+    /* start a new branch after special point (!= EP), or when
+       we are on the first point of a new branch
+    */
+    if((*lab&&(*itp**itp!=81))||(*mtot**mtot==1))
+      {
+	/* create new branch */
+	autoBranches[instance]=new Wave(size_t(ac.NMX)*(nVar+ac.ICP.size()));
+	
+	/* create constant values for the new branch */
+	Wave* constVals= new Wave(ac.parnames.size()-ac.ICP.size());
+	constVals->lock();
+	size_t index(0);
+	for(size_t i(0);i<ac.parnames.size();++i)
+	  {
+	    bool varies(false);
+	    for(size_t j(0);j<ac.ICP.size();++j)
+	      if(ac.ICP[j]==int(i+1))
+		varies=true;
+	    if(!varies)
+	      constVals->push_back(par[i]);
+	  }
+	constVals->unlock();
+	
+	std::stringstream ss2;
+	ss2<<ac.c<<"|"<<autoBranches[instance]->get_python_id()<<"|"<<constVals->get_python_id()<<"|"<<*mtot<<"|"<<
+	  0<<"|"<<*lab;
+	instance->log_->push<LOG_SUCCESS>(ss2.str());
+      }
+      
     Wave* newBranch(autoBranches[instance]);
     newBranch->lock();
     newBranch->push_back(u,nVar);
@@ -279,8 +279,10 @@ namespace scigma
       // run AUTO in its own thread (threading not yet implemented)
       int id((int(id_)));
       auto_entry(&id,autoConstants_.c.c_str());
+      std::stringstream ss1;
+      ss1<<autoConstants_.c<<"|done";
+      log_->push<LOG_SUCCESS>(ss1.str());
     }
-
     
     Auto::~Auto()
     {

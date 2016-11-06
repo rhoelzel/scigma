@@ -202,7 +202,7 @@ def move_cursor(win,varying=None,const=None,varVals=None,constVals=None,nParts=N
         nParts=1 if len(varying)== 0 else len(varVals)//len(varying)
     
     win.cursor = new(win,1,nParts,varying,const,varVals,constVals)
-    win.cursor['cgraph']=gui.Bundle(win.glWindow,'cursor',1,win.cursor['nparts'],len(win.cursor['varying']),
+    win.cursor['cgraph']=gui.Bundle(win.glWindow,1,win.cursor['nparts'],len(win.cursor['varying']),
                                         win.cursor['varwave'],win.cursor['constwave'])
     win.cursor['cgraph'].set_point_style(gui.RCROSS)
     win.cursor['cgraph'].set_point_size(50 if library.largeFontsFlag else 25)
@@ -326,6 +326,17 @@ def success(identifier,args,win):
     # perform any other initialization tasks
     if g['callbacks']['success']:
         g['callbacks']['success'](args)
+
+def stdcursor(g,point,win):
+    nVarying=len(g['varying'])
+
+    if point == -1:
+        varVals=g['varwave'][-nVarying:]
+    else:
+        varVals=g['varwave'][nVarying*point:nVarying*(point+1)]
+    constVals=g['constwave'][:]
+   
+    return g['varying'], g['const'], varVals, constVals
 
 def stdminmax(g):
     g['min']={}

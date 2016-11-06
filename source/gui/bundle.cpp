@@ -36,10 +36,10 @@ namespace scigma
 
     GLuint Bundle::program_(0);
     
-    Bundle::Bundle(GLWindow* glWindow, std::string identifier,
+    Bundle::Bundle(GLWindow* glWindow,
 		   GLsizei length, GLsizei nRays, GLsizei nVars,
 		   const Wave* varyings, const Wave* constants):
-      Graph(glWindow,identifier),
+      Graph(glWindow),
       PythonObject<Bundle>(this),
       length_(length), nRays_(nRays),
       nVars_(nVars), nConsts_(GLsizei(constants->size())),
